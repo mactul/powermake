@@ -1,6 +1,7 @@
 import os
 import glob
 import fnmatch
+from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
@@ -25,7 +26,7 @@ def filter_files(files: list[str], *patterns: str) -> list:
     return output
 
 
-def compile_files(files: list[str], config: Config) -> bool:
+def compile_files(files: list[str], config: Config, force: bool = False) -> bool:
     generated_objects: list[str] | bool = []
     operations: list[Operation] = []
 
@@ -45,8 +46,9 @@ def compile_files(files: list[str], config: Config) -> bool:
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
         operations.append(Operation(output_file, [file], config, command))
 
+    print_lock = Lock()
     with ThreadPoolExecutor(max_workers=NB_JOBS) as executor:
-        generated_objects = list(executor.map(lambda op: op.execute(), operations))
+        generated_objects = list(executor.map(lambda op: op.execute(force, print_lock), operations))
 
         if False in generated_objects:
             generated_objects = False
