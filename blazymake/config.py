@@ -26,6 +26,9 @@ class Config:
 
         self.defines: list[str] = []
         self.additional_includedirs: list[str] = []
+        self.c_flags: list[str] = []
+        self.cpp_flags: list[str] = []
+        self.c_cpp_flags: list[str] = []
 
         c_compiler_tuple = None
         cpp_compiler_tuple = None
@@ -68,6 +71,18 @@ class Config:
                         for includedir in conf["additional_includedirs"]:
                             if isinstance(includedir, str) and includedir not in self.additional_includedirs:
                                 self.additional_includedirs.append(includedir)
+                    if "c_flags" in conf and isinstance(conf["c_flags"], list):
+                        for c_flag in conf["c_flags"]:
+                            if isinstance(c_flag, str) and c_flag not in self.c_flags:
+                                self.c_flags.append(c_flag)
+                    if "cpp_flags" in conf and isinstance(conf["cpp_flags"], list):
+                        for cpp_flag in conf["cpp_flags"]:
+                            if isinstance(cpp_flag, str) and cpp_flag not in self.cpp_flags:
+                                self.cpp_flags.append(cpp_flag)
+                    if "c_cpp_flags" in conf and isinstance(conf["c_cpp_flags"], list):
+                        for c_cpp_flag in conf["c_cpp_flags"]:
+                            if isinstance(c_cpp_flag, str) and c_cpp_flag not in self.c_cpp_flags:
+                                self.c_cpp_flags.append(c_cpp_flag)
 
             except (OSError, json.JSONDecodeError):
                 pass
@@ -138,7 +153,8 @@ class Config:
 
     def remove_defines(self, *defines: str) -> None:
         for define in defines:
-            self.defines.remove(define)
+            if define in self.defines:
+                self.defines.remove(define)
 
     def add_includedirs(self, *includedirs: str) -> None:
         for includedir in includedirs:
@@ -147,4 +163,35 @@ class Config:
 
     def remove_includedirs(self, *includedirs: str) -> None:
         for includedir in includedirs:
-            self.additional_includedirs.remove(includedir)
+            if includedir in self.additional_includedirs:
+                self.additional_includedirs.remove(includedir)
+
+    def add_c_flags(self, *c_flags: str) -> None:
+        for c_flag in c_flags:
+            if c_flag not in self.c_flags:
+                self.c_flags.append(c_flag)
+
+    def remove_c_flags(self, *c_flags: str) -> None:
+        for c_flag in c_flags:
+            if c_flag in self.c_flags:
+                self.c_flags.remove(c_flag)
+
+    def add_cpp_flags(self, *cpp_flags: str) -> None:
+        for cpp_flag in cpp_flags:
+            if cpp_flag not in self.cpp_flags:
+                self.cpp_flags.append(cpp_flag)
+
+    def remove_cpp_flags(self, *cpp_flags: str) -> None:
+        for cpp_flag in cpp_flags:
+            if cpp_flag in self.cpp_flags:
+                self.cpp_flags.remove(cpp_flag)
+
+    def add_c_cpp_flags(self, *c_cpp_flags: str) -> None:
+        for c_cpp_flag in c_cpp_flags:
+            if c_cpp_flag not in self.c_cpp_flags:
+                self.c_cpp_flags.append(c_cpp_flag)
+
+    def remove_c_cpp_flags(self, *c_cpp_flags: str) -> None:
+        for c_cpp_flag in c_cpp_flags:
+            if c_cpp_flag in self.c_cpp_flags:
+                self.c_cpp_flags.remove(c_cpp_flag)
