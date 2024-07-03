@@ -3,9 +3,10 @@ import shutil
 
 
 class Tool(abc.ABC):
-    def __init__(self, path, type):
+    type = None
+
+    def __init__(self, path):
         self.path = shutil.which(path)
-        self.type = type
 
     def is_available(self):
         return self.path is not None

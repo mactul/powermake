@@ -118,7 +118,7 @@ class Config:
         return {
             "c_compiler": {
                 "type": self.c_compiler.type,
-                "path": self.c_compiler.compiler_path
+                "path": self.c_compiler.path
             }
         }
 

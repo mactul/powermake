@@ -1,16 +1,13 @@
 import abc
-import shutil
 
 from .tools import Tool
 
 
 class Archiver(Tool, abc.ABC):
-    def __init__(self, archiver_path):
-        self.archiver_path = shutil.which(archiver_path)
-        self.static_lib_extension = None
+    static_lib_extension = None
 
-    def is_available(self):
-        return self.archiver_path is not None
+    def __init__(self, path):
+        Tool.__init__(self, path)
 
     @abc.abstractmethod
     def basic_archive_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
@@ -18,31 +15,39 @@ class Archiver(Tool, abc.ABC):
 
 
 class ArchiverGNU(Archiver):
-    def __init__(self, archiver_path: str = "ar"):
-        super().__init__(archiver_path)
-        self.static_lib_extension = ".a"
+    type = "gnu"
+    static_lib_extension = ".a"
+
+    def __init__(self, path: str = "ar"):
+        super().__init__(path)
 
     def basic_archive_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
-        return [self.archiver_path, "-cr", outputfile, *inputfiles, *args]
+        return [self.path, "-cr", outputfile, *inputfiles, *args]
 
 
 class ArchiverAR(ArchiverGNU):
-    def __init__(self, archiver_path: str = "ar"):
-        super().__init__(archiver_path)
+    type = "ar"
+
+    def __init__(self, path: str = "ar"):
+        super().__init__(path)
 
 
 class ArchiverLLVM_AR(ArchiverGNU):
-    def __init__(self, archiver_path: str = "llvm-ar"):
-        super().__init__(archiver_path)
+    type = "llvm-ar"
+
+    def __init__(self, path: str = "llvm-ar"):
+        super().__init__(path)
 
 
 class ArchiverMSVC(Archiver):
-    def __init__(self, archiver_path: str = "lib"):
-        super().__init__(archiver_path)
-        self.static_lib_extension = ".lib"
+    type = "msvc"
+    static_lib_extension = ".lib"
+
+    def __init__(self, path: str = "lib"):
+        super().__init__(path)
 
     def basic_archive_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
-        return [self.archiver_path, "/nologo", *args, "/out:"+outputfile, *inputfiles]
+        return [self.path, "/nologo", *args, "/out:"+outputfile, *inputfiles]
 
 
 _archiver_types: dict[str, Archiver] = {

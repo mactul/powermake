@@ -29,22 +29,32 @@ def filter_files(files: list[str], *patterns: str) -> list:
     return output
 
 
-def compile_files(files: list[str], config: Config, force: bool = False) -> bool:
+def compile_files(files: list[str], config: Config, force: bool = False) -> list[str]:
     generated_objects: list[str] | bool = []
     operations: list[Operation] = []
 
     for file in files:
-        output_file = os.path.normpath(config.obj_build_directory + "/" + file + config.c_compiler.obj_extension)
+        output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        if config.c_compiler is not None:
+            c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs)
+        else:
+            c_args = None
+
+        if config.cpp_compiler is not None:
+            cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs)
+        else:
+            cpp_args = None
 
         if file.endswith(".c"):
             if config.c_compiler is None:
                 raise RuntimeError("No C compiler has been specified and the default config didn't find any")
-            command = config.c_compiler.basic_compile_command(output_file, [file], config.defines, config.additional_includedirs)
+            command = config.c_compiler.basic_compile_command(output_file, file, c_args)
         elif file.endswith(".cpp"):
             if config.cpp_compiler is None:
                 raise RuntimeError("No C++ compiler has been specified and the default config didn't find any")
-            command = config.cpp_compiler.basic_compile_command(output_file, [file], config.defines, config.additional_includedirs)
+            command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
         else:
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
         operations.append(Operation(output_file, [file], config, command))

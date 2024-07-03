@@ -16,7 +16,7 @@ def resolve_path(current_folder: str, additional_includedirs: list[str], filepat
     return None
 
 
-def file_is_uptodate(output_date: float, filename: str, additional_includedirs: list[str], headers_already_found: list[str] = []) -> bool:
+def is_file_uptodate_recursive(output_date: float, filename: str, additional_includedirs: list[str], headers_already_found: list[str] = []) -> bool:
     try:
         if os.path.getmtime(filename) >= output_date:
             return False
@@ -55,11 +55,11 @@ def file_is_uptodate(output_date: float, filename: str, additional_includedirs: 
             i += 1
             while i < len(line) and (line[i] == ' ' or line[i] == '\t'):
                 i += 1
-            if i >= len(line) or (line[i] != '<' and line[i] != '"'):
+            if i >= len(line) or line[i] != '"':
                 continue
             i += 1
             j = i
-            while j < len(line) and line[j] != '>' and line[j] != '"':
+            while j < len(line) and line[j] != '"':
                 j += 1
             if j >= len(line):
                 continue
@@ -80,8 +80,10 @@ def file_is_uptodate(output_date: float, filename: str, additional_includedirs: 
             headers_already_found.append(path)
             new_paths.append(path)
 
+    del headers_found
+
     for path in new_paths:
-        if not file_is_uptodate(path, additional_includedirs, headers_already_found):
+        if not is_file_uptodate_recursive(path, additional_includedirs, headers_already_found):
             return False
 
     return True
@@ -94,7 +96,7 @@ def needs_update(outputfile: str, dependencies: list[str], additional_includedir
         return True
     headers_already_found = []
     for dep in dependencies:
-        if not file_is_uptodate(output_date, dep, additional_includedirs, headers_already_found):
+        if not is_file_uptodate_recursive(output_date, dep, additional_includedirs, headers_already_found):
             return True
 
     return False
@@ -113,7 +115,7 @@ class Operation:
             if print_lock is not None:
                 print_lock.acquire()
             if self.config.verbosity > 0:
-                print(f"Compiling {os.path.basename(self.outputfile)}")
+                print(f"Generating {os.path.basename(self.outputfile)}")
             if self.config.verbosity > 1:
                 print(self.command)
             if print_lock is not None:

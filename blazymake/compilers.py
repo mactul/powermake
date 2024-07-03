@@ -4,63 +4,85 @@ from .tools import Tool
 
 
 class Compiler(Tool, abc.ABC):
-    def __init__(self, path, type):
-        Tool.__init__(self, path, type)
-        self.type = None
-        self.obj_extension = None
-        self.add_defines_option = None
-        self.add_includedirs_option = None
+    type = None
+    obj_extension = None
+
+    def __init__(self, path):
+        Tool.__init__(self, path)
+
+    @classmethod
+    @abc.abstractmethod
+    def format_args(defines: list[str], includedirs: list[str], flags: list[str] = []):
+        return []
 
     @abc.abstractmethod
-    def basic_compile_command(self, outputfile: str, inputfiles: list[str], defines: list[str], includedirs: list[str], args: list[str] = []) -> list[str]:
+    def basic_compile_command(self, outputfile: str, inputfile: str, defines: list[str], includedirs: list[str], args: list[str] = []) -> list[str]:
         return []
 
 
 class CompilerGNU(Compiler):
-    def __init__(self, path: str = "cc", type: str = "gnu"):
-        super().__init__(path, type)
-        self.obj_extension = ".o"
-        self.add_defines_option = "-D"
-        self.add_includedirs_option = "-I"
+    type = "gnu"
+    obj_extension = ".o"
 
-    def basic_compile_command(self, outputfile: str, inputfiles: list[str], defines: list[str], includedirs: list[str], args: list[str] = []) -> list[str]:
-        return [self.path, "-c", "-o", outputfile, *inputfiles, *args] + [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs]
+    def __init__(self, path: str = "cc"):
+        super().__init__(path)
+
+    @classmethod
+    def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
+        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + flags
+
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
+        return [self.path, "-c", "-o", outputfile, inputfile, *args]
 
 
 class CompilerGCC(CompilerGNU):
+    type = "gcc"
+
     def __init__(self, path: str = "gcc"):
-        super().__init__(path, "gcc")
+        super().__init__(path)
 
 
 class CompilerGPlusPlus(CompilerGNU):
+    type = "g++"
+
     def __init__(self, path: str = "g++"):
-        super().__init__(path, "g++")
+        super().__init__(path)
 
 
 class CompilerClang(CompilerGNU):
+    type = "clang"
+
     def __init__(self, path: str = "clang"):
-        super().__init__(path, "clang")
+        super().__init__(path)
 
 
 class CompilerClangPlusPlus(CompilerGNU):
+    type = "clang++"
+
     def __init__(self, path: str = "clang++"):
-        super().__init__(path, "clang++")
+        super().__init__(path)
 
 
 class CompilerMSVC(Compiler):
-    def __init__(self, path: str = "cl", type: str = "msvc"):
-        super().__init__(path, type)
-        self.obj_extension = ".obj"
-        self.add_defines_option = "/D"
-        self.add_includedirs_option = "/I"
+    type = "msvc"
+    obj_extension = ".obj"
 
-    def basic_compile_command(self, outputfile: str, inputfiles: list[str], defines: list[str], includedirs: list[str], args: list[str] = []) -> list[str]:
-        return [self.path, "/c", "/nologo", "/Fo" + outputfile, *inputfiles, *args] + [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs]
+    def __init__(self, path: str = "cl"):
+        super().__init__(path)
+
+    @classmethod
+    def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
+        return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + flags
+
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
+        return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
 
 class CompilerClang_CL(CompilerMSVC):
+    type = "clang-cl"
+
     def __init__(self, path: str = "clang-cl"):
-        super().__init__(path, "clang-cl")
+        super().__init__(path)
 
 
 _c_compiler_types: dict[str, Compiler] = {

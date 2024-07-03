@@ -1,16 +1,13 @@
 import abc
-import shutil
 
 from .tools import Tool
 
 
 class Linker(Tool, abc.ABC):
-    def __init__(self, linker_path):
-        self.linker_path = shutil.which(linker_path)
-        self.exe_extension = None
+    exe_extension = None
 
-    def is_available(self):
-        return self.linker_path is not None
+    def __init__(self, path):
+        Tool.__init__(self, path)
 
     @abc.abstractmethod
     def basic_link_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
@@ -18,41 +15,53 @@ class Linker(Tool, abc.ABC):
 
 
 class LinkerGNU(Linker):
-    def __init__(self, linker_path: str = "cc"):
-        super().__init__(linker_path)
-        self.exe_extension = ""
+    type = "gnu"
+    exe_extension = ""
+
+    def __init__(self, path: str = "cc"):
+        super().__init__(path)
 
     def basic_link_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
-        return [self.linker_path, "-o", outputfile, *inputfiles, *args]
+        return [self.path, "-o", outputfile, *inputfiles, *args]
 
 
 class LinkerGCC(LinkerGNU):
-    def __init__(self, linker_path: str = "gcc"):
-        super().__init__(linker_path)
+    type = "gcc"
+
+    def __init__(self, path: str = "gcc"):
+        super().__init__(path)
 
 
 class LinkerGPlusPlus(LinkerGNU):
-    def __init__(self, linker_path: str = "g++"):
-        super().__init__(linker_path)
+    type = "g++"
+
+    def __init__(self, path: str = "g++"):
+        super().__init__(path)
 
 
 class LinkerClang(LinkerGNU):
-    def __init__(self, linker_path: str = "clang"):
-        super().__init__(linker_path)
+    type = "clang"
+
+    def __init__(self, path: str = "clang"):
+        super().__init__(path)
 
 
 class LinkerClangPlusPlus(LinkerGNU):
-    def __init__(self, linker_path: str = "clang++"):
-        super().__init__(linker_path)
+    type = "clang++"
+
+    def __init__(self, path: str = "clang++"):
+        super().__init__(path)
 
 
 class LinkerMSVC(Linker):
-    def __init__(self, archiver_path: str = "link"):
-        super().__init__(archiver_path)
-        self.exe_extension = ".exe"
+    type = "msvc"
+    exe_extension = ".exe"
+
+    def __init__(self, path: str = "link"):
+        super().__init__(path)
 
     def basic_link_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
-        return [self.linker_path, "/nologo", *args, "/out:" + outputfile, *inputfiles]
+        return [self.path, "/nologo", *args, "/out:" + outputfile, *inputfiles]
 
 
 _linker_types: dict[str, Linker] = {
