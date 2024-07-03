@@ -1,6 +1,7 @@
 import os
 import glob
 import fnmatch
+import __main__ as __makefile__
 from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
@@ -8,6 +9,8 @@ from .config import Config
 from .operation import Operation, needs_update
 
 NB_JOBS = 8
+
+os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
 
 
 def get_files(*patterns: str) -> list:
