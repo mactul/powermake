@@ -1,0 +1,61 @@
+import abc
+import shutil
+
+
+class Tool(abc.ABC):
+    def __init__(self, path, type):
+        self.path = shutil.which(path)
+        self.type = type
+
+    def is_available(self):
+        return self.path is not None
+
+
+def load_tool_tuple_from_file(conf: dict[str, str], tool_name: str, object_getter: callable, tool_list_getter: callable) -> Tool:
+    if tool_name not in conf:
+        return None
+
+    if "path" in conf[tool_name] or "type" in conf[tool_name]:
+        if "type" in conf[tool_name]:
+            tool_type = conf[tool_name]["type"].lower()
+        else:
+            tool_type = "gnu"
+
+        ObjectConstructor = object_getter(tool_type)
+        if ObjectConstructor is None:
+            raise ValueError("Unsupported %s type: %s\n\nShould be one of them: %s" % (tool_name, tool_type, " ".join(tool_list_getter())))
+
+        if "path" in conf[tool_name]:
+            tool_path = conf[tool_name]["path"]
+        else:
+            tool_path = None
+
+        return (tool_path, ObjectConstructor)
+
+    return None
+
+
+def load_tool_from_tuple(tool_tuple, tool_name):
+    tool: Tool = None
+    if tool_tuple is not None:
+        if tool_tuple[0] is None:
+            tool = tool_tuple[1]()
+        else:
+            tool = tool_tuple[1](tool_tuple[0])
+
+        if not tool.is_available():
+            if tool_tuple[0] is None:
+                tool_tuple[0] = tool.type
+            raise ValueError("The %s %s could not be found on your machine" % (tool_name, tool_tuple[0]))
+    return tool
+
+
+def find_tool(object_getter: callable, *tool_types: str):
+    for tool_type in tool_types:
+        ObjectConstructor = object_getter(tool_type)
+        if ObjectConstructor is None:
+            continue
+        tool: Tool = ObjectConstructor()
+        if tool is not None and tool.is_available():
+            return tool
+    return None
