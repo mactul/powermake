@@ -108,11 +108,11 @@ class Config:
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc")
 
         if self.obj_build_directory is None:
-            self.obj_build_directory = os.path.join("blazymake_build/.objs/", self.operating_system)
+            self.obj_build_directory = os.path.join("build/.objs/", self.operating_system)
         if self.exe_build_directory is None:
-            self.exe_build_directory = os.path.join("blazymake_build", self.operating_system, "bin")
+            self.exe_build_directory = os.path.join("build", self.operating_system, "bin")
         if self.lib_build_directory is None:
-            self.lib_build_directory = os.path.join("blazymake_build", self.operating_system, "lib")
+            self.lib_build_directory = os.path.join("build", self.operating_system, "lib")
 
     def export_json(self):
         return {
