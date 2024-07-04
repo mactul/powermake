@@ -1,6 +1,7 @@
 import os
 import glob
 import fnmatch
+import importlib.util
 import __main__ as __makefile__
 from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +12,14 @@ from .operation import Operation, needs_update
 NB_JOBS = 8
 
 os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
+
+
+def import_module(module_name: str, module_path: str = None):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
 
 
 def get_files(*patterns: str) -> list:
