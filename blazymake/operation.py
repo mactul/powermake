@@ -27,7 +27,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
         return True
 
     headers_found = []
-    file = open(filename, "rb")
+    file = open(filename, "r", encoding="latin1")
 
     # The four lines under this comment are here for the compatibility with python < 3.8
     # They are equivalent to `while line := file.readline():`
@@ -41,7 +41,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
             i += 1
         if i >= len(line):
             continue
-        if line[i] != "#":
+        if line[i] != '#':
             continue
         i += 1
         while i < len(line) and (line[i] == ' ' or line[i] == '\t'):
@@ -83,7 +83,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     del headers_found
 
     for path in new_paths:
-        if not is_file_uptodate_recursive(path, additional_includedirs, headers_already_found):
+        if not is_file_uptodate_recursive(output_date, path, additional_includedirs, headers_already_found):
             return False
 
     return True
