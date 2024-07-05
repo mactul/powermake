@@ -1,11 +1,11 @@
-import blazymake
+import powermake
 
 
-config = blazymake.Config()
+config = powermake.Config()
 
-files = blazymake.get_files("*.c", "*.cpp")
+files = powermake.get_files("*.c", "*.cpp")
 
 
-objects = blazymake.compile_files(files, config)
+objects = powermake.compile_files(files, config)
 
-print(blazymake.link_files("program_test", objects, config))
+print(powermake.link_files("program_test", objects, config))
