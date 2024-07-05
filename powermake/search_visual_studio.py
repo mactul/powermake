@@ -86,7 +86,7 @@ vsenvs = {
 
 
 def _load_vcvarsall(vcvarsall_path, version, architecture):
-    tempdir = tempfile.TemporaryDirectory("blazymake")
+    tempdir = tempfile.TemporaryDirectory("powermake")
     genvcvars_filepath = os.path.join(tempdir.name, "genvcvars.bat")
     file = open(genvcvars_filepath, "w")
 

@@ -10,7 +10,7 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 
 
 class Config:
-    def __init__(self, verbosity: int = 1, local_config: str = "./blazymake_config.json", global_config: str = "/home/user/.blazymake/blazymake_config.json"):
+    def __init__(self, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = "/home/user/.powermake/powermake_config.json"):
         self.verbosity = verbosity
 
         self.c_compiler: Compiler = None
