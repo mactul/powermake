@@ -10,7 +10,7 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 
 
 class Config:
-    def __init__(self, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = "/home/user/.powermake/powermake_config.json"):
+    def __init__(self, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = None):
         self.verbosity = verbosity
 
         self.c_compiler: Compiler = None
@@ -18,7 +18,7 @@ class Config:
         self.archiver: Archiver = None
         self.linker: Linker = None
 
-        self.operating_system: str = None
+        self.target_operating_system: str = None
 
         self.obj_build_directory: str = None
         self.exe_build_directory: str = None
@@ -35,11 +35,14 @@ class Config:
         archiver_tuple = None
         linker_tuple = None
 
+        if global_config is None:
+            global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
+
         for path in (local_config, global_config):
             if path is None:
                 continue
             try:
-                with open(path, "rb") as file:
+                with open(path, "r") as file:
                     conf: dict = json.load(file)
                     if c_compiler_tuple is None:
                         c_compiler_tuple = load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types)
@@ -53,8 +56,8 @@ class Config:
                     if linker_tuple is None:
                         linker_tuple = load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types)
 
-                    if self.operating_system is None and "operating_system" in conf:
-                        self.operating_system = conf["operating_system"]
+                    if self.target_operating_system is None and "target_operating_system" in conf:
+                        self.target_operating_system = conf["target_operating_system"]
 
                     if self.obj_build_directory is None and "obj_build_directory" in conf:
                         self.obj_build_directory = conf["obj_build_directory"]
@@ -87,11 +90,14 @@ class Config:
             except (OSError, json.JSONDecodeError):
                 pass
 
-        if self.operating_system is None:
-            self.operating_system = platform.system()
+        if self.target_operating_system is None:
+            self.target_operating_system = platform.system()
 
         if self.is_windows():
-            load_msvc_environment()
+            env = load_msvc_environment(os.path.join(os.path.dirname(global_config), "msvc_envs.json"))
+            if env is not None:
+                for var in env:
+                    os.environ[var] = env[var]
 
         self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
         self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")
@@ -123,11 +129,11 @@ class Config:
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc")
 
         if self.obj_build_directory is None:
-            self.obj_build_directory = os.path.join("build/.objs/", self.operating_system)
+            self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system)
         if self.exe_build_directory is None:
-            self.exe_build_directory = os.path.join("build", self.operating_system, "bin")
+            self.exe_build_directory = os.path.join("build", self.target_operating_system, "bin")
         if self.lib_build_directory is None:
-            self.lib_build_directory = os.path.join("build", self.operating_system, "lib")
+            self.lib_build_directory = os.path.join("build", self.target_operating_system, "lib")
 
     def export_json(self):
         return {
@@ -138,10 +144,10 @@ class Config:
         }
 
     def is_windows(self):
-        return self.operating_system.lower().startswith("win")
+        return self.target_operating_system.lower().startswith("win")
 
     def is_linux(self):
-        return self.operating_system.lower().startswith("linux")
+        return self.target_operating_system.lower().startswith("linux")
 
     def is_mingw(self):
         return self.is_windows() and "gcc" in isinstance(self.c_compiler, CompilerGNU)

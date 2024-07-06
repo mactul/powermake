@@ -1,4 +1,5 @@
 import os
+import json
 import string
 import platform
 import tempfile
@@ -13,7 +14,7 @@ if platform.platform().lower().startswith("win"):
         bitmask = windll.kernel32.GetLogicalDrives()
         for letter in string.ascii_uppercase:
             if bitmask & 1:
-                drives.append(letter + ":")
+                drives.append(letter + ":\\")
             bitmask >>= 1
 
         return drives
@@ -67,23 +68,6 @@ vsvers = {
     "4.2": "4.2"
 }
 
-vsenvs = {
-    "17.0": "VS170COMNTOOLS",
-    "16.0": "VS160COMNTOOLS",
-    "15.0": "VS150COMNTOOLS",
-    "14.0": "VS140COMNTOOLS",
-    "12.0": "VS120COMNTOOLS",
-    "11.0": "VS110COMNTOOLS",
-    "10.0": "VS100COMNTOOLS",
-    "9.0": "VS90COMNTOOLS",
-    "8.0": "VS80COMNTOOLS",
-    "7.1": "VS71COMNTOOLS",
-    "7.0": "VS70COMNTOOLS",
-    "6.0": "VS60COMNTOOLS",
-    "5.0": "VS50COMNTOOLS",
-    "4.2": "VS42COMNTOOLS"
-}
-
 
 def _load_vcvarsall(vcvarsall_path, version, architecture):
     tempdir = tempfile.TemporaryDirectory("powermake")
@@ -120,7 +104,7 @@ def _load_vcvarsall(vcvarsall_path, version, architecture):
     return variables
 
 
-def find_vcvarsall():
+def _find_vcvarsall():
     for version in vsvers:
         for logical_drive in get_drives():
             paths = []
@@ -149,13 +133,43 @@ def find_vcvarsall():
     return None, None
 
 
-def load_msvc_environment(vcvarsall_path: str = None, vcversion: str = "15.0", architecture: str = "x86"):
-    if "VCInstallDir" in os.environ:
-        return
-    if vcvarsall_path is None:
-        vcvarsall_path, vcversion = find_vcvarsall()
-    if vcvarsall_path is not None:
-        env = _load_vcvarsall(vcvarsall_path, vcversion, architecture)
-        print(env)
-        for key in env:
-            os.environ[key] = env[key]
+def is_msvc_loaded_correctly(env: dict[str, str]):
+    for var in vcvars:
+        if var not in env:
+            return False
+    return True
+
+
+def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict[str, str]:
+    try:
+        with open(filepath, "r") as file:
+            return json.load(file)
+    except OSError:
+        return {}
+
+
+def store_envs_to_file(filepath: str, envs: dict[str, str]) -> None:
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, "w") as file:
+        json.dump(envs, file)
+
+
+def load_msvc_environment(storage_path: str, architecture: str = "x86") -> dict[str, str]:
+    envs = load_envs_from_file(storage_path)
+    if architecture in envs and is_msvc_loaded_correctly(envs[architecture]):
+        return envs[architecture]
+
+    if "vcvarsall_path" not in envs or "vcversion" not in envs:
+        vcvarsall_path, vcversion = _find_vcvarsall()
+        if vcvarsall_path is None:
+            return None
+        envs["vcvarsall_path"] = vcvarsall_path
+        envs["vcversion"] = vcversion
+
+    env = _load_vcvarsall(envs["vcvarsall_path"], envs["vcversion"], architecture)
+    if env is not None:
+        envs[architecture] = env
+
+    store_envs_to_file(storage_path, envs)
+
+    return env
