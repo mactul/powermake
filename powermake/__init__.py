@@ -79,19 +79,19 @@ def compile_files(files: set[str], config: Config, force: bool = False) -> set[s
     return generated_objects
 
 
-def archive_files(archive_name: str, object_files: set[str], config: Config):
+def archive_files(archive_name: str, object_files: set[str], config: Config, force: bool = False):
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.lib_build_directory + "/" + archive_name + config.archiver.static_lib_extension)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files)
-    return Operation(output_file, object_files, config, command).execute()
+    return Operation(output_file, object_files, config, command).execute(force=force)
 
 
-def link_files(executable_name: str, object_files: set[str], config: Config):
+def link_files(executable_name: str, object_files: set[str], config: Config, force: bool = False):
     if config.linker is None:
         raise RuntimeError("No linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.linker.basic_link_command(output_file, object_files)
-    return Operation(output_file, object_files, config, command).execute()
+    return Operation(output_file, object_files, config, command).execute(force=force)
