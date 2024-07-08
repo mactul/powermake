@@ -95,3 +95,11 @@ def link_files(executable_name: str, object_files: set[str], config: Config, for
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.linker.basic_link_command(output_file, object_files)
     return Operation(output_file, object_files, config, command).execute(force=force)
+
+
+def delete_files_from_disk(*filepaths: str):
+    for filepath in filepaths:
+        try:
+            os.remove(filepath)
+        except OSError:
+            pass
