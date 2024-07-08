@@ -23,7 +23,9 @@ class Config:
         self.host_operating_system: str = None
 
         self.target_architecture: str = None
+        self.target_simplified_architecture: str = None
         self.host_architecture: str = None
+        self.host_simplified_architecture: str = None
 
         self.obj_build_directory: str = None
         self.exe_build_directory: str = None
@@ -65,7 +67,7 @@ class Config:
                         self.target_operating_system = conf["target_operating_system"]
                     if self.host_operating_system is None and "host_operating_system" in conf:
                         self.host_operating_system = conf["host_operating_system"]
-                    
+
                     if self.target_architecture is None and "target_architecture" in conf:
                         self.target_architecture = conf["target_architecture"]
                     if self.host_architecture is None and "host_architecture" in conf:
@@ -112,8 +114,11 @@ class Config:
         if self.host_architecture is None:
             self.host_architecture = platform.machine()
 
+        self.target_simplified_architecture = simplify_architecture(self.target_architecture)
+        self.host_simplified_architecture = simplify_architecture(self.host_architecture)
+
         if self.target_is_windows():
-            env = load_msvc_environment(os.path.join(os.path.dirname(global_config), "msvc_envs.json"), architecture=simplify_architecture(self.target_architecture))
+            env = load_msvc_environment(os.path.join(os.path.dirname(global_config), "msvc_envs.json"), architecture=self.target_simplified_architecture)
             if env is not None:
                 for var in env:
                     os.environ[var] = env[var]
