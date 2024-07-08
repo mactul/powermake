@@ -10,7 +10,7 @@ class Archiver(Tool, abc.ABC):
         Tool.__init__(self, path)
 
     @abc.abstractmethod
-    def basic_archive_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
+    def basic_archive_command(self, outputfile: str, inputfiles: set[str], args: list[str] = []) -> list[str]:
         return []
 
 
@@ -21,7 +21,7 @@ class ArchiverGNU(Archiver):
     def __init__(self, path: str = "ar"):
         super().__init__(path)
 
-    def basic_archive_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
+    def basic_archive_command(self, outputfile: str, inputfiles: set[str], args: list[str] = []) -> list[str]:
         return [self.path, "-cr", outputfile, *inputfiles, *args]
 
 
@@ -46,7 +46,7 @@ class ArchiverMSVC(Archiver):
     def __init__(self, path: str = "lib"):
         super().__init__(path)
 
-    def basic_archive_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
+    def basic_archive_command(self, outputfile: str, inputfiles: set[str], args: list[str] = []) -> list[str]:
         return [self.path, "/nologo", *args, "/out:"+outputfile, *inputfiles]
 
 
@@ -64,5 +64,5 @@ def GenericArchiver(archiver_type: str) -> Archiver:
     return _archiver_types[archiver_type]
 
 
-def get_all_archiver_types() -> list[str]:
+def get_all_archiver_types() -> set[str]:
     return _archiver_types.keys()

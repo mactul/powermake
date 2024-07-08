@@ -22,25 +22,25 @@ def import_module(module_name: str, module_path: str = None):
     return module
 
 
-def get_files(*patterns: str) -> list:
-    files = []
+def get_files(*patterns: str) -> set[str]:
+    files = set()
     for pattern in patterns:
-        files.extend(glob.glob(pattern, recursive=True))
+        files.update(glob.glob(pattern, recursive=True))
     return files
 
 
-def filter_files(files: list[str], *patterns: str) -> list:
-    output = []
+def filter_files(files: set[str], *patterns: str) -> set[str]:
+    output = set()
     for file in files:
         for pattern in patterns:
             if not fnmatch.fnmatch(file, pattern):
-                output.append(file)
+                output.add(file)
     return output
 
 
-def compile_files(files: list[str], config: Config, force: bool = False) -> list[str]:
-    generated_objects: list[str] | bool = []
-    operations: list[Operation] = []
+def compile_files(files: set[str], config: Config, force: bool = False) -> set[str]:
+    generated_objects: set[str] = set()
+    operations: set[Operation] = set()
 
     for file in files:
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
@@ -66,11 +66,11 @@ def compile_files(files: list[str], config: Config, force: bool = False) -> list
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
         else:
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
-        operations.append(Operation(output_file, [file], config, command))
+        operations.add(Operation(output_file, [file], config, command))
 
     print_lock = Lock()
     with ThreadPoolExecutor(max_workers=NB_JOBS) as executor:
-        generated_objects = list(executor.map(lambda op: op.execute(force, print_lock), operations))
+        generated_objects = set(executor.map(lambda op: op.execute(force, print_lock), operations))
 
         if False in generated_objects:
             generated_objects = False
@@ -78,7 +78,7 @@ def compile_files(files: list[str], config: Config, force: bool = False) -> list
     return generated_objects
 
 
-def archive_files(archive_name: str, object_files: list[str], config: Config):
+def archive_files(archive_name: str, object_files: set[str], config: Config):
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.lib_build_directory + "/" + archive_name + config.archiver.static_lib_extension)
@@ -87,7 +87,7 @@ def archive_files(archive_name: str, object_files: list[str], config: Config):
     return Operation(output_file, object_files, config, command).execute()
 
 
-def link_files(executable_name: str, object_files: list[str], config: Config):
+def link_files(executable_name: str, object_files: set[str], config: Config):
     if config.linker is None:
         raise RuntimeError("No linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
