@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
 from .operation import Operation, needs_update
-from .args_parser import ArgsParser
+from .args_parser import run, default_on_clean, default_on_install
 
 NB_JOBS = 8
 
