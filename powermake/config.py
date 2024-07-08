@@ -4,6 +4,7 @@ import platform
 
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
+from .architecture import simplify_architecture
 from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
@@ -19,6 +20,10 @@ class Config:
         self.linker: Linker = None
 
         self.target_operating_system: str = None
+        self.host_operating_system: str = None
+
+        self.target_architecture: str = None
+        self.host_architecture: str = None
 
         self.obj_build_directory: str = None
         self.exe_build_directory: str = None
@@ -58,6 +63,13 @@ class Config:
 
                     if self.target_operating_system is None and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]
+                    if self.host_operating_system is None and "host_operating_system" in conf:
+                        self.host_operating_system = conf["host_operating_system"]
+                    
+                    if self.target_architecture is None and "target_architecture" in conf:
+                        self.target_architecture = conf["target_architecture"]
+                    if self.host_architecture is None and "host_architecture" in conf:
+                        self.host_architecture = conf["host_architecture"]
 
                     if self.obj_build_directory is None and "obj_build_directory" in conf:
                         self.obj_build_directory = conf["obj_build_directory"]
@@ -92,9 +104,16 @@ class Config:
 
         if self.target_operating_system is None:
             self.target_operating_system = platform.system()
+        if self.host_operating_system is None:
+            self.host_operating_system = platform.system()
 
-        if self.is_windows():
-            env = load_msvc_environment(os.path.join(os.path.dirname(global_config), "msvc_envs.json"))
+        if self.target_architecture is None:
+            self.target_architecture = platform.machine()
+        if self.host_architecture is None:
+            self.host_architecture = platform.machine()
+
+        if self.target_is_windows():
+            env = load_msvc_environment(os.path.join(os.path.dirname(global_config), "msvc_envs.json"), architecture=simplify_architecture(self.target_architecture))
             if env is not None:
                 for var in env:
                     os.environ[var] = env[var]
@@ -105,27 +124,27 @@ class Config:
         self.linker = load_tool_from_tuple(linker_tuple, "linker")
 
         if self.c_compiler is None:
-            if self.is_linux():
+            if self.target_is_linux():
                 self.c_compiler = find_tool(GenericCompiler, "gcc", "clang")
-            elif self.is_windows():
+            elif self.target_is_windows():
                 self.c_compiler = find_tool(GenericCompiler, "msvc", "clang-cl", "gcc")
 
         if self.cpp_compiler is None:
-            if self.is_linux():
+            if self.target_is_linux():
                 self.cpp_compiler = find_tool(GenericCompiler, "g++", "clang++")
-            elif self.is_windows():
+            elif self.target_is_windows():
                 self.cpp_compiler = find_tool(GenericCompiler, "msvc", "g++")
 
         if self.archiver is None:
-            if self.is_linux():
+            if self.target_is_linux():
                 self.archiver = find_tool(GenericArchiver, "ar")
-            elif self.is_windows():
+            elif self.target_is_windows():
                 self.archiver = find_tool(GenericArchiver, "msvc")
 
         if self.linker is None:
-            if self.is_linux():
+            if self.target_is_linux():
                 self.linker = find_tool(GenericLinker, "g++", "clang++", "gcc", "clang")
-            elif self.is_windows():
+            elif self.target_is_windows():
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc")
 
         if self.obj_build_directory is None:
@@ -143,14 +162,14 @@ class Config:
             }
         }
 
-    def is_windows(self):
+    def target_is_windows(self):
         return self.target_operating_system.lower().startswith("win")
 
-    def is_linux(self):
+    def target_is_linux(self):
         return self.target_operating_system.lower().startswith("linux")
 
-    def is_mingw(self):
-        return self.is_windows() and "gcc" in isinstance(self.c_compiler, CompilerGNU)
+    def target_is_mingw(self):
+        return self.target_is_windows() and "gcc" in isinstance(self.c_compiler, CompilerGNU)
 
     def add_defines(self, *defines: str) -> None:
         for define in defines:
