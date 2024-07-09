@@ -119,6 +119,6 @@ def delete_files_from_disk(*filepaths: str):
 def run_another_powermake(path: str):
     if subprocess.run([sys.executable, path]).returncode != 0:
         raise RuntimeError(f"Failed to run powermake {path}")
-    path = subprocess.check_output([sys.executable, path, "--get-lib-build-folder"]).strip()
+    path = subprocess.check_output([sys.executable, path, "--get-lib-build-folder"], encoding="utf-8").strip()
 
-    return os.listdir(path)
+    return [os.path.join(path, file) for file in os.listdir(path)]
