@@ -11,8 +11,9 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 
 
 class Config:
-    def __init__(self, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, debug: bool = False, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = None):
         self.verbosity = verbosity
+        self.debug = debug
 
         self.c_compiler: Compiler = None
         self.cpp_compiler: Compiler = None
@@ -158,6 +159,12 @@ class Config:
             self.exe_build_directory = os.path.join("build", self.target_operating_system, "bin")
         if self.lib_build_directory is None:
             self.lib_build_directory = os.path.join("build", self.target_operating_system, "lib")
+
+        if self.debug:
+            self.add_defines("DEBUG")
+            self.add_c_cpp_flags("-g")
+        else:
+            self.add_defines("NDEBUG")
 
     def export_json(self):
         return {
