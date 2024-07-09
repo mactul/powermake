@@ -17,6 +17,9 @@ def default_on_install(config: Config, location: str) -> None:
     if location is None:
         location = "./install/"
 
+    if config.verbosity >= 1:
+        print("Installing to", location)
+
     lib_folder = os.path.join(location, "lib")
     include_folder = os.path.join(location, "include")
     bin_folder = os.path.join(location, "bin")
