@@ -16,7 +16,7 @@ class Compiler(Tool, abc.ABC):
         return []
 
     @abc.abstractmethod
-    def basic_compile_command(self, outputfile: str, inputfile: str, defines: list[str], includedirs: list[str], args: list[str] = []) -> list[str]:
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
         return []
 
 

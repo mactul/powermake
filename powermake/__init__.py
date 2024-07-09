@@ -96,7 +96,7 @@ def archive_files(archive_name: str, object_files: set[str], config: Config, for
     return Operation(output_file, object_files, config, command).execute(force=force)
 
 
-def link_files(executable_name: str, object_files: set[str], config: Config, force: bool = None):
+def link_files(executable_name: str, object_files: set[str], archives: list[str], config: Config, force: bool = None):
     if force is None:
         force = config.rebuild
 
@@ -104,8 +104,8 @@ def link_files(executable_name: str, object_files: set[str], config: Config, for
         raise RuntimeError("No linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    command = config.linker.basic_link_command(output_file, object_files)
-    return Operation(output_file, object_files, config, command).execute(force=force)
+    command = config.linker.basic_link_command(output_file, object_files, archives)
+    return Operation(output_file, object_files.union(archives), config, command).execute(force=force)
 
 
 def delete_files_from_disk(*filepaths: str):
@@ -116,9 +116,28 @@ def delete_files_from_disk(*filepaths: str):
             pass
 
 
-def run_another_powermake(path: str):
-    if subprocess.run([sys.executable, path]).returncode != 0:
-        raise RuntimeError(f"Failed to run powermake {path}")
-    path = subprocess.check_output([sys.executable, path, "--get-lib-build-folder"], encoding="utf-8").strip()
+def run_another_powermake(config: Config, path: str):
+    command = [sys.executable, path]
+    output = None
+    if config.verbosity == 0:
+        command.append("-q")
+        output = subprocess.DEVNULL
+    elif config.verbosity >= 2:
+        command.append("-v")
 
+    if config.rebuild:
+        command.append("-r")
+
+    if config.debug:
+        command.append("-d")
+
+    if config.verbosity >= 1:
+        print("Running", path)
+    if config.verbosity >= 2:
+        print(command)
+
+    if subprocess.run(command, stdout=output, stderr=output).returncode != 0:
+        raise RuntimeError(f"Failed to run powermake {path}")
+
+    path = subprocess.check_output([sys.executable, path, "--get-lib-build-folder"], encoding="utf-8").strip()
     return [os.path.join(path, file) for file in os.listdir(path)]

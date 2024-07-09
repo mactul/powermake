@@ -10,7 +10,7 @@ class Linker(Tool, abc.ABC):
         Tool.__init__(self, path)
 
     @abc.abstractmethod
-    def basic_link_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
+    def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return []
 
 
@@ -21,8 +21,8 @@ class LinkerGNU(Linker):
     def __init__(self, path: str = "cc"):
         super().__init__(path)
 
-    def basic_link_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
-        return [self.path, "-o", outputfile, *inputfiles, *args]
+    def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
+        return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
 
 
 class LinkerGCC(LinkerGNU):
@@ -60,8 +60,8 @@ class LinkerMSVC(Linker):
     def __init__(self, path: str = "link"):
         super().__init__(path)
 
-    def basic_link_command(self, outputfile: str, inputfiles: list[str], args: list[str] = []) -> list[str]:
-        return [self.path, "/nologo", *args, "/out:" + outputfile, *inputfiles]
+    def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
+        return [self.path, "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
 
 
 _linker_types: dict[str, Linker] = {

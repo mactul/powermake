@@ -89,7 +89,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     return True
 
 
-def needs_update(outputfile: str, dependencies: list[str], additional_includedirs: list[str]):
+def needs_update(outputfile: str, dependencies: set[str], additional_includedirs: list[str]):
     try:
         output_date = os.path.getmtime(outputfile)
     except OSError:
@@ -103,7 +103,7 @@ def needs_update(outputfile: str, dependencies: list[str], additional_includedir
 
 
 class Operation:
-    def __init__(self, outputfile: str, dependencies: list[str], config: Config, command: list[str]):
+    def __init__(self, outputfile: str, dependencies: set[str], config: Config, command: list[str]):
         self.outputfile = outputfile
         self.dependencies = dependencies
         self._hidden_dependencies = None
