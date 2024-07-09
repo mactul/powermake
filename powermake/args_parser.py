@@ -4,7 +4,9 @@ from .config import Config
 
 
 def default_on_clean(config: Config) -> None:
-    shutil.rmtree("build", ignore_errors=True)
+    shutil.rmtree(config.exe_build_directory, ignore_errors=True)
+    shutil.rmtree(config.lib_build_directory, ignore_errors=True)
+    shutil.rmtree(config.obj_build_directory, ignore_errors=True)
 
 
 def default_on_install(config: Config, location: str) -> None:
