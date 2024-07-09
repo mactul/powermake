@@ -1,6 +1,8 @@
 import os
+import sys
 import glob
 import fnmatch
+import subprocess
 import importlib.util
 import __main__ as __makefile__
 from threading import Lock
@@ -39,9 +41,12 @@ def filter_files(files: set[str], *patterns: str) -> set[str]:
     return output
 
 
-def compile_files(files: set[str], config: Config, force: bool = False) -> set[str]:
+def compile_files(files: set[str], config: Config, force: bool = None) -> set[str]:
     generated_objects: set[str] = set()
     operations: set[Operation] = set()
+
+    if force is None:
+        force = config.rebuild
 
     for file in files:
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
@@ -79,7 +84,10 @@ def compile_files(files: set[str], config: Config, force: bool = False) -> set[s
     return generated_objects
 
 
-def archive_files(archive_name: str, object_files: set[str], config: Config, force: bool = False):
+def archive_files(archive_name: str, object_files: set[str], config: Config, force: bool = None):
+    if force is None:
+        force = config.rebuild
+
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.lib_build_directory + "/" + archive_name + config.archiver.static_lib_extension)
@@ -88,7 +96,10 @@ def archive_files(archive_name: str, object_files: set[str], config: Config, for
     return Operation(output_file, object_files, config, command).execute(force=force)
 
 
-def link_files(executable_name: str, object_files: set[str], config: Config, force: bool = False):
+def link_files(executable_name: str, object_files: set[str], config: Config, force: bool = None):
+    if force is None:
+        force = config.rebuild
+
     if config.linker is None:
         raise RuntimeError("No linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
@@ -103,3 +114,11 @@ def delete_files_from_disk(*filepaths: str):
             os.remove(filepath)
         except OSError:
             pass
+
+
+def run_another_powermake(path: str):
+    if subprocess.run([sys.executable, path]).returncode != 0:
+        raise RuntimeError(f"Failed to run powermake {path}")
+    path = subprocess.check_output([sys.executable, path, "--get-lib-build-folder"]).strip()
+
+    return os.listdir(path)
