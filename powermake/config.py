@@ -11,9 +11,10 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 
 
 class Config:
-    def __init__(self, debug: bool = False, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, debug: bool = False, rebuild: bool = False, verbosity: int = 1, local_config: str = "./powermake_config.json", global_config: str = None):
         self.verbosity = verbosity
         self.debug = debug
+        self.rebuild = rebuild
 
         self.c_compiler: Compiler = None
         self.cpp_compiler: Compiler = None
