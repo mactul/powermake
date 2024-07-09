@@ -39,6 +39,8 @@ class Config:
         self.cpp_flags: list[str] = []
         self.c_cpp_flags: list[str] = []
 
+        self.exported_headers = []
+
         c_compiler_tuple = None
         cpp_compiler_tuple = None
         archiver_tuple = None
@@ -102,6 +104,11 @@ class Config:
                         for c_cpp_flag in conf["c_cpp_flags"]:
                             if isinstance(c_cpp_flag, str) and c_cpp_flag not in self.c_cpp_flags:
                                 self.c_cpp_flags.append(c_cpp_flag)
+
+                    if "exported_headers" in conf and isinstance(conf["exported_headers"], list):
+                        for exported_header in conf["exported_headers"]:
+                            if isinstance(exported_header, str) and exported_header not in self.exported_headers:
+                                self.exported_headers.append(exported_header)
 
             except (OSError, json.JSONDecodeError):
                 pass
@@ -233,3 +240,13 @@ class Config:
         for c_cpp_flag in c_cpp_flags:
             if c_cpp_flag in self.c_cpp_flags:
                 self.c_cpp_flags.remove(c_cpp_flag)
+
+    def add_exported_headers(self, *exported_headers: str) -> None:
+        for exported_header in exported_headers:
+            if exported_header not in self.exported_headers:
+                self.exported_headers.append(exported_header)
+
+    def remove_exported_headers(self, *exported_headers: str) -> None:
+        for exported_header in exported_headers:
+            if exported_header in self.exported_headers:
+                self.exported_headers.remove(exported_header)

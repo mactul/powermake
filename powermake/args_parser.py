@@ -14,7 +14,31 @@ def default_on_clean(config: Config) -> None:
 
 
 def default_on_install(config: Config, location: str) -> None:
-    raise NotImplementedError("This needs to be implemented")
+    if location is None:
+        location = "./install/"
+
+    lib_folder = os.path.join(location, "lib")
+    include_folder = os.path.join(location, "include")
+    bin_folder = os.path.join(location, "bin")
+
+    if os.path.isdir(config.lib_build_directory):
+        lib_files = os.listdir(config.lib_build_directory)
+        if lib_files != []:
+            os.makedirs(lib_folder, exist_ok=True)
+            for file in lib_files:
+                shutil.copyfile(os.path.join(config.lib_build_directory, file), os.path.join(lib_folder, file))
+
+    if os.path.isdir(config.exe_build_directory):
+        bin_files = os.listdir(config.exe_build_directory)
+        if bin_files != []:
+            os.makedirs(bin_folder, exist_ok=True)
+            for file in bin_files:
+                shutil.copyfile(os.path.join(config.exe_build_directory, file), os.path.join(bin_folder, file))
+
+    if config.exported_headers != []:
+        os.makedirs(include_folder, exist_ok=True)
+        for file in config.exported_headers:
+            shutil.copyfile(file, os.path.join(include_folder, os.path.basename(file)))
 
 
 def run(build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
@@ -73,4 +97,7 @@ def run(build_callback: callable, clean_callback: callable = default_on_clean, i
     if build or (not clean and not install):
         build_callback(config)
     if install:
-        install_callback(config, args.install)
+        if args.action == "install":
+            install_callback(config, args.install_location)
+        else:
+            install_callback(config, args.install)
