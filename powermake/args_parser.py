@@ -29,19 +29,19 @@ def default_on_install(config: Config, location: str) -> None:
         if lib_files != []:
             os.makedirs(lib_folder, exist_ok=True)
             for file in lib_files:
-                shutil.copyfile(os.path.join(config.lib_build_directory, file), os.path.join(lib_folder, file))
+                shutil.copy(os.path.join(config.lib_build_directory, file), os.path.join(lib_folder, file))
 
     if os.path.isdir(config.exe_build_directory):
         bin_files = os.listdir(config.exe_build_directory)
         if bin_files != []:
             os.makedirs(bin_folder, exist_ok=True)
             for file in bin_files:
-                shutil.copyfile(os.path.join(config.exe_build_directory, file), os.path.join(bin_folder, file))
+                shutil.copy(os.path.join(config.exe_build_directory, file), os.path.join(bin_folder, file))
 
     if config.exported_headers != []:
         os.makedirs(include_folder, exist_ok=True)
         for file in config.exported_headers:
-            shutil.copyfile(file, os.path.join(include_folder, os.path.basename(file)))
+            shutil.copy(file, os.path.join(include_folder, os.path.basename(file)))
 
 
 def run(build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
