@@ -145,5 +145,8 @@ def run_another_powermake(config: Config, path: str):
     if subprocess.run(command, stdout=output, stderr=output).returncode != 0:
         raise RuntimeError(f"Failed to run powermake {path}")
 
-    path = subprocess.check_output([sys.executable, path, "--get-lib-build-folder"], encoding="utf-8").strip()
-    return [os.path.join(path, file) for file in os.listdir(path)]
+    command.append("--get-lib-build-folder")
+    path = subprocess.check_output(command, encoding="utf-8").strip()
+    if path != "":
+        return [os.path.join(path, file) for file in os.listdir(path)]
+    return None
