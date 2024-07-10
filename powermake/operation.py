@@ -112,16 +112,20 @@ class Operation:
 
     def execute(self, force: bool = False, print_lock: Lock = None) -> int:
         if force or needs_update(self.outputfile, self.dependencies, self.config.additional_includedirs):
+
             if print_lock is not None:
                 print_lock.acquire()
+
             if self.config.verbosity > 0:
                 print(f"Generating {os.path.basename(self.outputfile)}")
             if self.config.verbosity > 1:
                 print(self.command)
+
             if print_lock is not None:
                 print_lock.release()
+
             if subprocess.run(self.command).returncode == 0:
                 return self.outputfile
             else:
-                return False
+                raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")
         return self.outputfile
