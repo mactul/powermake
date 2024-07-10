@@ -41,7 +41,7 @@ def filter_files(files: set[str], *patterns: str) -> set[str]:
     return output
 
 
-def compile_files(files: set[str], config: Config, force: bool = None) -> set[str]:
+def compile_files(config: Config, files: set[str], force: bool = None) -> set[str]:
     generated_objects: set[str] = set()
     operations: set[Operation] = set()
 
@@ -84,9 +84,12 @@ def compile_files(files: set[str], config: Config, force: bool = None) -> set[st
     return generated_objects
 
 
-def archive_files(archive_name: str, object_files: set[str], config: Config, force: bool = None):
+def archive_files(config: Config, object_files: set[str], archive_name: str = None, force: bool = None):
     if force is None:
         force = config.rebuild
+
+    if archive_name is None:
+        archive_name = "lib"+config.target_name
 
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
@@ -96,9 +99,12 @@ def archive_files(archive_name: str, object_files: set[str], config: Config, for
     return Operation(output_file, object_files, config, command).execute(force=force)
 
 
-def link_files(executable_name: str, object_files: set[str], archives: list[str], config: Config, force: bool = None):
+def link_files(config: Config, object_files: set[str], archives: list[str], executable_name: str = None, force: bool = None):
     if force is None:
         force = config.rebuild
+
+    if executable_name is None:
+        executable_name = config.target_name
 
     if config.linker is None:
         raise RuntimeError("No linker has been specified and the default config didn't find any")

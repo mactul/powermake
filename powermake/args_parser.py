@@ -20,6 +20,8 @@ def default_on_install(config: Config, location: str) -> None:
     if config.verbosity >= 1:
         print("Installing to", location)
 
+    nb_files_installed = 0
+
     lib_folder = os.path.join(location, "lib")
     include_folder = os.path.join(location, "include")
     bin_folder = os.path.join(location, "bin")
@@ -29,22 +31,40 @@ def default_on_install(config: Config, location: str) -> None:
         if lib_files != []:
             os.makedirs(lib_folder, exist_ok=True)
             for file in lib_files:
-                shutil.copy(os.path.join(config.lib_build_directory, file), os.path.join(lib_folder, file))
+                src = os.path.join(config.lib_build_directory, file)
+                dest = os.path.join(lib_folder, file)
+                if config.verbosity >= 2:
+                    print(f"copying {src} to {dest}")
+                nb_files_installed += 1
+                shutil.copy(src, dest)
 
     if os.path.isdir(config.exe_build_directory):
         bin_files = os.listdir(config.exe_build_directory)
         if bin_files != []:
             os.makedirs(bin_folder, exist_ok=True)
             for file in bin_files:
-                shutil.copy(os.path.join(config.exe_build_directory, file), os.path.join(bin_folder, file))
+                src = os.path.join(config.exe_build_directory, file)
+                dest = os.path.join(bin_folder, file)
+                if config.verbosity >= 2:
+                    print(f"copying {src} to {dest}")
+                nb_files_installed += 1
+                shutil.copy(src, dest)
 
     if config.exported_headers != []:
         os.makedirs(include_folder, exist_ok=True)
         for file in config.exported_headers:
-            shutil.copy(file, os.path.join(include_folder, os.path.basename(file)))
+            src = file
+            dest = os.path.join(include_folder, os.path.basename(file))
+            if config.verbosity >= 2:
+                print(f"copying {src} to {dest}")
+            nb_files_installed += 1
+            shutil.copy(src, dest)
+
+    if config.verbosity >= 1:
+        print(nb_files_installed, "files successfully copied")
 
 
-def run(build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
+def run(target_name: str, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
     parser = argparse.ArgumentParser(prog="powermake", description="Makefile Utility")
 
     parser.add_argument("action", choices=["build", "clean", "install"], nargs='?')
@@ -79,7 +99,7 @@ def run(build_callback: callable, clean_callback: callable = default_on_clean, i
     else:
         verbosity = 1
 
-    config = Config(verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config)
+    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config)
 
     if args.get_lib_build_folder:
         print(os.path.abspath(config.lib_build_directory))
