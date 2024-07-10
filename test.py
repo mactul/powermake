@@ -5,9 +5,9 @@ def on_build(config: powermake.Config):
 
     files = powermake.get_files("*.c", "*.cpp")
 
-    objects = powermake.compile_files(files, config)
+    objects = powermake.compile_files(config, files)
 
-    print(powermake.link_files("program_test", objects, archives=[], config=config))
+    print(powermake.link_files(config, objects, archives=[]))
 
 
-powermake.run(build_callback=on_build)
+powermake.run("program_test", build_callback=on_build)

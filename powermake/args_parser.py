@@ -64,7 +64,7 @@ def default_on_install(config: Config, location: str) -> None:
         print(nb_files_installed, "files successfully copied")
 
 
-def run(target_name: str, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
+def run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
     parser = argparse.ArgumentParser(prog="powermake", description="Makefile Utility")
 
     parser.add_argument("action", choices=["build", "clean", "install"], nargs='?')
