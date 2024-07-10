@@ -162,12 +162,16 @@ class Config:
             elif self.target_is_windows():
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc")
 
+        if self.debug:
+            mode = "debug"
+        else:
+            mode = "release"
         if self.obj_build_directory is None:
-            self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system)
+            self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system, self.target_simplified_architecture, mode)
         if self.exe_build_directory is None:
-            self.exe_build_directory = os.path.join("build", self.target_operating_system, "bin")
+            self.exe_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "bin")
         if self.lib_build_directory is None:
-            self.lib_build_directory = os.path.join("build", self.target_operating_system, "lib")
+            self.lib_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "lib")
 
         if self.debug:
             self.add_defines("DEBUG")
