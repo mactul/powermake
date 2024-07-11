@@ -12,7 +12,6 @@ from .config import Config
 from .operation import Operation, needs_update
 from .args_parser import run, default_on_clean, default_on_install
 
-NB_JOBS = 8
 
 os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
 
@@ -75,7 +74,7 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
         operations.add(Operation(output_file, [file], config, command))
 
     print_lock = Lock()
-    with ThreadPoolExecutor(max_workers=NB_JOBS) as executor:
+    with ThreadPoolExecutor(max_workers=config.nb_jobs) as executor:
         generated_objects = set(executor.map(lambda op: op.execute(force, print_lock), operations))
 
         if False in generated_objects:
