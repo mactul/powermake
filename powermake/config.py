@@ -40,7 +40,7 @@ class Config:
         self.cpp_flags: list[str] = []
         self.c_cpp_flags: list[str] = []
 
-        self.exported_headers = []
+        self.exported_headers: list[tuple[str, str]] = []
 
         c_compiler_tuple = None
         cpp_compiler_tuple = None
@@ -246,12 +246,12 @@ class Config:
             if c_cpp_flag in self.c_cpp_flags:
                 self.c_cpp_flags.remove(c_cpp_flag)
 
-    def add_exported_headers(self, *exported_headers: str) -> None:
+    def add_exported_headers(self, *exported_headers: str, subfolder: str = None) -> None:
         for exported_header in exported_headers:
-            if exported_header not in self.exported_headers:
-                self.exported_headers.append(exported_header)
+            if (exported_header, subfolder) not in self.exported_headers:
+                self.exported_headers.append((exported_header, subfolder))
 
-    def remove_exported_headers(self, *exported_headers: str) -> None:
+    def remove_exported_headers(self, *exported_headers: str, subfolder: str = None) -> None:
         for exported_header in exported_headers:
-            if exported_header in self.exported_headers:
-                self.exported_headers.remove(exported_header)
+            if (exported_header, subfolder) in self.exported_headers:
+                self.exported_headers.remove((exported_header, subfolder))
