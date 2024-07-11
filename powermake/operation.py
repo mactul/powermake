@@ -89,7 +89,19 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     return True
 
 
-def needs_update(outputfile: str, dependencies: set[str], additional_includedirs: list[str]):
+def needs_update(outputfile: str, dependencies: set[str], additional_includedirs: list[str]) -> bool:
+    """Returns whether or not `outputfile` is up to date with all his dependencies
+
+    If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
+
+    Args:
+        outputfile (str): the path to the target file
+        dependencies (set[str]): a set of all files on which `outputfile` depends
+        additional_includedirs (list[str]): The list of additional includedirs used by the compiler. This is necessary to discover hidden dependencies.
+
+    Returns:
+        bool: True if `outputfile` is **not** up to date with all his dependencies and hidden dependencies.
+    """
     try:
         output_date = os.path.getmtime(outputfile)
     except OSError:
@@ -104,25 +116,46 @@ def needs_update(outputfile: str, dependencies: set[str], additional_includedirs
 
 class Operation:
     def __init__(self, outputfile: str, dependencies: set[str], config: Config, command: list[str]):
+        """Provide a simple object that can execute a command only if it's needed.
+
+        Args:
+            outputfile (str): the path to the target file
+            dependencies (set[str]): a set of all files on which `outputfile` depends
+            config (Config): A powermake.Config object, the additional_includedirs in it should be completed
+            command (list[str]): The command that will be executed by subprocess. It's a list representing the argv that will be passed to the program at the first list position.
+        """
         self.outputfile = outputfile
         self.dependencies = dependencies
         self._hidden_dependencies = None
         self.command = command
         self.config = config
 
-    def execute(self, force: bool = False, print_lock: Lock = None) -> int:
+    def execute(self, force: bool = False, print_lock: Lock = None) -> str:
+        """Verify if the outputfile is up to date with his dependencies and if not, execute the command.
+
+        Args:
+            force (bool, optional): If True, this function will always execute the command without verifying if this is needed.
+            print_lock (Lock, optional): A mutex to ensure that no print mixes together when parallelizing Operations.  
+                If None, no mutex is used, the compilation will be fine but the output might be a little bit buggy.
+
+        Raises:
+            RuntimeError: If the command fails.
+
+        Returns:
+            str: The outputfile, like that we can easily parallelize this method.
+        """
         if force or needs_update(self.outputfile, self.dependencies, self.config.additional_includedirs):
 
-            if print_lock is not None:
-                print_lock.acquire()
-
             if self.config.verbosity > 0:
-                print(f"Generating {os.path.basename(self.outputfile)}")
-            if self.config.verbosity > 1:
-                print(self.command)
+                if print_lock is not None:
+                    print_lock.acquire()
 
-            if print_lock is not None:
-                print_lock.release()
+                print(f"Generating {os.path.basename(self.outputfile)}")
+                if self.config.verbosity > 1:
+                    print(self.command)
+
+                if print_lock is not None:
+                    print_lock.release()
 
             if subprocess.run(self.command).returncode == 0:
                 return self.outputfile

@@ -6,14 +6,44 @@ from .config import Config
 
 
 def default_on_clean(config: Config) -> None:
+    """Remove exe, lib and obj directories
+
+    Args:
+        config (Config): the object given by `powermake.run`
+    """
     if config.verbosity >= 1:
         print("Cleaning")
-    shutil.rmtree(config.exe_build_directory, ignore_errors=True)
-    shutil.rmtree(config.lib_build_directory, ignore_errors=True)
-    shutil.rmtree(config.obj_build_directory, ignore_errors=True)
+
+    if config.exe_build_directory is not None and os.path.isdir(config.exe_build_directory):
+        if config.verbosity >= 2:
+            print("Removing", config.exe_build_directory)
+        shutil.rmtree(config.exe_build_directory)
+
+    if config.lib_build_directory is not None and os.path.isdir(config.lib_build_directory):
+        if config.verbosity >= 2:
+            print("Removing", config.lib_build_directory)
+        shutil.rmtree(config.lib_build_directory)
+
+    if config.obj_build_directory is not None and os.path.isdir(config.obj_build_directory):
+        if config.verbosity >= 2:
+            print("Removing", config.obj_build_directory)
+        shutil.rmtree(config.obj_build_directory)
 
 
 def default_on_install(config: Config, location: str) -> None:
+    """Install binary files, library files and exported headers into the subfolders `bin/`, `lib/` and `include/` of the location provided.
+
+    You can directly give this function as a callback to `powermake.run` (it's the default behavior), but it's even better to call it from your own implementation of the install_callback.
+    Like that, you can do work before this function, especially adding exported headers to the config with `config.add_exported_headers`
+
+    If `location` is None, his default value is `./install/`
+
+    For each exported header, if it has been exported with a None subfolder, it is simply copied into `include/`. If it has been exported with a subfolder, it is copied into `include/{subfolder}/`
+
+    Args:
+        config (Config): The powermake.Config object created by the `powermake.run`. You should have called the method `config.add_exported_headers` on this object before giving it to this function.
+        location (str): Where to install `bin/`, `lib/` and `include/` subfolders. Ideally, if the location given to the install_callback by `powermake.run` was not None, you should give that to this function.
+    """
     if location is None:
         location = "./install/"
 
@@ -68,6 +98,22 @@ def default_on_install(config: Config, location: str) -> None:
 
 
 def run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
+    """Parse the command line, create a powermake.Config object according to the command line arguments and call the appropriate callback.
+
+    If multiples actions are passed trough the command line, like `-cri` (or `--clean --rebuild --install` in the long form), multiple callbacks can be called.  
+    Callbacks are always called in this order: clean -> build -> install.
+
+    Warning: You shouldn't run anything important after the return of this function, because if `--get-lib-build-folder` is provided on the command line, this function call `exit(0)`
+
+    Args:
+        target_name (str): The name of your application. It will be stored in the config and used for default naming.
+        build_callback (callable): The function that will be called when building or rebuilding. This callback takes a single parameter: config
+        clean_callback (callable, optional): The function that will be called when cleaning. This callback takes a single parameter: config
+        install_callback (callable, optional): The function that will be called when installing. This callback takes 2 parameters: config and location.  
+            If the location is not provided on the command line, his value is None
+    """
+    default_nb_jobs = os.cpu_count() or 8
+
     parser = argparse.ArgumentParser(prog="powermake", description="Makefile Utility")
 
     parser.add_argument("action", choices=["build", "clean", "install"], nargs='?')
@@ -80,7 +126,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     parser.add_argument("--install", nargs='?', metavar="LOCATION", help="Trigger the install function with the location argument set to the location given or None.", default=False)
     parser.add_argument("-q", "--quiet", help="Disable all messages from the lib.", action="store_true")
     parser.add_argument("-v", "--verbose", help="Display every command the lib runs.", action="store_true")
-    parser.add_argument("-j", "--jobs", help="Set on how many threads the compilation should be parallelized. (default: 8)", default=8, type=int)
+    parser.add_argument("-j", "--jobs", help=f"Set on how many threads the compilation should be parallelized. (default: {default_nb_jobs})", default=default_nb_jobs, type=int)
     parser.add_argument("-l", "--local-config", nargs=1, metavar="LOCAL_CONFIG_PATH", help="Set the path for the local config", default="./powermake_config.json")
     parser.add_argument("-g", "--global-config", nargs=1, metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
     parser.add_argument("--get-lib-build-folder", help="Return the lib build folder path according to the config.", action="store_true")
@@ -126,6 +172,9 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
         else:
             install_callback(config, args.install or None)
 
+    # After doing all compilation, if the argument get-lib-build-folder was given, we print the absolute path of the directory in which all lib have been built and exit.
+    # Like that, the last line of the program output will be the requested folder.
+    # This is used by the powermake.run_another_powermake function.
     if args.get_lib_build_folder:
         if config.lib_build_directory is not None and os.path.exists(config.lib_build_directory):
             print(os.path.abspath(config.lib_build_directory))
