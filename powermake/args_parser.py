@@ -76,11 +76,13 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     parser.add_argument("-b", "--build", help="Trigger the build function. This is the default but it can be used in combination with --clean or --install", action="store_true")
     parser.add_argument("-r", "--rebuild", help="Trigger the build function with config.rebuild set to True.", action="store_true")
     parser.add_argument("-c", "--clean", help="Trigger the clean function.", action="store_true")
-    parser.add_argument("--install", nargs='?', metavar="location", help="Trigger the install function with the location argument set to the location given or None.", default=False)
+    parser.add_argument("-i", help="Trigger the install function with the location argument set to None.", action="store_true")
+    parser.add_argument("--install", nargs='?', metavar="LOCATION", help="Trigger the install function with the location argument set to the location given or None.", default=False)
     parser.add_argument("-q", "--quiet", help="Disable all messages from the lib.", action="store_true")
     parser.add_argument("-v", "--verbose", help="Display every command the lib runs.", action="store_true")
-    parser.add_argument("-l", "--local-config", nargs=1, metavar="local_config_path", help="Set the path for the local config", default="./powermake_config.json")
-    parser.add_argument("-g", "--global-config", nargs=1, metavar="global_config_path", help="Set the path for the global config", default=None)
+    parser.add_argument("-j", "--jobs", help="Set on how many threads the compilation should be parallelized. (default: 8)", default=8, type=int)
+    parser.add_argument("-l", "--local-config", nargs=1, metavar="LOCAL_CONFIG_PATH", help="Set the path for the local config", default="./powermake_config.json")
+    parser.add_argument("-g", "--global-config", nargs=1, metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
     parser.add_argument("--get-lib-build-folder", help="Return the lib build folder path according to the config.", action="store_true")
 
     args = parser.parse_args()
@@ -102,7 +104,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     else:
         verbosity = 1
 
-    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config)
+    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config, nb_jobs=args.jobs)
 
     clean = False
     build = False
@@ -111,7 +113,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
         clean = True
     if args.action == "build" or args.build or args.rebuild:
         build = True
-    if args.action == "install" or args.install is not False:
+    if args.action == "install" or args.install is not False or args.i:
         install = True
 
     if clean:
@@ -122,7 +124,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
         if args.action == "install":
             install_callback(config, args.install_location)
         else:
-            install_callback(config, args.install)
+            install_callback(config, args.install or None)
 
     if args.get_lib_build_folder:
         if config.lib_build_directory is not None and os.path.exists(config.lib_build_directory):
