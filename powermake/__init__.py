@@ -121,15 +121,17 @@ def delete_files_from_disk(*filepaths: str):
             pass
 
 
-def run_another_powermake(config: Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None):
+def run_another_powermake(config: Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None):
     if debug is None:
         debug = config.debug
     if rebuild is None:
         rebuild = config.rebuild
     if verbosity is None:
         verbosity = config.verbosity
+    if nb_jobs is None:
+        nb_jobs = config.nb_jobs
 
-    command = [sys.executable, path, "--get-lib-build-folder"]
+    command = [sys.executable, path, "--get-lib-build-folder", "-j", str(nb_jobs)]
     if verbosity == 0:
         command.append("-q")
     elif verbosity >= 2:
