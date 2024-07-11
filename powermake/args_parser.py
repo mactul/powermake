@@ -104,11 +104,6 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
 
     config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config)
 
-    if args.get_lib_build_folder:
-        if config.lib_build_directory is not None and os.path.exists(config.lib_build_directory):
-            print(os.path.abspath(config.lib_build_directory))
-        exit(0)
-
     clean = False
     build = False
     install = False
@@ -128,3 +123,10 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
             install_callback(config, args.install_location)
         else:
             install_callback(config, args.install)
+
+    if args.get_lib_build_folder:
+        if config.lib_build_directory is not None and os.path.exists(config.lib_build_directory):
+            print(os.path.abspath(config.lib_build_directory))
+        else:
+            print()
+        exit(0)

@@ -122,19 +122,24 @@ def delete_files_from_disk(*filepaths: str):
             pass
 
 
-def run_another_powermake(config: Config, path: str):
-    command = [sys.executable, path]
-    output = None
-    if config.verbosity == 0:
+def run_another_powermake(config: Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None):
+    if debug is None:
+        debug = config.debug
+    if rebuild is None:
+        rebuild = config.rebuild
+    if verbosity is None:
+        verbosity = config.verbosity
+
+    command = [sys.executable, path, "--get-lib-build-folder"]
+    if verbosity == 0:
         command.append("-q")
-        output = subprocess.DEVNULL
-    elif config.verbosity >= 2:
+    elif verbosity >= 2:
         command.append("-v")
 
-    if config.rebuild:
+    if rebuild:
         command.append("-r")
 
-    if config.debug:
+    if debug:
         command.append("-d")
 
     if config.verbosity >= 1:
@@ -142,11 +147,16 @@ def run_another_powermake(config: Config, path: str):
     if config.verbosity >= 2:
         print(command)
 
-    if subprocess.run(command, stdout=output, stderr=output).returncode != 0:
+    try:
+        output = subprocess.check_output(command, encoding="utf-8").splitlines()
+    except OSError:
         raise RuntimeError(f"Failed to run powermake {path}")
 
-    command.append("--get-lib-build-folder")
-    path = subprocess.check_output(command, encoding="utf-8").strip()
+    if verbosity != 0:
+        for line in output[:-1]:
+            print(line)
+
+    path = output[-1]
     if path != "":
         return [os.path.join(path, file) for file in os.listdir(path)]
     return None
