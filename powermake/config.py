@@ -11,12 +11,19 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 
 
 class Config:
-    def __init__(self, target_name, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 8, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 8, single_file: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
+        """Create an object that loads all configurations files and search for compilers.
+
+        This objects hold all the configuration for the compilation.
+
+        If you want to compile multiple set of files with different settings, you have to make a copy of this object and modify the copy.
+        """
         self.target_name = target_name
         self.verbosity = verbosity
         self.debug = debug
         self.rebuild = rebuild
         self.nb_jobs = nb_jobs
+        self.single_file = single_file
 
         self.c_compiler: Compiler = None
         self.cpp_compiler: Compiler = None
@@ -40,6 +47,8 @@ class Config:
         self.c_flags: list[str] = []
         self.cpp_flags: list[str] = []
         self.c_cpp_flags: list[str] = []
+        self.ar_flags: list[str] = []
+        self.ld_flags: list[str] = []
 
         self.exported_headers: list[tuple[str, str]] = []
 
@@ -90,10 +99,12 @@ class Config:
                         for define in conf["defines"]:
                             if isinstance(define, str) and define not in self.defines:
                                 self.defines.append(define)
+
                     if "additional_includedirs" in conf and isinstance(conf["additional_includedirs"], list):
                         for includedir in conf["additional_includedirs"]:
                             if isinstance(includedir, str) and includedir not in self.additional_includedirs:
                                 self.additional_includedirs.append(includedir)
+
                     if "c_flags" in conf and isinstance(conf["c_flags"], list):
                         for c_flag in conf["c_flags"]:
                             if isinstance(c_flag, str) and c_flag not in self.c_flags:
@@ -106,6 +117,16 @@ class Config:
                         for c_cpp_flag in conf["c_cpp_flags"]:
                             if isinstance(c_cpp_flag, str) and c_cpp_flag not in self.c_cpp_flags:
                                 self.c_cpp_flags.append(c_cpp_flag)
+
+                    if "ar_flags" in conf and isinstance(conf["ar_flags"], list):
+                        for ar_flag in conf["ar_flags"]:
+                            if isinstance(ar_flag, str) and ar_flag not in self.ar_flags:
+                                self.ar_flags.append(ar_flag)
+
+                    if "ld_flags" in conf and isinstance(conf["ld_flags"], list):
+                        for ld_flag in conf["ld_flags"]:
+                            if isinstance(ld_flag, str) and ld_flag not in self.ld_flags:
+                                self.ld_flags.append(ld_flag)
 
                     if "exported_headers" in conf and isinstance(conf["exported_headers"], list):
                         for exported_header in conf["exported_headers"]:
@@ -246,6 +267,26 @@ class Config:
         for c_cpp_flag in c_cpp_flags:
             if c_cpp_flag in self.c_cpp_flags:
                 self.c_cpp_flags.remove(c_cpp_flag)
+
+    def add_ar_flags(self, *ar_flags: str) -> None:
+        for ar_flag in ar_flags:
+            if ar_flag not in self.ar_flags:
+                self.ar_flags.append(ar_flag)
+
+    def remove_ar_flags(self, *ar_flags: str) -> None:
+        for ar_flag in ar_flags:
+            if ar_flag in self.ar_flags:
+                self.ar_flags.remove(ar_flag)
+
+    def add_ld_flags(self, *ld_flags: str) -> None:
+        for ld_flag in ld_flags:
+            if ld_flag not in self.ld_flags:
+                self.ld_flags.append(ld_flag)
+
+    def remove_ld_flags(self, *ld_flags: str) -> None:
+        for ld_flag in ld_flags:
+            if ld_flag in self.ld_flags:
+                self.ld_flags.remove(ld_flag)
 
     def add_exported_headers(self, *exported_headers: str, subfolder: str = None) -> None:
         for exported_header in exported_headers:

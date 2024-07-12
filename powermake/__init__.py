@@ -72,6 +72,13 @@ def filter_files(files: set[str], *patterns: str) -> set[str]:
     return output
 
 
+def file_in_files_set(file: str, files_set: set[str]) -> bool:
+    for f in files_set:
+        if os.path.samefile(f, file):
+            return True
+    return False
+
+
 def compile_files(config: Config, files: set[str], force: bool = None) -> set[str]:
     """Compile each C/C++ file in the `files` set according to the compiler and options stored in `config`
 
@@ -98,6 +105,12 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
     if force is None:
         force = config.rebuild
 
+    if config.single_file is not None:
+        if file_in_files_set(config.single_file, files):
+            files = {config.single_file}
+        else:
+            return set()
+
     for file in files:
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -123,6 +136,11 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
         else:
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
         operations.add(Operation(output_file, [file], config, command))
+
+    if config.single_file is not None:
+        (op, ) = operations
+        op.execute(force)
+        exit(0)
 
     print_lock = Lock()
     with ThreadPoolExecutor(max_workers=config.nb_jobs) as executor:

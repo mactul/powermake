@@ -127,8 +127,9 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     parser.add_argument("-q", "--quiet", help="Disable all messages from the lib.", action="store_true")
     parser.add_argument("-v", "--verbose", help="Display every command the lib runs.", action="store_true")
     parser.add_argument("-j", "--jobs", help=f"Set on how many threads the compilation should be parallelized. (default: {default_nb_jobs})", default=default_nb_jobs, type=int)
-    parser.add_argument("-l", "--local-config", nargs=1, metavar="LOCAL_CONFIG_PATH", help="Set the path for the local config", default="./powermake_config.json")
-    parser.add_argument("-g", "--global-config", nargs=1, metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
+    parser.add_argument("-l", "--local-config", metavar="LOCAL_CONFIG_PATH", help="Set the path for the local config", default="./powermake_config.json")
+    parser.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
+    parser.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
     parser.add_argument("--get-lib-build-folder", help="Return the lib build folder path according to the config.", action="store_true")
 
     args = parser.parse_args()
@@ -150,7 +151,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     else:
         verbosity = 1
 
-    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config, nb_jobs=args.jobs)
+    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config, nb_jobs=args.jobs, single_file=args.single_file)
 
     clean = False
     build = False
