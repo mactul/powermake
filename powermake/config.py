@@ -58,7 +58,9 @@ class Config:
         linker_tuple = None
 
         if global_config is None:
-            global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
+            global_config = os.getenv("POWERMAKE_CONFIG")
+            if global_config is None:
+                global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
 
         for path in (local_config, global_config):
             if path is None:
