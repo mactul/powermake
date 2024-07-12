@@ -9,13 +9,18 @@ jobs:
   build-n-publish:
     name: Build and publish Python distributions to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/powermake
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
-    - name: Install pypa/setuptools
+    - name: Install build/twine
       run: >-
         python -m
         pip install build twine
@@ -29,6 +34,6 @@ jobs:
       run: >-
         python -m build
     - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
