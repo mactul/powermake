@@ -182,7 +182,7 @@ def archive_files(config: Config, object_files: set[str], archive_name: str = No
     return Operation(output_file, object_files, config, command).execute(force=force)
 
 
-def link_files(config: Config, object_files: set[str], archives: list[str], executable_name: str = None, force: bool = None) -> str:
+def link_files(config: Config, object_files: set[str], archives: list[str] = [], executable_name: str = None, force: bool = None) -> str:
     """Create an executable from a list of object files and a list of archive files.
 
     Args:
