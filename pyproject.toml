@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "powermake"
-version = "1.0.0"
+version = "{{VERSION_PLACEHOLDER}}"
 requires-python = ">=3.6"
 authors = [
     { name="Macéo Tuloup" },
