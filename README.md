@@ -8,7 +8,7 @@ His goal is to give full power to the user, while being cross-platform, easier t
 
 ## For which project is PowerMake suitable ?
 
-PowerMake was specifically designed for all the complex projects that have very complicated compilation steps, with a lot of pre-built tasks and which need to be compiled on multiple operating systems with different options.
+PowerMake was specifically designed for complex projects that have very complicated compilation steps, with a lot of pre-built tasks and which need to be compiled on multiple operating systems with different options.
 
 ## Advantages of PowerMake
 

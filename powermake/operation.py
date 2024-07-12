@@ -3,6 +3,7 @@ import subprocess
 from threading import Lock
 
 from .config import Config
+from .display import print_info, print_debug_info
 
 
 def resolve_path(current_folder: str, additional_includedirs: list[str], filepath: str) -> str:
@@ -150,9 +151,8 @@ class Operation:
                 if print_lock is not None:
                     print_lock.acquire()
 
-                print(f"Generating {os.path.basename(self.outputfile)}")
-                if self.config.verbosity > 1:
-                    print(self.command)
+                print_info(f"Generating {os.path.basename(self.outputfile)}", self.config.verbosity)
+                print_debug_info(self.command, self.config.verbosity)
 
                 if print_lock is not None:
                     print_lock.release()

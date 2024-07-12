@@ -9,6 +9,7 @@ from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
+from .display import print_info, print_debug_info
 from .operation import Operation, needs_update
 from .args_parser import run, default_on_clean, default_on_install
 
@@ -265,10 +266,8 @@ def run_another_powermake(config: Config, path: str, debug: bool = None, rebuild
     if debug:
         command.append("-d")
 
-    if config.verbosity >= 1:
-        print("Running", path)
-    if config.verbosity >= 2:
-        print(command)
+    print_info(f"Running {path}", config.verbosity)
+    print_debug_info(command, config.verbosity)
 
     try:
         output = subprocess.check_output(command, encoding="utf-8").splitlines()
