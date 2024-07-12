@@ -40,7 +40,9 @@ This gives you a complete control; you can retrieve files from the web, read an 
 
 ## Installation
 
-Documentation in coming...
+```sh
+pip install -U powermake
+```
 
 ## Quick Example
 
@@ -67,4 +69,63 @@ powermake.run("program_test", build_callback=on_build)
 
 ## Documentation
 
-Documentation in coming...
+### powermake.run
+```py
+powermake.run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install)
+```
+It's the entry point of most programs.  
+This function parse the command line and generate a `powermake.Config` object, containing all the information required for the compilation, from the compiler path to the level of verbosity to use.
+
+Then, depending on the command line arguments, this function will call the clean callback, the build callback, the install callback or all of them.
+
+The `target_name` is a string that will be stored in the config and which will be used for auto-naming. You should set this to the name of your executable or the name of your library.
+
+The `build_callback` and the `clean_callback` only takes 1 argument: The `powermake.Config` object generated.
+
+Example:
+```py
+import powermake
+
+
+def on_build(config: powermake.Config):
+    print("The build callback was called !")
+    print(f"Compiling the project {config.target_name}...")
+
+def on_clean(config: powermake.Config):
+    print("The clean callback was called !")
+    print(f"Erasing the project {config.target_name}...")
+
+
+powermake.run("my_project", build_callback=on_build, clean_callback=on_clean)
+```
+
+The `install_callback` takes 2 arguments: The `powermake.Config` object and a string `location` that can be `None` if the user hasn't specified anything on the command line.
+
+**NOTE:** It's often a very good idea to use the `install_callback` has a "pre-install script" and then call `powermake.default_on_install`.
+
+Example:
+
+```py
+import powermake
+
+
+def on_build(config: powermake.Config):
+    print("The build callback was called !")
+    print(f"Compiling the lib {config.target_name}...")
+
+def on_install(config: powermake.Config, location: str):
+    if location is None:
+        # No location is explicitly provided so we change the default for our convenance.
+        location = "/usr/local/"
+    
+    # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
+    # The .so or .a that corresponds will be copied into /usr/local/lib/my_lib.so
+    config.add_exported_headers("my_lib.h", subfolder="my_lib")
+
+    powermake.default_on_install(config, location)
+
+
+powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
+```
+
+documentation in progress...
