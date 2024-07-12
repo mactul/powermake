@@ -151,7 +151,7 @@ def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict[str, s
 def store_envs_to_file(filepath: str, envs: dict[str, str]) -> None:
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
-        json.dump(envs, file)
+        json.dump(envs, file, indent=4)
 
 
 def load_msvc_environment(storage_path: str, architecture: str = "x86") -> dict[str, str]:
