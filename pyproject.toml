@@ -7,9 +7,7 @@ name = "powermake"
 version = "1.0.0"
 requires-python = ">=3.6"
 authors = [
-    {
-        name="Macéo Tuloup"
-    },
+    { name="Macéo Tuloup" },
 ]
 description = "Yet another makefile tool. This one is meant to be super fast, super easy and crossplatform while leaving full power to the user at any time."
 readme = "README.md"
