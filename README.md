@@ -261,7 +261,7 @@ For the moment it doesn't serve any purpose, but you can access it if needed.
 
 A string representing the architecture of the executable, it can be "amd64", "x64", "x86", "i386", etc...  
 If you need an easier string to work with, use `config.simplified_target_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
-It's used to determine the subfolder of the build folder and to set the compiler architecture. However, setting the compiler architecture automatically is for the moment only supported for MSVC, for gcc, use the `-m32` and `-m64` flag.
+It's used to determine the subfolder of the build folder and to set the compiler architecture. However, for the moment, gcc and clang only switch from 64 bits to 32 bits. If you are on x64 and you set the target_architecture to "arm32", you will in reality compile for x86. You have to give the path of a cross-compiler in order to achieve what you want.
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
 - **Note that if you change this value in the script after the config is loaded, the MSVC environnement will not be reloaded and the compiler will keep the previous architecture**
