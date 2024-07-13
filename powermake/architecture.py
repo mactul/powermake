@@ -1,19 +1,16 @@
-# - applexros: arm64 armv7 armv7s i386 x86_64
-# - windows: x86 x64 arm64
-# - appletvos: arm64 armv7 armv7s i386 x86_64
-# - cross: i386 x86_64 arm arm64 mips mips64 riscv riscv64 loong64 s390x ppc ppc64 sh4
-# - mingw: i386 x86_64 arm arm64
-# - msys: i386 x86_64
-# - linux: i386 x86_64 armv7 armv7s arm64-v8a mips mips64 mipsel mips64el loong64
-# - harmony: armeabi-v7a arm64-v8a x86 x86_64
-# - watchos: armv7k i386
-# - wasm: wasm32 wasm64
-# - iphoneos: arm64 x86_64
-# - haiku: i386 x86_64
-# - bsd: i386 x86_64
-# - android: armeabi armeabi-v7a arm64-v8a x86 x86_64 mips mip64
-# - macosx: x86_64 arm64
-# - cygwin: i386 x86_64
+# Copyright 2024 Macéo Tuloup
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
 def simplify_architecture(architecture: str) -> str:
