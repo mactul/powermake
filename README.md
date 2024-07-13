@@ -1,5 +1,18 @@
 # PowerMake
 
+- [PowerMake](#powermake)
+  - [What is PowerMake ?](#what-is-powermake-)
+  - [For which project is PowerMake suitable ?](#for-which-project-is-powermake-suitable-)
+  - [Advantages of PowerMake](#advantages-of-powermake)
+  - [Disadvantages of PowerMake](#disadvantages-of-powermake)
+  - [Philosophy](#philosophy)
+  - [Installation](#installation)
+  - [Quick Example](#quick-example)
+  - [Documentation](#documentation)
+    - [Command line arguments](#command-line-arguments)
+    - [powermake.run](#powermakerun)
+
+
 ## What is PowerMake ?
 
 Powermake is an utility to compile C/C++ code, just like Make, Ninja, cmake or xmake.
@@ -29,7 +42,7 @@ PowerMake was specifically designed for complex projects that have very complica
 
 - PowerMake is very young so it changes a lot at each version and you may have to write some features by yourself (the whole point of PowerMake is that you can write missing features).
 
-- Because PowerMake gives you full control, the tool can't really now what's you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is running the PowerMake where it stands and scanning his output directory. This works well but has some limitations...
+- Because PowerMake gives you full control, the tool can't really know what's you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is running the PowerMake where it stands and scanning his output directory. This works well but has some limitations...
 
 ## Philosophy
 
@@ -68,6 +81,25 @@ powermake.run("program_test", build_callback=on_build)
 ```
 
 ## Documentation
+
+### Command line arguments
+
+To benefit from the command line parser, you have to use the [powermake.run](#powermakerun) function.
+
+If no arguments are passed trough the command line, the default behavior is to trigger the build callback.  
+You can also write `python makefile.py build`, `python makefile.py clean` or `python makefile.py install [install_location]` to trigger one of the three different callbacks.
+
+Alternatively, you can also use the option `-b` or `--build`, `-c` or `--clean` and `-i` or `--install`.  
+This alternative has a great advantages: you can combine multiple tasks. For example, running `python makefile.py -bci` will first trigger the clean callback, then the build callback and finally the install callback. (The order will always be clean -> build -> install).
+
+You can also replace the `-b` argument with `-r` (using `-br` does the same as `-r`) and this will force the makefile to recompile everything, without trying to figure out which file needs to be recompiled.
+
+There is many more options you can add such as `-d` (`--debug`), `-q` (`--quiet`), `-v` (`--verbose`), etc...
+
+All these options can be listed by running `python makefile.py -h` (or `python makefile.py --help`)
+
+/!\\ Specificity: While `python makefile.py install` and `python makefile.py --install` takes the `install_location` has an optional argument, this argument has been disabled with the `-i` option, because writing `-bic` would have trigger the install callback with the location `c`
+
 
 ### powermake.run
 ```py

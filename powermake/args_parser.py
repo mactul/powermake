@@ -122,8 +122,8 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     parser.add_argument("-l", "--local-config", metavar="LOCAL_CONFIG_PATH", help="Set the path for the local config", default="./powermake_config.json")
     parser.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
     parser.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
-    parser.add_argument("--get-lib-build-folder", help="Return the lib build folder path according to the config.", action="store_true")
-    parser.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal.", action="store_true")
+    parser.add_argument("--get-lib-build-folder", help="(Internal option) - Return the lib build folder path according to the config.", action="store_true")
+    parser.add_argument("--retransmit-colors", help="(Internal option) - Let all ANSI color codes intact, even if not in a terminal.", action="store_true")
 
     args = parser.parse_args()
 
