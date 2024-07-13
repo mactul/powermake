@@ -11,6 +11,12 @@
   - [Documentation](#documentation)
     - [Command line arguments](#command-line-arguments)
     - [powermake.run](#powermakerun)
+    - [powermake.Config](#powermakeconfig)
+      - [host\_operation\_system](#host_operation_system)
+      - [target\_operating\_system](#target_operating_system)
+      - [host\_architecture](#host_architecture)
+      - [target\_architecture](#target_architecture)
+      - [c\_compiler](#c_compiler)
 
 
 ## What is PowerMake ?
@@ -63,6 +69,8 @@ This example compile all `.c` and `.cpp` files that are recursively in the same 
 
 **Warning !** PowerMake calculate all paths from his own location, not the location where it is run.  
 For example, `python ./folder/makefile.py` will do the same as `cd ./folder && python ./makefile.py`
+
+**Note:** In this documentation, we often assume that your makefile is named `makefile.py`, it makes thing easier to explain. Of course, you can name your makefile the name you like the most.
 
 ```py
 import powermake
@@ -159,5 +167,142 @@ def on_install(config: powermake.Config, location: str):
 
 powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
 ```
+
+### powermake.Config
+
+This is the most important object of this library.  
+It contains everything you need for your compilation journey. For example, it stores the C compiler alongside with the path to the build folder.
+
+Most of the time, this object is created by [powermake.run](#powermakerun) and you don't need to worry about the constructor of this object (which is a bit messy...).
+
+But one thing you have to know is that the construction of this object involve 3 steps:
+- step 1: It loads the local config file, by default stored at `./powermake_config.json` just next to the `makefile.py` (or whatever name your makefile have)
+- step 2: It complete the local config with the global config, by default, stored in your home, at `~/.powermake/powermake_config.json` (If you create an env variable named `POWERMAKE_CONFIG`, you can override this location.).
+- step 3: For all fields that are left empty, powermake will try to create a default value from your platform information.
+  
+In theory, after the end of these 3 steps, all members of the `powermake.Config` object should be set.  
+In rare case, if powermake was enable to detect a default compiler, the `c_compiler`, `cpp_compiler`, `archiver` and `linker` members can be None.  
+In this situation, it's your responsibility to give them a value before the call to the `powermake.compile_files` function.
+
+
+If you haven't, we recommend you to try compiling your code without setting any `powermake_config.json`. In most cases, the automatic detection of your environnement does a good job finding your compiler/system/etc...
+
+In the future, we will provide a tool to interactively set your configuration file, but for the moment, here is an example of a `powermake_config.json`.  
+Here, everything is set, but **you should set the bare minimum**, especially, you shouldn't set the "host_architecture", it's way better to let the script find it.  
+Please note that this example is incoherent, but it shows as many options as possible.
+
+```json
+{
+    "host_operating_system": "Linux",
+    "target_operating_system": "Windows",
+    "host_architecture": "x64",
+    "target_architecture": "x86",
+
+    "c_compiler": {
+        "type": "gcc",
+        "path": "/usr/bin/gcc"
+    },
+    "cpp_compiler": {
+        "type": "clang++"
+    },
+    "archiver": {
+        "type": "ar",
+        "path": "/usr/bin/ar"
+    },
+    "linker": {
+        "type": "gnu",
+        "path": "/usr/bin/cc"
+    },
+
+    "obj_build_directory": "./build/objects/",
+    "lib_build_directory": "./build/lib/",
+    "exe_build_directory": "./build/bin/",
+
+    "defines": ["WIN32", "DEBUG"],
+    "additional_includedirs": ["/usr/local/include", "../my_lib/"],
+    "c_flags": ["-fanalyzer", "-O3"],
+    "cpp_flags": ["-g", "-O0"],
+    "c_cpp_flags": ["-Wall", "-Wextra"],
+    "ar_flags": [],
+    "ld_flags": ["-static"],
+
+    "exported_headers": ["my_lib.h", "my_lib_linux.h", "my_lib_windows.h"]
+}
+```
+
+All fields have the same name in the `powermake_config.json` and in the `powermake.Config` object, so we have grouped them below.
+
+#### host_operation_system
+
+A string representing the name of your operating system. For the moment it doesn't serve any purpose, but you can access it if needed.
+
+- **It's not recommended to set this in the json file, the autodetection should do a better job.**
+
+
+#### target_operating_system
+
+A string representing the name of the operating system for which the executable is for.  
+It's used to determine the subfolder of the build folder and for the functions `target_is_linux`, `target_is_windows`, etc...
+
+- You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
+- **Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated**
+
+
+#### host_architecture
+
+A string representing the architecture of your system, it can be "amd64", "x64", "x86", "i386", etc...  
+If you need an easier string to work with, use `config.simplified_host_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
+For the moment it doesn't serve any purpose, but you can access it if needed.
+
+- **It's not recommended to set this in the json file, the autodetection should do a better job.**
+
+
+#### target_architecture
+
+A string representing the architecture of the executable, it can be "amd64", "x64", "x86", "i386", etc...  
+If you need an easier string to work with, use `config.simplified_target_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
+It's used to determine the subfolder of the build folder and to set the compiler architecture. However, setting the compiler architecture automatically is for the moment only supported for MSVC, for gcc, use the `-m32` and `-m64` flag.
+
+- You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
+- **Note that if you change this value in the script after the config is loaded, the MSVC environnement will not be reloaded and the compiler will keep the previous architecture**
+
+
+#### c_compiler
+
+This one is different in the json config and in the loaded config.
+
+In the json config, it's define as an object with 2 fields, like that:
+```json
+"c_compiler": {
+    "type": "gcc",
+    "path": "/usr/bin/gcc"
+},
+```
+If the `"path"` field is omitted, the compiler corresponding to the type is searched in the path. For example if `"type"` is `"msvc"`, the compiler "cl.exe" is searched in the path.
+
+If the `"type"` field is omitted, his default value is `"gnu"`.
+
+
+- The `"type"` field can have the value `"gnu"`, `"gcc"`, `"clang"`, `"msvc"` or `"clang-cl"`.  
+  It determines the syntax that should be used. For example, if you are using mingw, the syntax of the compiler is the same as the `gcc` syntax and your compiler should be set like that:
+  ```json
+  "c_compiler" {
+      "type": "gcc",
+      "path": "C:\\msys64\\ucrt64\\bin\\gcc.exe"
+  }
+  ```
+  *Note: for mingw on Windows, you should simply set  `C:\msys64\ucrt64\bin` in your PATH and powermake will be able to find it automatically*
+
+- The `"path"` field indicate where is the executable of the compiler. Note that PATH searching is always applied, so `"gcc"` work as well as `"/usr/bin/gcc"`
+  For mingw on Linux, your compiler can be set like this:
+  ```json
+  "c_compiler" {
+      "type": "gcc",
+      "path": "x86_64-w64-mingw32-gcc"
+  }
+  ```
+
+When the powermake.Config object is loaded, the `c_compiler` member is no longer a `dict`, it's a virtual class which inherit from `powermake.compilers.Compiler` and which is able to generate compile commands. see [documentation in coming]
+
 
 documentation in progress...
