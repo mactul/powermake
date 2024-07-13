@@ -150,7 +150,7 @@ class Config:
                             if isinstance(exported_header, str) and exported_header not in self.exported_headers:
                                 self.exported_headers.append(exported_header)
 
-            except (OSError, json.JSONDecodeError):
+            except OSError:
                 pass
 
         if self.target_operating_system is None:
