@@ -18,6 +18,59 @@ import abc
 from .tools import Tool
 
 
+_powermake_flags_to_msvc_flags = {
+    "-w": ["/W0"],
+    "-Wall": ["/W3"],
+    "-Wextra": ["/W4"],
+    "-Weverything": ["/Wall"],
+    "-Werror": ["/WX"],
+    "-Wpedantic": [],
+    "-Wswitch": ["/we4062"],
+    "-Wswitch-enum": ["/we4061"],
+    "-fanalyzer": ["/analyze"],
+    "-O0": ["/Od"],
+    "-O1": ["/O1"],
+    "-O2": ["/O2"],
+    "-O3": ["/Ox", "/fp:fast"],
+    "-Os": ["/O1", "/GL"],
+    "-Ofast": ["/Ox", "/fp:fast"],
+    "-fomit-frame-pointer": ["/Oy"],
+    "-g": ["/Z7"],
+    "-m32": [],
+    "-m64": [],
+    "-mmmx": ["/arch:MMX"],
+    "-msse": ["/arch:SSE"],
+    "-msse2": ["/arch:SSE2"],
+    "-mssse3": ["/arch:SSSE3"],
+    "-mavx": ["/arch:AVX"],
+    "-mavx2": ["/arch:AVX2"],
+}
+
+_powermake_flags_to_gcc_flags = {
+    "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"]
+}
+
+_powermake_flags_to_clang_flags = {
+    "-fanalyzer": []
+}
+
+_powermake_flags_to_gnu_flags = {
+    "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"],
+    "-fanalyzer": []
+}
+
+
+def translate_flags(flags: list[str], translation_dict: dict[str, list[str]]):
+    translated_flags = []
+    for flag in flags:
+        if flag in translation_dict:
+            translated_flags.extend(translation_dict[flag])
+        else:
+            translated_flags.append(flag)
+
+    return translated_flags
+
+
 class Compiler(Tool, abc.ABC):
     type = None
     obj_extension = None
@@ -38,13 +91,14 @@ class Compiler(Tool, abc.ABC):
 class CompilerGNU(Compiler):
     type = "gnu"
     obj_extension = ".o"
+    translation_dict = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
 
     @classmethod
     def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
-        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + flags
+        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + translate_flags(flags, self.translation_dict)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
         return [self.path, "-c", "-o", outputfile, inputfile, *args]
@@ -52,6 +106,7 @@ class CompilerGNU(Compiler):
 
 class CompilerGCC(CompilerGNU):
     type = "gcc"
+    translation_dict = _powermake_flags_to_gcc_flags
 
     def __init__(self, path: str = "gcc"):
         super().__init__(path)
@@ -59,6 +114,7 @@ class CompilerGCC(CompilerGNU):
 
 class CompilerGPlusPlus(CompilerGNU):
     type = "g++"
+    translation_dict = _powermake_flags_to_gcc_flags
 
     def __init__(self, path: str = "g++"):
         super().__init__(path)
@@ -66,6 +122,7 @@ class CompilerGPlusPlus(CompilerGNU):
 
 class CompilerClang(CompilerGNU):
     type = "clang"
+    translation_dict = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
@@ -73,6 +130,7 @@ class CompilerClang(CompilerGNU):
 
 class CompilerClangPlusPlus(CompilerGNU):
     type = "clang++"
+    translation_dict = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)
@@ -81,13 +139,14 @@ class CompilerClangPlusPlus(CompilerGNU):
 class CompilerMSVC(Compiler):
     type = "msvc"
     obj_extension = ".obj"
+    translation_dict = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "cl"):
         super().__init__(path)
 
     @classmethod
     def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
-        return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + flags
+        return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + translate_flags(flags, self.translation_dict)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
