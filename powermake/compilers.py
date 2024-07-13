@@ -80,7 +80,7 @@ class Compiler(Tool, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def format_args(defines: list[str], includedirs: list[str], flags: list[str] = []):
+    def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
         return []
 
     @abc.abstractmethod

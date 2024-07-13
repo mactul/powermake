@@ -127,19 +127,19 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
         else:
             return set()
 
+    if config.c_compiler is not None:
+        c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags + config.c_cpp_flags)
+    else:
+        c_args = None
+
+    if config.cpp_compiler is not None:
+        cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags + config.c_cpp_flags)
+    else:
+        cpp_args = None
+
     for file in files:
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        if config.c_compiler is not None:
-            c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags + config.c_cpp_flags)
-        else:
-            c_args = None
-
-        if config.cpp_compiler is not None:
-            cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags + config.c_cpp_flags)
-        else:
-            cpp_args = None
 
         if file.endswith(".c"):
             if config.c_compiler is None:
@@ -194,7 +194,7 @@ def archive_files(config: Config, object_files: set[str], archive_name: str = No
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.lib_build_directory + "/" + archive_name + config.archiver.static_lib_extension)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    command = config.archiver.basic_archive_command(output_file, object_files)
+    command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
     return Operation(output_file, object_files, config, command).execute(force=force)
 
 
@@ -225,7 +225,8 @@ def link_files(config: Config, object_files: set[str], archives: list[str] = [],
         raise RuntimeError("No linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    command = config.linker.basic_link_command(output_file, object_files, archives)
+    args = config.linker.format_args(config.ld_flags)
+    command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, object_files.union(archives), config, command).execute(force=force)
 
 

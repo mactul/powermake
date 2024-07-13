@@ -1,3 +1,5 @@
+# This script is not used for the moment but it should become a tool to help creating the json configuration.
+
 def dp(string: str):
     if string is None:
         return "Let the program decide"

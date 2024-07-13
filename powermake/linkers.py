@@ -18,11 +18,33 @@ import abc
 from .tools import Tool
 
 
+_powermake_flags_to_msvc_flags = {
+    "-m32": [],
+    "-m64": []
+}
+
+
+def translate_flags(flags: list[str], translation_dict: dict[str, list[str]]):
+    translated_flags = []
+    for flag in flags:
+        if flag in translation_dict:
+            translated_flags.extend(translation_dict[flag])
+        else:
+            translated_flags.append(flag)
+
+    return translated_flags
+
+
 class Linker(Tool, abc.ABC):
     exe_extension = None
 
     def __init__(self, path):
         Tool.__init__(self, path)
+
+    @classmethod
+    @abc.abstractmethod
+    def format_args(self, flags: list[str]):
+        return []
 
     @abc.abstractmethod
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
@@ -35,6 +57,10 @@ class LinkerGNU(Linker):
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
+
+    @classmethod
+    def format_args(self, flags: list[str]):
+        return flags
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
@@ -71,9 +97,14 @@ class LinkerClangPlusPlus(LinkerGNU):
 class LinkerMSVC(Linker):
     type = "msvc"
     exe_extension = ".exe"
+    translation_dict = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "link"):
         super().__init__(path)
+
+    @classmethod
+    def format_args(self, flags: list[str]):
+        return translate_flags(flags, self.translation_dict)
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
