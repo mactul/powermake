@@ -3,6 +3,8 @@ import powermake
 
 def on_build(config: powermake.Config):
 
+    config.add_c_cpp_flags("-Weverything")
+
     files = powermake.get_files("*.c", "*.cpp")
 
     objects = powermake.compile_files(config, files)

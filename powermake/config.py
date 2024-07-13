@@ -172,6 +172,13 @@ class Config:
                 for var in env:
                     os.environ[var] = env[var]
 
+        if self.target_simplified_architecture == "x86" or self.target_simplified_architecture == "arm32":
+            self.add_c_cpp_flags("-m32")
+            self.add_ld_flags("-m32")
+        elif self.target_simplified_architecture == "x64" or self.target_simplified_architecture == "arm64":
+            self.add_c_cpp_flags("-m64")
+            self.add_ld_flags("-m64")
+
         self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
         self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")
         self.archiver = load_tool_from_tuple(archiver_tuple, "archiver")
