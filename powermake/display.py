@@ -1,6 +1,8 @@
 import colorama
 
-colorama.init()
+
+def init_colors():
+    colorama.init()
 
 
 def print_info(string: str, verbosity: int):

@@ -3,6 +3,7 @@ import sys
 import shutil
 import argparse
 from .config import Config
+from .display import print_info, print_debug_info, init_colors
 
 
 def default_on_clean(config: Config) -> None:
@@ -11,22 +12,18 @@ def default_on_clean(config: Config) -> None:
     Args:
         config (Config): the object given by `powermake.run`
     """
-    if config.verbosity >= 1:
-        print("Cleaning")
+    print_info("Cleaning", config.verbosity)
 
     if config.exe_build_directory is not None and os.path.isdir(config.exe_build_directory):
-        if config.verbosity >= 2:
-            print("Removing", config.exe_build_directory)
+        print_debug_info(f"Removing {config.exe_build_directory}", config.verbosity)
         shutil.rmtree(config.exe_build_directory)
 
     if config.lib_build_directory is not None and os.path.isdir(config.lib_build_directory):
-        if config.verbosity >= 2:
-            print("Removing", config.lib_build_directory)
+        print_debug_info(f"Removing {config.lib_build_directory}", config.verbosity)
         shutil.rmtree(config.lib_build_directory)
 
     if config.obj_build_directory is not None and os.path.isdir(config.obj_build_directory):
-        if config.verbosity >= 2:
-            print("Removing", config.obj_build_directory)
+        print_debug_info(f"Removing {config.obj_build_directory}", config.verbosity)
         shutil.rmtree(config.obj_build_directory)
 
 
@@ -47,8 +44,7 @@ def default_on_install(config: Config, location: str) -> None:
     if location is None:
         location = "./install/"
 
-    if config.verbosity >= 1:
-        print("Installing to", location)
+    print_info(f"Installing to {location}", config.verbosity)
 
     nb_files_installed = 0
 
@@ -63,8 +59,7 @@ def default_on_install(config: Config, location: str) -> None:
             for file in lib_files:
                 src = os.path.join(config.lib_build_directory, file)
                 dest = os.path.join(lib_folder, file)
-                if config.verbosity >= 2:
-                    print(f"copying {src} to {dest}")
+                print_debug_info(f"copying {src} to {dest}", config.verbosity)
                 nb_files_installed += 1
                 shutil.copy(src, dest)
 
@@ -75,8 +70,7 @@ def default_on_install(config: Config, location: str) -> None:
             for file in bin_files:
                 src = os.path.join(config.exe_build_directory, file)
                 dest = os.path.join(bin_folder, file)
-                if config.verbosity >= 2:
-                    print(f"copying {src} to {dest}")
+                print_debug_info(f"copying {src} to {dest}", config.verbosity)
                 nb_files_installed += 1
                 shutil.copy(src, dest)
 
@@ -88,13 +82,11 @@ def default_on_install(config: Config, location: str) -> None:
         else:
             os.makedirs(os.path.join(include_folder, subfolder), exist_ok=True)
             dest = os.path.join(include_folder, subfolder, os.path.basename(src))
-        if config.verbosity >= 2:
-            print(f"copying {src} to {dest}")
+        print_debug_info(f"copying {src} to {dest}", config.verbosity)
         nb_files_installed += 1
         shutil.copy(src, dest)
 
-    if config.verbosity >= 1:
-        print(nb_files_installed, "files successfully copied")
+    print_info(f"{nb_files_installed} files successfully copied", config.verbosity)
 
 
 def run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install):
@@ -131,6 +123,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     parser.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
     parser.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
     parser.add_argument("--get-lib-build-folder", help="Return the lib build folder path according to the config.", action="store_true")
+    parser.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal.", action="store_true")
 
     args = parser.parse_args()
 
@@ -150,6 +143,9 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
         verbosity = 2
     else:
         verbosity = 1
+
+    if not args.retransmit_colors:
+        init_colors()
 
     config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config, nb_jobs=args.jobs, single_file=args.single_file)
 
