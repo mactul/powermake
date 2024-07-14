@@ -114,13 +114,13 @@ All these options can be listed by running `python makefile.py -h` (or `python m
 powermake.run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install)
 ```
 It's the entry point of most programs.  
-This function parse the command line and generate a `powermake.Config` object, containing all the information required for the compilation, from the compiler path to the level of verbosity to use.
+This function parse the command line and generate a [powermake.Config](#powermakeconfig) object, containing all the information required for the compilation, from the compiler path to the level of verbosity to use.
 
 Then, depending on the command line arguments, this function will call the clean callback, the build callback, the install callback or all of them.
 
 The `target_name` is a string that will be stored in the config and which will be used for auto-naming. You should set this to the name of your executable or the name of your library.
 
-The `build_callback` and the `clean_callback` only takes 1 argument: The `powermake.Config` object generated.
+The `build_callback` and the `clean_callback` only takes 1 argument: The [powermake.Config](#powermakeconfig) object generated.
 
 Example:
 ```py
@@ -139,7 +139,7 @@ def on_clean(config: powermake.Config):
 powermake.run("my_project", build_callback=on_build, clean_callback=on_clean)
 ```
 
-The `install_callback` takes 2 arguments: The `powermake.Config` object and a string `location` that can be `None` if the user hasn't specified anything on the command line.
+The `install_callback` takes 2 arguments: The [powermake.Config](#powermakeconfig) object and a string `location` that can be `None` if the user hasn't specified anything on the command line.
 
 **NOTE:** It's often a very good idea to use the `install_callback` has a "pre-install script" and then call `powermake.default_on_install`.
 
@@ -251,7 +251,7 @@ It's used to determine the subfolder of the build folder and for the functions `
 #### host_architecture
 
 A string representing the architecture of your system, it can be "amd64", "x64", "x86", "i386", etc...  
-If you need an easier string to work with, use `config.simplified_host_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
+If you need an easier string to work with, use `config.host_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
 For the moment it doesn't serve any purpose, but you can access it if needed.
 
 - **It's not recommended to set this in the json file, the autodetection should do a better job.**
@@ -260,7 +260,7 @@ For the moment it doesn't serve any purpose, but you can access it if needed.
 #### target_architecture
 
 A string representing the architecture of the executable, it can be "amd64", "x64", "x86", "i386", etc...  
-If you need an easier string to work with, use `config.simplified_target_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
+If you need an easier string to work with, use `config.target_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
 It's used to determine the subfolder of the build folder and to set the compiler architecture. However, for the moment, gcc and clang only switch from 64 bits to 32 bits. If you are on x64 and you set the target_architecture to "arm32", you will in reality compile for x86. You have to give the path of a cross-compiler in order to achieve what you want.
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
@@ -302,7 +302,7 @@ If the `"type"` field is omitted, his default value is `"gnu"`.
   }
   ```
 
-When the powermake.Config object is loaded, the `c_compiler` member is no longer a `dict`, it's a virtual class which inherit from `powermake.compilers.Compiler` and which is able to generate compile commands. see [documentation in coming]
+When the `powermake.Config` object is loaded, the `c_compiler` member is no longer a `dict`, it's a virtual class which inherit from `powermake.compilers.Compiler` and which is able to generate compile commands. see [documentation in coming]
 
 
 documentation in progress...
