@@ -48,7 +48,7 @@ PowerMake was specifically designed for complex projects that have very complica
 
 - PowerMake is very young so it changes a lot at each version and you may have to write some features by yourself (the whole point of PowerMake is that you can write missing features).
 
-- Because PowerMake gives you full control, the tool can't really know what's you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is running the PowerMake where it stands and scanning his output directory. This works well but has some limitations...
+- Because PowerMake gives you full control, the tool can't really know what you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is running the PowerMake where it stands and scanning his output directory. This works well but has some limitations...
 
 ## Philosophy
 
