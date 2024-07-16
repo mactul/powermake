@@ -25,6 +25,13 @@ from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
 
 
+def get_global_config():
+    global_config = os.getenv("POWERMAKE_CONFIG")
+    if global_config is None:
+        global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
+    return global_config
+
+
 class Config:
     def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 8, single_file: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
         """Create an object that loads all configurations files and search for compilers.
@@ -73,9 +80,7 @@ class Config:
         linker_tuple = None
 
         if global_config is None:
-            global_config = os.getenv("POWERMAKE_CONFIG")
-            if global_config is None:
-                global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
+            global_config = get_global_config()
 
         for path in (local_config, global_config):
             if path is None:

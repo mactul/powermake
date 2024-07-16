@@ -3,6 +3,7 @@ import sys
 import shutil
 import argparse
 from .config import Config
+from .interactive_config import InteractiveConfig
 from .display import print_info, print_debug_info, init_colors
 
 
@@ -108,7 +109,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
 
     parser = argparse.ArgumentParser(prog="powermake", description="Makefile Utility")
 
-    parser.add_argument("action", choices=["build", "clean", "install"], nargs='?')
+    parser.add_argument("action", choices=["build", "clean", "install", "config"], nargs='?')
     parser.add_argument("install_location", nargs='?', help="Only if the action is set to install, indicate in which folder the installation should be")
     parser.add_argument("-d", "--debug", help="Trigger the build function with config.debug set to True.", action="store_true")
     parser.add_argument("-b", "--build", help="Trigger the build function. This is the default but it can be used in combination with --clean or --install", action="store_true")
@@ -116,6 +117,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     parser.add_argument("-c", "--clean", help="Trigger the clean function.", action="store_true")
     parser.add_argument("-i", help="Trigger the install function with the location argument set to None.", action="store_true")
     parser.add_argument("--install", nargs='?', metavar="LOCATION", help="Trigger the install function with the location argument set to the location given or None.", default=False)
+    parser.add_argument("-f", "--config", help="Switch to an interactive mode that helps you editing your configuration files.", action="store_true")
     parser.add_argument("-q", "--quiet", help="Disable all messages from the lib.", action="store_true")
     parser.add_argument("-v", "--verbose", help="Display every command the lib runs.", action="store_true")
     parser.add_argument("-j", "--jobs", help=f"Set on how many threads the compilation should be parallelized. (default: {default_nb_jobs})", default=default_nb_jobs, type=int)
@@ -147,21 +149,25 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
     if not args.retransmit_colors:
         init_colors()
 
-    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config, nb_jobs=args.jobs, single_file=args.single_file)
-
     clean = False
     build = False
     install = False
+    interactive_config = False
     if args.action == "clean" or args.clean:
         clean = True
     if args.action == "build" or args.build or args.rebuild:
         build = True
     if args.action == "install" or args.install is not False or args.i:
         install = True
+    if args.action == "config" or args.config:
+        interactive_config = True
+        InteractiveConfig(global_config=args.global_config, local_config=args.local_config)
+
+    config = Config(target_name, verbosity=verbosity, debug=args.debug, rebuild=args.rebuild, local_config=args.local_config, global_config=args.global_config, nb_jobs=args.jobs, single_file=args.single_file)
 
     if clean:
         clean_callback(config)
-    if build or (not clean and not install):
+    if build or (not clean and not install and not interactive_config):
         build_callback(config)
     if install:
         if args.action == "install":

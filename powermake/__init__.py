@@ -28,8 +28,8 @@ from .display import print_info, print_debug_info
 from .operation import Operation, needs_update
 from .args_parser import run, default_on_clean, default_on_install
 
-
-os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
+if hasattr(__makefile__, '__file__'):
+    os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
 
 
 def import_module(module_name: str, module_path: str = None):
