@@ -17,6 +17,7 @@
       - [host\_architecture](#host_architecture)
       - [target\_architecture](#target_architecture)
       - [c\_compiler](#c_compiler)
+      - [cpp\_compiler](#cpp_compiler)
 
 
 ## What is PowerMake ?
@@ -304,5 +305,13 @@ If the `"type"` field is omitted, his default value is `"gnu"`.
 
 When the `powermake.Config` object is loaded, the `c_compiler` member is no longer a `dict`, it's a virtual class which inherit from `powermake.compilers.Compiler` and which is able to generate compile commands. see [documentation in coming]
 
+#### cpp_compiler
+
+The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `g++`
+- `clang++`
+- `msvc`
+
+You can also use one of the [c_compiler](#c_compiler) types, but in this case you **must** add a path or the compilers will not be C++ compilers.
 
 documentation in progress...
