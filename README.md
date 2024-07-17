@@ -8,6 +8,7 @@
   - [Philosophy](#philosophy)
   - [Installation](#installation)
   - [Quick Example](#quick-example)
+    - [See more examples](#see-more-examples)
   - [Documentation](#documentation)
     - [Command line arguments](#command-line-arguments)
     - [powermake.run](#powermakerun)
@@ -33,10 +34,8 @@ PowerMake was specifically designed for complex projects that have very complica
 ## Advantages of PowerMake
 
 - Extremely fast:
-  - PowerMake is approximately 2x faster than Ninja, at least on relatively small projects
-      - With a project that has 10 000 lines of C:
-        - Ninja takes 1.484 seconds
-        - PowerMake takes 0.649 seconds
+  - PowerMake is faster than Ninja/make/xmake when building a project for the first time.
+  - Their is still some improvements to do for detecting that their is nothing to do for very large codebase because PowerMake doesn't actually store hidden dependencies (headers files). But with less than 2000 files, this step is almost instant.
 
 - Cross-Platform:
   - PowerMake is able to detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
@@ -89,6 +88,8 @@ def on_build(config: powermake.Config):
 powermake.run("program_test", build_callback=on_build)
 ```
 
+### [See more examples](./examples.md)
+
 ## Documentation
 
 ### Command line arguments
@@ -98,8 +99,10 @@ To benefit from the command line parser, you have to use the [powermake.run](#po
 If no arguments are passed trough the command line, the default behavior is to trigger the build callback.  
 You can also write `python makefile.py build`, `python makefile.py clean` or `python makefile.py install [install_location]` to trigger one of the three different callbacks.
 
-Alternatively, you can also use the option `-b` or `--build`, `-c` or `--clean` and `-i` or `--install`.  
-This alternative has a great advantages: you can combine multiple tasks. For example, running `python makefile.py -bci` will first trigger the clean callback, then the build callback and finally the install callback. (The order will always be clean -> build -> install).
+Their is also the `python makefile.py config` command, that doesn't trigger a callback but enter into an interactive mode for editing a configuration file.
+
+Alternatively, you can also use the option `-b` or `--build`, `-c` or `--clean`, `-i` or `--install` and `-f` or `--config`.  
+This alternative has a great advantages: you can combine multiple tasks. For example, running `python makefile.py -bci` will first trigger the clean callback, then the build callback and finally the install callback. (The order will always be config -> clean -> build -> install).
 
 You can also replace the `-b` argument with `-r` (using `-br` does the same as `-r`) and this will force the makefile to recompile everything, without trying to figure out which file needs to be recompiled.
 
