@@ -33,7 +33,7 @@ def get_global_config():
 
 
 class Config:
-    def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 8, single_file: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
         """Create an object that loads all configurations files and search for compilers.
 
         This objects hold all the configuration for the compilation.
@@ -117,6 +117,9 @@ class Config:
                     if self.lib_build_directory is None and "lib_build_directory" in conf:
                         self.lib_build_directory = conf["lib_build_directory"]
 
+                    if self.nb_jobs == 0 and "nb_jobs" in conf:
+                        self.nb_jobs = conf["nb_jobs"]
+
                     if "defines" in conf and isinstance(conf["defines"], list):
                         for define in conf["defines"]:
                             if isinstance(define, str) and define not in self.defines:
@@ -157,6 +160,9 @@ class Config:
 
             except OSError:
                 pass
+
+        if self.nb_jobs == 0:
+            self.nb_jobs = os.cpu_count() or 8
 
         if self.target_operating_system is None:
             self.target_operating_system = platform.system()

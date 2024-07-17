@@ -17,8 +17,7 @@ import abc
 
 from .tools import Tool
 
-
-_powermake_flags_to_msvc_flags = {
+_powermake_warning_flags_to_msvc_flags = {
     "-w": ["/W0"],
     "-Wall": ["/W3"],
     "-Wextra": ["/W4"],
@@ -28,14 +27,21 @@ _powermake_flags_to_msvc_flags = {
     "-Wswitch": ["/we4062"],
     "-Wswitch-enum": ["/we4061"],
     "-fanalyzer": ["/analyze"],
+}
+
+_powermake_optimization_flags_to_msvc_flags = {
     "-O0": ["/Od"],
+    "-Og": ["/Od"],
     "-O1": ["/O1"],
     "-O2": ["/O2"],
     "-O3": ["/Ox", "/fp:fast"],
     "-Os": ["/O1", "/GL"],
+    "-Oz": ["/O1", "/Oi", "/GL"],
     "-Ofast": ["/Ox", "/fp:fast"],
     "-fomit-frame-pointer": ["/Oy"],
-    "-g": ["/Z7"],
+}
+
+_powermake_machine_flags_to_msvc_flags = {
     "-m32": [],
     "-m64": [],
     "-mmmx": ["/arch:MMX"],
@@ -43,7 +49,14 @@ _powermake_flags_to_msvc_flags = {
     "-msse2": ["/arch:SSE2"],
     "-mssse3": ["/arch:SSSE3"],
     "-mavx": ["/arch:AVX"],
-    "-mavx2": ["/arch:AVX2"],
+    "-mavx2": ["/arch:AVX2"]
+}
+
+_powermake_flags_to_msvc_flags = {
+    **_powermake_warning_flags_to_msvc_flags,
+    **_powermake_optimization_flags_to_msvc_flags,
+    **_powermake_machine_flags_to_msvc_flags,
+    "-g": ["/Z7"]
 }
 
 _powermake_flags_to_gcc_flags = {
