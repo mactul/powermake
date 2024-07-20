@@ -128,12 +128,12 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
             return set()
 
     if config.c_compiler is not None:
-        c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags + config.c_cpp_flags)
+        c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags)
     else:
         c_args = None
 
     if config.cpp_compiler is not None:
-        cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags + config.c_cpp_flags)
+        cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags)
     else:
         cpp_args = None
 

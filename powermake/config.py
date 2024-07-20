@@ -68,7 +68,6 @@ class Config:
         self.additional_includedirs: list[str] = []
         self.c_flags: list[str] = []
         self.cpp_flags: list[str] = []
-        self.c_cpp_flags: list[str] = []
         self.ar_flags: list[str] = []
         self.ld_flags: list[str] = []
 
@@ -140,8 +139,11 @@ class Config:
                                 self.cpp_flags.append(cpp_flag)
                     if "c_cpp_flags" in conf and isinstance(conf["c_cpp_flags"], list):
                         for c_cpp_flag in conf["c_cpp_flags"]:
-                            if isinstance(c_cpp_flag, str) and c_cpp_flag not in self.c_cpp_flags:
-                                self.c_cpp_flags.append(c_cpp_flag)
+                            if isinstance(c_cpp_flag, str):
+                                if c_cpp_flag not in self.c_flags:
+                                    self.c_flags.append(c_cpp_flag)
+                                if c_cpp_flag not in self.cpp_flags:
+                                    self.cpp_flags.append(c_cpp_flag)
 
                     if "ar_flags" in conf and isinstance(conf["ar_flags"], list):
                         for ar_flag in conf["ar_flags"]:
@@ -219,6 +221,22 @@ class Config:
             elif self.target_is_windows():
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc")
 
+        self.set_debug(self.debug)
+
+    @property
+    def c_cpp_flags(self):
+        return self.c_flags + self.cpp_flags
+
+    def export_json(self):
+        return {
+            "c_compiler": {
+                "type": self.c_compiler.type,
+                "path": self.c_compiler.path
+            }
+        }
+
+    def set_debug(self, debug: bool = True):
+        self.debug = debug
         if self.debug:
             mode = "debug"
         else:
@@ -232,17 +250,26 @@ class Config:
 
         if self.debug:
             self.add_defines("DEBUG")
+            self.remove_defines("NDEBUG")
             self.add_c_cpp_flags("-g")
+            if self.get_optimization_level() is None:
+                self.add_c_cpp_flags("-O0")
         else:
             self.add_defines("NDEBUG")
+            self.remove_defines("DEBUG")
+            self.remove_c_cpp_flags("-g")
+            if self.get_optimization_level() is None:
+                self.add_c_cpp_flags("-O3")
 
-    def export_json(self):
-        return {
-            "c_compiler": {
-                "type": self.c_compiler.type,
-                "path": self.c_compiler.path
-            }
-        }
+    def set_optimization(self, opt_flag: str):
+        self.remove_c_cpp_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
+        self.add_c_cpp_flags(opt_flag)
+
+    def get_optimization_level(self):
+        for flag in reversed(self.c_cpp_flags):
+            if flag in ("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer"):
+                return flag
+        return None
 
     def target_is_windows(self):
         return self.target_operating_system.lower().startswith("win")
@@ -294,14 +321,12 @@ class Config:
                 self.cpp_flags.remove(cpp_flag)
 
     def add_c_cpp_flags(self, *c_cpp_flags: str) -> None:
-        for c_cpp_flag in c_cpp_flags:
-            if c_cpp_flag not in self.c_cpp_flags:
-                self.c_cpp_flags.append(c_cpp_flag)
+        self.add_c_flags(*c_cpp_flags)
+        self.add_cpp_flags(*c_cpp_flags)
 
     def remove_c_cpp_flags(self, *c_cpp_flags: str) -> None:
-        for c_cpp_flag in c_cpp_flags:
-            if c_cpp_flag in self.c_cpp_flags:
-                self.c_cpp_flags.remove(c_cpp_flag)
+        self.remove_c_flags(*c_cpp_flags)
+        self.remove_cpp_flags(*c_cpp_flags)
 
     def add_ar_flags(self, *ar_flags: str) -> None:
         for ar_flag in ar_flags:
