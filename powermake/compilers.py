@@ -15,7 +15,7 @@
 
 import abc
 
-from .tools import Tool
+from .tools import Tool, translate_flags
 
 _powermake_warning_flags_to_msvc_flags = {
     "-w": ["/W0"],
@@ -71,17 +71,6 @@ _powermake_flags_to_gnu_flags = {
     "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"],
     "-fanalyzer": []
 }
-
-
-def translate_flags(flags: list[str], translation_dict: dict[str, list[str]]):
-    translated_flags = []
-    for flag in flags:
-        if flag in translation_dict:
-            translated_flags.extend(translation_dict[flag])
-        else:
-            translated_flags.append(flag)
-
-    return translated_flags
 
 
 class Compiler(Tool, abc.ABC):

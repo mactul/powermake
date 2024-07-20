@@ -65,6 +65,7 @@ class Config:
         self.lib_build_directory: str = None
 
         self.defines: list[str] = []
+        self.shared_libs: list[str] = []
         self.additional_includedirs: list[str] = []
         self.c_flags: list[str] = []
         self.cpp_flags: list[str] = []
@@ -123,6 +124,11 @@ class Config:
                         for define in conf["defines"]:
                             if isinstance(define, str) and define not in self.defines:
                                 self.defines.append(define)
+
+                    if "shared_libs" in conf and isinstance(conf["shared_links"], list):
+                        for shared_link in conf["shared_links"]:
+                            if isinstance(shared_link, str) and shared_link not in self.shared_links:
+                                self.shared_links.append(shared_link)
 
                     if "additional_includedirs" in conf and isinstance(conf["additional_includedirs"], list):
                         for includedir in conf["additional_includedirs"]:
@@ -289,6 +295,16 @@ class Config:
         for define in defines:
             if define in self.defines:
                 self.defines.remove(define)
+    
+    def add_shared_libs(self, *shared_libs: str) -> None:
+        for shared_lib in shared_libs:
+            if shared_lib not in self.shared_libs:
+                self.shared_libs.append(shared_lib)
+
+    def remove_shared_libs(self, *shared_libs: str) -> None:
+        for shared_lib in shared_libs:
+            if shared_lib in self.shared_libs:
+                self.shared_libs.remove(shared_lib)
 
     def add_includedirs(self, *includedirs: str) -> None:
         for includedir in includedirs:

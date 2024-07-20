@@ -15,24 +15,13 @@
 
 import abc
 
-from .tools import Tool
+from .tools import Tool, translate_flags
 
 
 _powermake_flags_to_msvc_flags = {
     "-m32": [],
     "-m64": []
 }
-
-
-def translate_flags(flags: list[str], translation_dict: dict[str, list[str]]):
-    translated_flags = []
-    for flag in flags:
-        if flag in translation_dict:
-            translated_flags.extend(translation_dict[flag])
-        else:
-            translated_flags.append(flag)
-
-    return translated_flags
 
 
 class Linker(Tool, abc.ABC):
@@ -43,7 +32,7 @@ class Linker(Tool, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def format_args(self, flags: list[str]):
+    def format_args(self, shared_libs: list[str], flags: list[str]):
         return []
 
     @abc.abstractmethod
@@ -59,8 +48,8 @@ class LinkerGNU(Linker):
         super().__init__(path)
 
     @classmethod
-    def format_args(self, flags: list[str]):
-        return flags
+    def format_args(self, shared_libs: list[str], flags: list[str]):
+        return ["-l"+lib for lib in shared_libs] + flags
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
@@ -103,8 +92,8 @@ class LinkerMSVC(Linker):
         super().__init__(path)
 
     @classmethod
-    def format_args(self, flags: list[str]):
-        return translate_flags(flags, self.translation_dict)
+    def format_args(self, shared_libs: list[str], flags: list[str]):
+        return [(lib if lib.endswith(".lib") else lib+".lib") for lib in shared_libs] + translate_flags(flags, self.translation_dict)
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
