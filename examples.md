@@ -59,8 +59,10 @@ def on_build(config: powermake.Config):
     # The flags that are unknown by PowerMake will be passed untranslated.
     config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
 
+    config.add_shared_libs("mariadb")
+
     # These flags are not translated for the moment but this will arrive soon
-    config.add_ld_flags("-lmariadb")
+    config.add_ld_flags("-static")
 
     objects = powermake.compile_files(config, files)
 
