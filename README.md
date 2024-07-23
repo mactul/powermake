@@ -13,12 +13,18 @@
     - [Command line arguments](#command-line-arguments)
     - [powermake.run](#powermakerun)
     - [powermake.Config](#powermakeconfig)
+      - [nb\_jobs](#nb_jobs)
       - [host\_operating\_system](#host_operating_system)
       - [target\_operating\_system](#target_operating_system)
       - [host\_architecture](#host_architecture)
       - [target\_architecture](#target_architecture)
       - [c\_compiler](#c_compiler)
       - [cpp\_compiler](#cpp_compiler)
+      - [archiver](#archiver)
+      - [linker](#linker)
+      - [obj\_build\_directory](#obj_build_directory)
+      - [lib\_build\_directory](#lib_build_directory)
+      - [exe\_build\_directory](#exe_build_directory)
 
 
 ## What is PowerMake ?
@@ -197,6 +203,7 @@ Please note that this example is incoherent, but it shows as many options as pos
 
 ```json
 {
+    "nb_jobs": 8,
     "host_operating_system": "Linux",
     "target_operating_system": "Windows",
     "host_architecture": "x64",
@@ -236,6 +243,16 @@ Please note that this example is incoherent, but it shows as many options as pos
 
 All fields have the same name in the `powermake_config.json` and in the `powermake.Config` object, so we have grouped them below.
 
+#### nb_jobs
+
+This number determinate on how many threads the compilation should be parallelized.  
+If non-set or set to zero, this number is choose according to the number of CPU cores you have.
+
+Set this to 1 to disable multithreading.
+
+This can be overwritten by the command-line.
+
+
 #### host_operating_system
 
 A string representing the name of your operating system. For the moment it doesn't serve any purpose, but you can access it if needed.
@@ -268,7 +285,7 @@ If you need an easier string to work with, use `config.target_simplified_archite
 It's used to determine the subfolder of the build folder and to set the compiler architecture. However, for the moment, gcc and clang only switch from 64 bits to 32 bits. If you are on x64 and you set the target_architecture to "arm32", you will in reality compile for x86. You have to give the path of a cross-compiler in order to achieve what you want.
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
-- **Note that if you change this value in the script after the config is loaded, the MSVC environnement will not be reloaded and the compiler will keep the previous architecture**
+- **Note that if you change this value in the script after the config is loaded, the environnement will not be reloaded and the compiler will keep the previous architecture**
 
 
 #### c_compiler
@@ -317,7 +334,7 @@ The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possi
 
 You can also use one of the [c_compiler](#c_compiler) types, but in this case you **must** add a path or the compilers will not be C++ compilers.
 
-### archiver
+#### archiver
 
 The archiver is the program used to create a static library.
 
@@ -330,7 +347,7 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 Once loaded, the `config.archiver` is a virtual class that inherit from `powermake.archivers.Archiver`.
 
 
-### linker
+#### linker
 
 The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
 - `gnu`
@@ -341,6 +358,28 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 - `msvc`
 
 Once loaded, the `config.linker` is a virtual class that inherit from `powermake.archivers.Linker`.
+
+
+#### obj_build_directory
+
+This is the directory in which all .o (or equivalent) will be stored.
+
+- **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
+
+
+#### lib_build_directory
+
+This is the directory in which all .a, .so, .lib, .dll, etc... will be stored.
+
+- **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
+
+
+#### exe_build_directory
+
+This is the directory in which the linked executable will be stored.
+
+- **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
+
 
 
 documentation in progress...
