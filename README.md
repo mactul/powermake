@@ -13,7 +13,7 @@
     - [Command line arguments](#command-line-arguments)
     - [powermake.run](#powermakerun)
     - [powermake.Config](#powermakeconfig)
-      - [host\_operation\_system](#host_operation_system)
+      - [host\_operating\_system](#host_operating_system)
       - [target\_operating\_system](#target_operating_system)
       - [host\_architecture](#host_architecture)
       - [target\_architecture](#target_architecture)
@@ -236,7 +236,7 @@ Please note that this example is incoherent, but it shows as many options as pos
 
 All fields have the same name in the `powermake_config.json` and in the `powermake.Config` object, so we have grouped them below.
 
-#### host_operation_system
+#### host_operating_system
 
 A string representing the name of your operating system. For the moment it doesn't serve any purpose, but you can access it if needed.
 
