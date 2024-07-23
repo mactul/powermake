@@ -317,4 +317,15 @@ The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possi
 
 You can also use one of the [c_compiler](#c_compiler) types, but in this case you **must** add a path or the compilers will not be C++ compilers.
 
+### archiver
+
+The archiver is the program used to create a static library.
+
+The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `ar`
+- `msvc`
+
+Once loaded, the `config.archiver` is a virtual class that inherit from `powermake.archivers.Archiver`.
+
+
 documentation in progress...
