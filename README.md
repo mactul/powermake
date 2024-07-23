@@ -25,6 +25,14 @@
       - [obj\_build\_directory](#obj_build_directory)
       - [lib\_build\_directory](#lib_build_directory)
       - [exe\_build\_directory](#exe_build_directory)
+      - [defines](#defines)
+      - [additional\_includedirs](#additional_includedirs)
+      - [c\_flags](#c_flags)
+      - [cpp\_flags](#cpp_flags)
+      - [c\_cpp\_flags](#c_cpp_flags)
+      - [ar\_flags](#ar_flags)
+      - [ld\_flags](#ld_flags)
+      - [exported\_headers](#exported_headers)
 
 
 ## What is PowerMake ?
@@ -237,7 +245,7 @@ Please note that this example is incoherent, but it shows as many options as pos
     "ar_flags": [],
     "ld_flags": ["-static"],
 
-    "exported_headers": ["my_lib.h", "my_lib_linux.h", "my_lib_windows.h"]
+    "exported_headers": ["my_lib.h", ["my_lib_linux.h", "my_lib/linux"], ["my_lib/windows.h", "my_lib/windows"]]
 }
 ```
 
@@ -379,6 +387,88 @@ This is the directory in which all .a, .so, .lib, .dll, etc... will be stored.
 This is the directory in which the linked executable will be stored.
 
 - **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
+
+
+#### defines
+
+This is a list of some defines that will be used during the compilation process.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these defines directly in the makefile with `config.add_defines`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### additional_includedirs
+
+This is a list of additional includedirs that will be used during the compilation process.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with `config.add_includedirs`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### c_flags
+
+A list of flags that will be passed to the C compiler (not the C++ compiler).
+
+If in the powermake known flags list, these flags are translated for the specific compiler.  
+If not, they are simply passed to the compiler.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### cpp_flags
+
+A list of flags that will be passed to the C++ compiler (not the C compiler).
+
+If in the powermake known flags list, these flags are translated for the specific compiler.  
+If not, they are simply passed to the compiler.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### c_cpp_flags
+
+A list of flags that will be passed to the C compiler AND the C++ compiler.
+
+If in the powermake known flags list, these flags are translated for the specific compiler.  
+If not, they are simply passed to the compiler.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### ar_flags
+
+A list of flags that will be passed to the archiver.
+
+If in the powermake known flags list, these flags are translated for the specific archiver.  
+If not, they are simply passed to the archiver.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_ar_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### ld_flags
+
+A list of flags that will be passed to the linker.
+
+If in the powermake known flags list, these flags are translated for the specific linker.  
+If not, they are simply passed to the linker.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_ld_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+#### exported_headers
+
+This is a list of .h and .hpp that needs to be exported in a `include` folder during the installation process.
+
+This list can directly contain strings, in this case, the file is exported at the root of the `include` folder.  
+This list can also contain 2 elements lists. The first element is the file to export and the second element is the subfolder of the `include` folder in which the file should be exported.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these headers directly in the makefile with `config.add_exported_headers`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 

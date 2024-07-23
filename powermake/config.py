@@ -163,8 +163,10 @@ class Config:
 
                     if "exported_headers" in conf and isinstance(conf["exported_headers"], list):
                         for exported_header in conf["exported_headers"]:
-                            if isinstance(exported_header, str) and exported_header not in self.exported_headers:
-                                self.exported_headers.append(exported_header)
+                            if isinstance(exported_header, str) and (exported_header, None) not in self.exported_headers:
+                                self.exported_headers.append((exported_header, None))
+                            elif isinstance(exported_header, list) and len(exported_header) == 2 and exported_header not in self.exported_headers:
+                                self.exported_headers.append((exported_header[0], exported_header[1]))
 
             except OSError:
                 pass
