@@ -233,7 +233,7 @@ class Config:
             elif self.target_is_windows():
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc", "clang-cl")
 
-        self.set_debug(self.debug)
+        self.set_debug(self.debug, True)
 
     @property
     def c_cpp_flags(self):
@@ -247,31 +247,42 @@ class Config:
             }
         }
 
-    def set_debug(self, debug: bool = True):
+    def set_debug(self, debug: bool = True, reset_optimization: bool = False):
         self.debug = debug
         if self.debug:
             mode = "debug"
+            old_mode = "release"
         else:
             mode = "release"
+            old_mode = "debug"
+
         if self.obj_build_directory is None:
             self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system, self.target_simplified_architecture, mode)
+        else:
+            self.obj_build_directory = self.obj_build_directory.replace(old_mode, mode)
+
         if self.exe_build_directory is None:
             self.exe_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "bin")
+        else:
+            self.exe_build_directory = self.exe_build_directory.replace(old_mode, mode)
+
         if self.lib_build_directory is None:
             self.lib_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "lib")
+        else:
+            self.lib_build_directory = self.lib_build_directory.replace(old_mode, mode)
 
         if self.debug:
             self.add_defines("DEBUG")
             self.remove_defines("NDEBUG")
             self.add_c_cpp_flags("-g")
-            if self.get_optimization_level() is None:
-                self.add_c_cpp_flags("-O0")
+            if reset_optimization:
+                self.set_optimization("-O0")
         else:
             self.add_defines("NDEBUG")
             self.remove_defines("DEBUG")
             self.remove_c_cpp_flags("-g")
-            if self.get_optimization_level() is None:
-                self.add_c_cpp_flags("-O3")
+            if reset_optimization:
+                self.set_optimization("-O3")
 
     def set_optimization(self, opt_flag: str):
         self.remove_c_cpp_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
@@ -290,7 +301,7 @@ class Config:
         return self.target_operating_system.lower().startswith("linux")
 
     def target_is_mingw(self):
-        return self.target_is_windows() and "gcc" in isinstance(self.c_compiler, CompilerGNU)
+        return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
 
     def add_defines(self, *defines: str) -> None:
         for define in defines:
@@ -301,7 +312,7 @@ class Config:
         for define in defines:
             if define in self.defines:
                 self.defines.remove(define)
-    
+
     def add_shared_libs(self, *shared_libs: str) -> None:
         for shared_lib in shared_libs:
             if shared_lib not in self.shared_libs:

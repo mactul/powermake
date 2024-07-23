@@ -28,6 +28,7 @@
         - [exe\_build\_directory](#exe_build_directory)
         - [defines](#defines)
         - [additional\_includedirs](#additional_includedirs)
+        - [shared\_libs](#shared_libs)
         - [c\_flags](#c_flags)
         - [cpp\_flags](#cpp_flags)
         - [c\_cpp\_flags](#c_cpp_flags)
@@ -35,6 +36,15 @@
         - [ld\_flags](#ld_flags)
         - [exported\_headers](#exported_headers)
       - [Methods](#methods)
+        - [set\_debug()](#set_debug)
+        - [set\_optimization()](#set_optimization)
+        - [target\_is\_windows()](#target_is_windows)
+        - [target\_is\_linux()](#target_is_linux)
+        - [target\_is\_mingw()](#target_is_mingw)
+        - [add\_defines()](#add_defines)
+        - [remove\_defines()](#remove_defines)
+        - [add\_shared\_libs()](#add_shared_libs)
+        - [remove\_shared\_libs()](#remove_shared_libs)
 
 
 ## What is PowerMake ?
@@ -241,6 +251,7 @@ Please note that this example is incoherent, but it shows as many options as pos
 
     "defines": ["WIN32", "DEBUG"],
     "additional_includedirs": ["/usr/local/include", "../my_lib/"],
+    "shared_libs": ["mariadb", "ssl", "crypto"],
     "c_flags": ["-fanalyzer", "-O3"],
     "cpp_flags": ["-g", "-O0"],
     "c_cpp_flags": ["-Wall", "-Wextra"],
@@ -410,6 +421,14 @@ This is a list of additional includedirs that will be used during the compilatio
 - **It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with `config.add_includedirs`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
+##### shared_libs
+
+This is a list of shared libraries that will be used for the link.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these shared libs directly in the makefile with `config.add_shared_libs`, if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
 ##### c_flags
 
 A list of flags that will be passed to the C compiler (not the C++ compiler).
@@ -438,6 +457,8 @@ A list of flags that will be passed to the C compiler AND the C++ compiler.
 
 If in the powermake known flags list, these flags are translated for the specific compiler.  
 If not, they are simply passed to the compiler.
+
+In the `powermake.Config` object, this list doesn't correspond to a real list, it's just a property. You can read the value of `config.c_cpp_flags`, it's just the concatenation of `c_flags` and `cpp_flags`, but you can't edit this property, you have to use `config.add_c_cpp_flags` and `config.remove_c_cpp_flags`
 
 - This list is merged from the local and global config
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
@@ -482,5 +503,89 @@ This list can also contain 2 elements lists. The first element is the file to ex
 These are all the methods you can call from the the `powermake.Config` object.  
 You can access all members to read them, but you should use these methods if possible to set them, in order to ensure that everything stays coherent.
 
+
+##### set_debug()
+```py
+config.set_debug(debug: bool = True, reset_optimization: bool = False)
+```
+
+If `debug` is True, set everything to be in debug mode. It replaces the `NDEBUG` define by `DEBUG`, it adds the `-g` flag and if possible it modify the output dir to change from a release folder to a debug folder.
+
+If `debug` is False, set everything to be in release mode. (does the opposite of what's explained above)
+
+If `reset_optimization` is set to True, then a `debug` to True will put the optimization to `-O0` and a `debug` to False will put the optimization to `-O3`
+
+- **If possible you should prefer using the command-line instead of this function.**
+
+
+##### set_optimization()
+```py
+config.set_optimization(opt_flag: str)
+```
+
+Remove all optimization flags set and add the `opt_flag`
+
+
+##### target_is_windows()
+```py
+config.target_is_windows()
+```
+
+Returns `True` if the target operating system is Windows.
+This use the [config.target_operating_system](#target_operating_system) member.
+
+
+##### target_is_linux()
+```py
+config.target_is_linux()
+```
+
+Returns `True` if the target operating system is Linux.
+This use the [config.target_operating_system](#target_operating_system) member.
+
+
+##### target_is_mingw()
+```py
+config.target_is_mingw()
+```
+
+Returns `True` if the target operating system is MinGW
+This use the [config.target_operating_system](#target_operating_system) member and the [config.c_compiler](#c_compiler) member.
+
+
+##### add_defines()
+```py
+config.add_defines(*defines: str)
+```
+
+Add new defines to [config.defines](#defines) if they do not exists.
+This method is variadic so you can put as many defines as you want.
+
+
+##### remove_defines()
+```py
+config.remove_defines(*defines: str)
+```
+
+Remove defines from [config.defines](#defines) if they exists.
+This method is variadic so you can put as many defines as you want.
+
+
+##### add_shared_libs()
+```py
+config.add_shared_libs(*shared_libs: str)
+```
+
+Add shared libraries to [config.shared_libs](#shared_libs) if they do not exists.
+This method is variadic so you can put as many libs as you want.
+
+
+##### remove_shared_libs()
+```py
+config.remove_shared_libs(*shared_libs: str)
+```
+
+Remove shared libraries from [config.shared_libs](#shared_libs) if they exists.
+This method is variadic so you can put as many libs as you want.
 
 **documentation in progress...**
