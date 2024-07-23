@@ -24,7 +24,7 @@ def simplify_architecture(architecture: str) -> str:
     if arch in ["arm32", "arm", "armv6", "armv6-m", "armv7a", "armv7s", "armv7m", "armv7r", "armv7-a", "armv7-m", "armv7-r", "armeabi", "armeabi-v7a"]:
         return "arm32"
 
-    if arch in ["arm64", "armv8-a", "armv8.2-a", "armv8.3-a", "armv8-m", "armv8-r"]:
+    if arch in ["arm64", "aarch64", "armv8-a", "armv8.2-a", "armv8.3-a", "armv8-m", "armv8-r"]:
         return "arm64"
 
     return None
