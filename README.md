@@ -191,7 +191,7 @@ In this situation, it's your responsibility to give them a value before the call
 
 If you haven't, we recommend you to try compiling your code without setting any `powermake_config.json`. In most cases, the automatic detection of your environnement does a good job finding your compiler/system/etc...
 
-We provide a tool to interactively set your configuration file, you use it either but running `python -m powermake` or `python makefile.py config`, but this tool cannot configure anything, so we provide here an example of a `powermake_config.json`.  
+We provide a tool to interactively set your configuration file, you use it either by running `python -m powermake` or `python makefile.py config`, but this tool cannot configure everything, so we provide here an example of a `powermake_config.json`.  
 Here, everything is set, but **you should set the bare minimum**, especially, you shouldn't set the "host_architecture", it's way better to let the script find it.  
 Please note that this example is incoherent, but it shows as many options as possible.
 
