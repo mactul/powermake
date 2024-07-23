@@ -14,7 +14,7 @@
 
 from .common import Linker
 from .gnu import LinkerGNU, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
-from .msvc import LinkerMSVC
+from .msvc import LinkerMSVC, LinkerClang_CL
 
 
 _linker_types: dict[str, Linker] = {
@@ -23,7 +23,8 @@ _linker_types: dict[str, Linker] = {
     "g++": LinkerGPlusPlus,
     "clang": LinkerClang,
     "clang++": LinkerClangPlusPlus,
-    "msvc": LinkerMSVC
+    "msvc": LinkerMSVC,
+    "clang-cl": LinkerClang_CL
 }
 
 

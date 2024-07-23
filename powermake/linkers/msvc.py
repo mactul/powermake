@@ -35,3 +35,10 @@ class LinkerMSVC(Linker):
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
+
+
+class LinkerClang_CL(LinkerMSVC):
+    type = "clang-cl"
+
+    def __init__(self, path: str = "clang-cl"):
+        super().__init__(path)

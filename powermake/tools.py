@@ -61,8 +61,10 @@ def load_tool_from_tuple(tool_tuple, tool_name):
 
         if not tool.is_available():
             if tool_tuple[0] is None:
-                tool_tuple[0] = tool.type
-            raise ValueError("The %s %s could not be found on your machine" % (tool_name, tool_tuple[0]))
+                tool_path = tool.type
+            else:
+                tool_path = tool_tuple[0]
+            raise ValueError("The %s %s could not be found on your machine" % (tool_name, tool_path))
     return tool
 
 
