@@ -13,26 +13,28 @@
     - [Command line arguments](#command-line-arguments)
     - [powermake.run](#powermakerun)
     - [powermake.Config](#powermakeconfig)
-      - [nb\_jobs](#nb_jobs)
-      - [host\_operating\_system](#host_operating_system)
-      - [target\_operating\_system](#target_operating_system)
-      - [host\_architecture](#host_architecture)
-      - [target\_architecture](#target_architecture)
-      - [c\_compiler](#c_compiler)
-      - [cpp\_compiler](#cpp_compiler)
-      - [archiver](#archiver)
-      - [linker](#linker)
-      - [obj\_build\_directory](#obj_build_directory)
-      - [lib\_build\_directory](#lib_build_directory)
-      - [exe\_build\_directory](#exe_build_directory)
-      - [defines](#defines)
-      - [additional\_includedirs](#additional_includedirs)
-      - [c\_flags](#c_flags)
-      - [cpp\_flags](#cpp_flags)
-      - [c\_cpp\_flags](#c_cpp_flags)
-      - [ar\_flags](#ar_flags)
-      - [ld\_flags](#ld_flags)
-      - [exported\_headers](#exported_headers)
+      - [Members](#members)
+        - [nb\_jobs](#nb_jobs)
+        - [host\_operating\_system](#host_operating_system)
+        - [target\_operating\_system](#target_operating_system)
+        - [host\_architecture](#host_architecture)
+        - [target\_architecture](#target_architecture)
+        - [c\_compiler](#c_compiler)
+        - [cpp\_compiler](#cpp_compiler)
+        - [archiver](#archiver)
+        - [linker](#linker)
+        - [obj\_build\_directory](#obj_build_directory)
+        - [lib\_build\_directory](#lib_build_directory)
+        - [exe\_build\_directory](#exe_build_directory)
+        - [defines](#defines)
+        - [additional\_includedirs](#additional_includedirs)
+        - [c\_flags](#c_flags)
+        - [cpp\_flags](#cpp_flags)
+        - [c\_cpp\_flags](#c_cpp_flags)
+        - [ar\_flags](#ar_flags)
+        - [ld\_flags](#ld_flags)
+        - [exported\_headers](#exported_headers)
+      - [Methods](#methods)
 
 
 ## What is PowerMake ?
@@ -249,9 +251,12 @@ Please note that this example is incoherent, but it shows as many options as pos
 }
 ```
 
+
+#### Members
+
 All fields have the same name in the `powermake_config.json` and in the `powermake.Config` object, so we have grouped them below.
 
-#### nb_jobs
+##### nb_jobs
 
 This number determinate on how many threads the compilation should be parallelized.  
 If non-set or set to zero, this number is choose according to the number of CPU cores you have.
@@ -261,14 +266,14 @@ Set this to 1 to disable multithreading.
 This can be overwritten by the command-line.
 
 
-#### host_operating_system
+##### host_operating_system
 
 A string representing the name of your operating system. For the moment it doesn't serve any purpose, but you can access it if needed.
 
 - **It's not recommended to set this in the json file, the autodetection should do a better job.**
 
 
-#### target_operating_system
+##### target_operating_system
 
 A string representing the name of the operating system for which the executable is for.  
 It's used to determine the subfolder of the build folder and for the functions `target_is_linux`, `target_is_windows`, etc...
@@ -277,7 +282,7 @@ It's used to determine the subfolder of the build folder and for the functions `
 - **Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated**
 
 
-#### host_architecture
+##### host_architecture
 
 A string representing the architecture of your system, it can be "amd64", "x64", "x86", "i386", etc...  
 If you need an easier string to work with, use `config.host_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
@@ -286,7 +291,7 @@ For the moment it doesn't serve any purpose, but you can access it if needed.
 - **It's not recommended to set this in the json file, the autodetection should do a better job.**
 
 
-#### target_architecture
+##### target_architecture
 
 A string representing the architecture of the executable, it can be "amd64", "x64", "x86", "i386", etc...  
 If you need an easier string to work with, use `config.target_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
@@ -296,7 +301,7 @@ It's used to determine the subfolder of the build folder and to set the compiler
 - **Note that if you change this value in the script after the config is loaded, the environnement will not be reloaded and the compiler will keep the previous architecture**
 
 
-#### c_compiler
+##### c_compiler
 
 This one is different in the json config and in the loaded config.
 
@@ -333,7 +338,7 @@ If the `"type"` field is omitted, his default value is `"gnu"`.
 
 When the `powermake.Config` object is loaded, the `c_compiler` member is no longer a `dict`, it's a virtual class which inherit from `powermake.compilers.Compiler` and which is able to generate compile commands. see [documentation in coming]
 
-#### cpp_compiler
+##### cpp_compiler
 
 The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possible types are:
 - `g++`
@@ -342,7 +347,7 @@ The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possi
 
 You can also use one of the [c_compiler](#c_compiler) types, but in this case you **must** add a path or the compilers will not be C++ compilers.
 
-#### archiver
+##### archiver
 
 The archiver is the program used to create a static library.
 
@@ -355,7 +360,7 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 Once loaded, the `config.archiver` is a virtual class that inherit from `powermake.archivers.Archiver`.
 
 
-#### linker
+##### linker
 
 The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
 - `gnu`
@@ -368,28 +373,28 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 Once loaded, the `config.linker` is a virtual class that inherit from `powermake.archivers.Linker`.
 
 
-#### obj_build_directory
+##### obj_build_directory
 
 This is the directory in which all .o (or equivalent) will be stored.
 
 - **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
 
 
-#### lib_build_directory
+##### lib_build_directory
 
 This is the directory in which all .a, .so, .lib, .dll, etc... will be stored.
 
 - **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
 
 
-#### exe_build_directory
+##### exe_build_directory
 
 This is the directory in which the linked executable will be stored.
 
 - **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/linux or x86/x64 doesn't have any conflict.**
 
 
-#### defines
+##### defines
 
 This is a list of some defines that will be used during the compilation process.
 
@@ -397,7 +402,7 @@ This is a list of some defines that will be used during the compilation process.
 - **It's not recommended to set this in the json file, it makes much more sense to add these defines directly in the makefile with `config.add_defines`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### additional_includedirs
+##### additional_includedirs
 
 This is a list of additional includedirs that will be used during the compilation process.
 
@@ -405,7 +410,7 @@ This is a list of additional includedirs that will be used during the compilatio
 - **It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with `config.add_includedirs`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### c_flags
+##### c_flags
 
 A list of flags that will be passed to the C compiler (not the C++ compiler).
 
@@ -416,7 +421,7 @@ If not, they are simply passed to the compiler.
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### cpp_flags
+##### cpp_flags
 
 A list of flags that will be passed to the C++ compiler (not the C compiler).
 
@@ -427,7 +432,7 @@ If not, they are simply passed to the compiler.
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### c_cpp_flags
+##### c_cpp_flags
 
 A list of flags that will be passed to the C compiler AND the C++ compiler.
 
@@ -438,7 +443,7 @@ If not, they are simply passed to the compiler.
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### ar_flags
+##### ar_flags
 
 A list of flags that will be passed to the archiver.
 
@@ -449,7 +454,7 @@ If not, they are simply passed to the archiver.
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_ar_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### ld_flags
+##### ld_flags
 
 A list of flags that will be passed to the linker.
 
@@ -460,7 +465,7 @@ If not, they are simply passed to the linker.
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_ld_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
-#### exported_headers
+##### exported_headers
 
 This is a list of .h and .hpp that needs to be exported in a `include` folder during the installation process.
 
@@ -472,4 +477,10 @@ This list can also contain 2 elements lists. The first element is the file to ex
 
 
 
-documentation in progress...
+#### Methods
+
+These are all the methods you can call from the the `powermake.Config` object.  
+You can access all members to read them, but you should use these methods if possible to set them, in order to ensure that everything stays coherent.
+
+
+**documentation in progress...**
