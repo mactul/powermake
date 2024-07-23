@@ -330,4 +330,17 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 Once loaded, the `config.archiver` is a virtual class that inherit from `powermake.archivers.Archiver`.
 
 
+### linker
+
+The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `gnu`
+- `gcc`
+- `g++`
+- `clang`
+- `clang++`
+- `msvc`
+
+Once loaded, the `config.linker` is a virtual class that inherit from `powermake.archivers.Linker`.
+
+
 documentation in progress...
