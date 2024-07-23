@@ -322,7 +322,9 @@ You can also use one of the [c_compiler](#c_compiler) types, but in this case yo
 The archiver is the program used to create a static library.
 
 The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `gnu`
 - `ar`
+- `llvm-ar`
 - `msvc`
 
 Once loaded, the `config.archiver` is a virtual class that inherit from `powermake.archivers.Archiver`.
