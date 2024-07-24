@@ -45,6 +45,20 @@
         - [remove\_defines()](#remove_defines)
         - [add\_shared\_libs()](#add_shared_libs)
         - [remove\_shared\_libs()](#remove_shared_libs)
+        - [add\_includedirs()](#add_includedirs)
+        - [remove\_includedirs()](#remove_includedirs)
+        - [add\_c\_flags()](#add_c_flags)
+        - [remove\_c\_flags()](#remove_c_flags)
+        - [add\_cpp\_flags()](#add_cpp_flags)
+        - [remove\_cpp\_flags()](#remove_cpp_flags)
+        - [add\_c\_cpp\_flags()](#add_c_cpp_flags)
+        - [remove\_c\_cpp\_flags()](#remove_c_cpp_flags)
+        - [add\_ar\_flags()](#add_ar_flags)
+        - [remove\_ar\_flags()](#remove_ar_flags)
+        - [add\_ld\_flags()](#add_ld_flags)
+        - [remove\_ld\_flags()](#remove_ld_flags)
+        - [add\_exported\_headers()](#add_exported_headers)
+        - [remove\_exported\_headers()](#remove_exported_headers)
 
 
 ## What is PowerMake ?
@@ -410,7 +424,7 @@ This is the directory in which the linked executable will be stored.
 This is a list of some defines that will be used during the compilation process.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these defines directly in the makefile with `config.add_defines`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these defines directly in the makefile with [config.add_defines](#add_defines), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### additional_includedirs
@@ -418,7 +432,7 @@ This is a list of some defines that will be used during the compilation process.
 This is a list of additional includedirs that will be used during the compilation process.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with `config.add_includedirs`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with [config.add_includedirs](#add_includedirs), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### shared_libs
@@ -426,7 +440,7 @@ This is a list of additional includedirs that will be used during the compilatio
 This is a list of shared libraries that will be used for the link.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these shared libs directly in the makefile with `config.add_shared_libs`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these shared libs directly in the makefile with [config.add_shared_libs](#add_shared_libs), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### c_flags
@@ -437,7 +451,7 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the compiler.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_flags](#add_c_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### cpp_flags
@@ -448,7 +462,7 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the compiler.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_cpp_flags](#add_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### c_cpp_flags
@@ -458,10 +472,10 @@ A list of flags that will be passed to the C compiler AND the C++ compiler.
 If in the powermake known flags list, these flags are translated for the specific compiler.  
 If not, they are simply passed to the compiler.
 
-In the `powermake.Config` object, this list doesn't correspond to a real list, it's just a property. You can read the value of `config.c_cpp_flags`, it's just the concatenation of `c_flags` and `cpp_flags`, but you can't edit this property, you have to use `config.add_c_cpp_flags` and `config.remove_c_cpp_flags`
+In the `powermake.Config` object, this list doesn't correspond to a real list, it's just a property. You can read the value of `config.c_cpp_flags`, it's just the concatenation of `c_flags` and `cpp_flags`, but you can't edit this property, you have to use [config.add_c_cpp_flags](#add_c_cpp_flags) and [config.remove_c_cpp_flags](#remove_c_cpp_flags)
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_c_cpp_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_cpp_flags](#add_c_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### ar_flags
@@ -472,7 +486,7 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the archiver.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_ar_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ar_flags](#add_ar_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### ld_flags
@@ -483,7 +497,7 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the linker.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with `config.add_ld_flags`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ld_flags](#add_ld_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 ##### exported_headers
@@ -494,7 +508,7 @@ This list can directly contain strings, in this case, the file is exported at th
 This list can also contain 2 elements lists. The first element is the file to export and the second element is the subfolder of the `include` folder in which the file should be exported.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these headers directly in the makefile with `config.add_exported_headers`, if needed, in a conditional statement like `if config.target_is_windows():`**
+- **It's not recommended to set this in the json file, it makes much more sense to add these headers directly in the makefile with [config.add_exported_headers](#add_exported_headers), if needed, in a conditional statement like `if config.target_is_windows():`**
 
 
 
@@ -558,8 +572,9 @@ This use the [config.target_operating_system](#target_operating_system) member a
 config.add_defines(*defines: str)
 ```
 
-Add new defines to [config.defines](#defines) if they do not exists.
-This method is variadic so you can put as many defines as you want.
+Add new defines to [config.defines](#defines) if they do not exists.  
+This method is variadic so you can put as many defines as you want.  
+The list order is preserved.
 
 
 ##### remove_defines()
@@ -567,7 +582,7 @@ This method is variadic so you can put as many defines as you want.
 config.remove_defines(*defines: str)
 ```
 
-Remove defines from [config.defines](#defines) if they exists.
+Remove defines from [config.defines](#defines) if they exists.  
 This method is variadic so you can put as many defines as you want.
 
 
@@ -576,8 +591,9 @@ This method is variadic so you can put as many defines as you want.
 config.add_shared_libs(*shared_libs: str)
 ```
 
-Add shared libraries to [config.shared_libs](#shared_libs) if they do not exists.
-This method is variadic so you can put as many libs as you want.
+Add shared libraries to [config.shared_libs](#shared_libs) if they do not exists.  
+This method is variadic so you can put as many libs as you want.  
+The list order is preserved.
 
 
 ##### remove_shared_libs()
@@ -585,7 +601,150 @@ This method is variadic so you can put as many libs as you want.
 config.remove_shared_libs(*shared_libs: str)
 ```
 
-Remove shared libraries from [config.shared_libs](#shared_libs) if they exists.
+Remove shared libraries from [config.shared_libs](#shared_libs) if they exists.  
 This method is variadic so you can put as many libs as you want.
+
+
+##### add_includedirs()
+```py
+config.add_includedirs(*includedirs: str)
+```
+
+Add additional includedirs to [config.additional_includedirs](#additional_includedirs) if they do not exists.  
+This method is variadic so you can put as many includedirs as you want.  
+The list order is preserved.
+
+
+##### remove_includedirs()
+```py
+config.remove_includedirs(*includedirs: str)
+```
+
+Remove additional includedirs from [config.additional_includedirs](#additional_includedirs) if they exists.  
+This method is variadic so you can put as many includedirs as you want.  
+The list order is preserved.
+
+
+##### add_c_flags()
+```py
+config.add_c_flags(*c_flags: str)
+```
+
+Add flags to [config.c_flags](#c_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_c_flags()
+```py
+config.remove_c_flags(*c_flags: str)
+```
+
+Remove flags from [config.c_flags](#c_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_cpp_flags()
+```py
+config.add_cpp_flags(*cpp_flags: str)
+```
+
+Add flags to [config.cpp_flags](#cpp_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_cpp_flags()
+```py
+config.remove_cpp_flags(*cpp_flags: str)
+```
+
+Remove flags from [config.cpp_flags](#cpp_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_c_cpp_flags()
+```py
+config.add_c_cpp_flags(*c_cpp_flags: str)
+```
+
+Add flags to [config.c_cpp_flags](#c_cpp_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_c_cpp_flags()
+```py
+config.remove_c_cpp_flags(*c_cpp_flags: str)
+```
+
+Remove flags from [config.c_cpp_flags](#c_cpp_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_ar_flags()
+```py
+config.add_ar_flags(*ar_flags: str)
+```
+
+Add flags to [config.ar_flags](#ar_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_ar_flags()
+```py
+config.remove_ar_flags(*ar_flags: str)
+```
+
+Remove flags from [config.ar_flags](#ar_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_ld_flags()
+```py
+config.add_ld_flags(*ld_flags: str)
+```
+
+Add flags to [config.ld_flags](#ld_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_ld_flags()
+```py
+config.remove_ld_flags(*ld_flags: str)
+```
+
+Remove flags from [config.ld_flags](#ld_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_exported_headers()
+```py
+config.add_exported_headers(*exported_headers: str, subfolder: str = None)
+```
+
+Add exported headers to [config.exported_headers](#exported_headers) if they do not exists.  
+This method is variadic so you can put as many headers as you want.  
+The list order is preserved.
+
+By default their is no subfolder, but we recommend you to use `config.target_name` for the `subfolder` argument.
+
+
+##### remove_exported_headers()
+```py
+config.remove_exported_headers(*exported_headers: str, subfolder: str = None)
+```
+
+Remove exported headers from [config.exported_headers](#exported_headers) if they exists.  
+This method is variadic so you can put as many headers as you want.  
+The list order is preserved.
+
 
 **documentation in progress...**
