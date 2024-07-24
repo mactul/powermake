@@ -209,13 +209,13 @@ class Config:
             if self.target_is_linux():
                 self.c_compiler = find_tool(GenericCompiler, "gcc", "clang")
             elif self.target_is_windows():
-                self.c_compiler = find_tool(GenericCompiler, "msvc", "clang-cl", "gcc")
+                self.c_compiler = find_tool(GenericCompiler, "msvc", "gcc", "clang-cl")
 
         if self.cpp_compiler is None:
             if self.target_is_linux():
                 self.cpp_compiler = find_tool(GenericCompiler, "g++", "clang++")
             elif self.target_is_windows():
-                self.cpp_compiler = find_tool(GenericCompiler, "msvc", "g++")
+                self.cpp_compiler = find_tool(GenericCompiler, "msvc", "g++", "clang-cl")
 
         if self.archiver is None:
             if self.target_is_linux():
