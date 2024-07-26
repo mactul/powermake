@@ -68,6 +68,8 @@
     - [powermake.delete\_files\_from\_disk](#powermakedelete_files_from_disk)
     - [powermake.run\_another\_powermake](#powermakerun_another_powermake)
     - [powermake.needs\_update](#powermakeneeds_update)
+    - [powermake.Operation](#powermakeoperation)
+      - [execute()](#execute)
 
 
 ## What is PowerMake ?
@@ -882,5 +884,41 @@ These parameters are passed to the other powermake.
 
 
 ### powermake.needs_update
+```py
+powermake.needs_update(outputfile: str, dependencies: set[str], additional_includedirs: list[str]) -> bool
+```
+
+This function is low level.
+
+Returns whether or not `outputfile` is up to date with all his dependencies.  
+If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
+
+The `additional_includedirs` list is required to discover hidden dependencies. You must set this to the additional includedirs used during the compilation of `outputfile`. You can use [config.additional_includedirs](#additional_includedirs) if needed.
+
+
+### powermake.Operation
+```py
+powermake.Operation(outputfile: str, dependencies: set[str], config: Config, command: list[str])
+```
+
+This is a simple object to execute a command only if needed.  
+It can be used to easily parallelize multiple commands. Note that you can use [powermake.compile_files](#powermakecompile_files) which do that for you, but only for C/C++ files.
+
+The command should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
+This list is then directly passed to `subprocess.run`
+
+#### execute()
+```py
+execute(self, force: bool = False, print_lock: threading.Lock = None) -> str
+```
+
+Run the `command` if `outputfile` is not up to date.
+
+If `force` is True, the command is run in any case.
+
+`print_lock` is a mutex which ensures that debug prints are not mixed together.  
+If you are parallelizing operations, you should set this mutex to avoid weird debug messages behavior.  
+If left to None, no mutex is used.
+
 
 **documentation in progress...**
