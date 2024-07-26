@@ -770,7 +770,7 @@ This function is variadic.
 
 ### filter_files
 ```py
-def filter_files(files: set[str], *patterns: str) -> set[str]
+filter_files(files: set[str], *patterns: str) -> set[str]
 ```
 
 From a given set of filepaths, remove every file that matches at least one of the patterns.  
@@ -831,7 +831,7 @@ This function is variadic.
 
 ### run_another_powermake
 ```py
-run_another_powermake(config: Powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list[str]
+run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list[str]
 ```
 
 Run a powermake from another directory and returns a list of path to all libraries generated.
