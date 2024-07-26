@@ -59,12 +59,15 @@
         - [remove\_ld\_flags()](#remove_ld_flags)
         - [add\_exported\_headers()](#add_exported_headers)
         - [remove\_exported\_headers()](#remove_exported_headers)
-    - [get\_files](#get_files)
-    - [filter\_files](#filter_files)
-    - [compile\_files](#compile_files)
-    - [archive\_files](#archive_files)
-    - [delete\_files\_from\_disk](#delete_files_from_disk)
-    - [run\_another\_powermake](#run_another_powermake)
+    - [powermake.default\_on\_clean](#powermakedefault_on_clean)
+    - [powermake.default\_on\_install](#powermakedefault_on_install)
+    - [powermake.get\_files](#powermakeget_files)
+    - [powermake.filter\_files](#powermakefilter_files)
+    - [powermake.compile\_files](#powermakecompile_files)
+    - [powermake.archive\_files](#powermakearchive_files)
+    - [powermake.delete\_files\_from\_disk](#powermakedelete_files_from_disk)
+    - [powermake.run\_another\_powermake](#powermakerun_another_powermake)
+    - [powermake.needs\_update](#powermakeneeds_update)
 
 
 ## What is PowerMake ?
@@ -349,7 +352,8 @@ If the `"type"` field is omitted, his default value is `"gnu"`.
 
 
 - The `"type"` field can have the value `"gnu"`, `"gcc"`, `"clang"`, `"msvc"` or `"clang-cl"`.  
-  It determines the syntax that should be used. For example, if you are using mingw, the syntax of the compiler is the same as the `gcc` syntax and your compiler should be set like that:
+  It determines the syntax that should be used. For example, if you are using mingw, the syntax of the compiler is the same as the `gcc` syntax and ythe default callback used by [powermake.run](#powermakerun) if the `default_callback` is unspecified but you can use it whenever you want.
+our compiler should be set like that:
   ```json
   "c_compiler" {
       "type": "gcc",
@@ -753,9 +757,46 @@ This method is variadic so you can put as many headers as you want.
 The list order is preserved.
 
 
-### get_files
+### powermake.default_on_clean
 ```py
-get_files(*patterns: str) -> set[str]
+powermake.default_on_clean(config: powermake.Config)
+```
+
+This is the default callback used by [powermake.run](#powermakerun) if the `clean_callback` is unspecified but you can use it whenever you want.
+
+It cleans the obj, lib and exe build directories of the `config`
+
+
+### powermake.default_on_install
+```py
+powermake.default_on_install(config: Config, location: str)
+```
+
+This is the default callback used by [powermake.run](#powermakerun) if the `install_callback` is unspecified but you can use it whenever you want.  
+In fact, if you overwrite the `install_callback` (which is the normal way of adding exported headers), you should call this function inside your own callback to have a coherent installation. See the example in [powermake.run](#powermakerun)
+
+Each library compiled is copied and put in a directory named `lib`.
+Each header in [config.exported_headers](#exported_headers) is copied an put in a directory named `include`.
+Each executable compiled is copied and put in a directory named `bin`.
+
+The final structure is as follow:
+```
+location
+    |_ include
+        |_ eventual_subfolders
+            |_ my_lib.h
+    |_ lib
+        |_ my_lib.a
+    |_ bin
+        |_ my_program
+```
+
+If `location` is None, the default is `./install/`.
+
+
+### powermake.get_files
+```py
+powermake.get_files(*patterns: str) -> set[str]
 ```
 
 Returns a set of filepaths that matches at least one of the patterns.
@@ -768,9 +809,9 @@ Authorized patterns are:
 This function is variadic.
 
 
-### filter_files
+### powermake.filter_files
 ```py
-filter_files(files: set[str], *patterns: str) -> set[str]
+powermake.filter_files(files: set[str], *patterns: str) -> set[str]
 ```
 
 From a given set of filepaths, remove every file that matches at least one of the patterns.  
@@ -784,9 +825,9 @@ Authorized patterns are:
 This function is variadic.
 
 
-### compile_files
+### powermake.compile_files
 ```py
-compile_files(config: powermake.Config, files: set[str], force: bool = None) -> set[str]
+powermake.compile_files(config: powermake.Config, files: set[str], force: bool = None) -> set[str]
 ```
 
 This function is a wrapper of lower level powermake functions.
@@ -800,14 +841,14 @@ From a set of `.c`, `.cpp`, `.cc` and `.C` filepaths and a [powermake.Config](#p
 Returns a set of `.o` (or compiler equivalent) filepaths for the next step.
 
 
-### archive_files
+### powermake.archive_files
 ```py
-archive_files(config: powermake.Config, object_files: set[str], archive_name: str = None, force: bool = None) -> str
+powermake.archive_files(config: powermake.Config, object_files: set[str], archive_name: str = None, force: bool = None) -> str
 ```
 
 This function is a wrapper of lower level powermake functions.
 
-From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [compile_files](#compile_files) and a [powermake.Config](#powermakeconfig) object, it run the command to create a static library with the appropriate archiver and options in `config`.
+From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [powermake.compile_files](#powermakecompile_files) and a [powermake.Config](#powermakeconfig) object, it run the command to create a static library with the appropriate archiver and options in `config`.
 
 - if `archive_name` is None, the `config.target_name` is concatenated with the prefix `"lib"` so if `config.target_name` is `"XXX"`, the name will be `"libXXX"` and then the extension given by the type of archiver is added.
 - if `archiver_name` is not None, only the extension is added, if you want to use this parameter and you want your lib to be `"libXXX"`, you have to explicitly write `"libXXX"`.
@@ -819,9 +860,9 @@ From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by
 Returns the path of the static library generated.
 
 
-### delete_files_from_disk
+### powermake.delete_files_from_disk
 ```py
-delete_files_from_disk(*filepaths: str)
+powermake.delete_files_from_disk(*filepaths: str)
 ```
 
 Remove each filepath and skip if it doesn't exists.
@@ -829,14 +870,17 @@ Remove each filepath and skip if it doesn't exists.
 This function is variadic.
 
 
-### run_another_powermake
+### powermake.run_another_powermake
 ```py
-run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list[str]
+powermake.run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list[str]
 ```
 
 Run a powermake from another directory and returns a list of path to all libraries generated.
 
 If the parameters `debug`, `rebuild`, `verbosity` and `nb_jobs` are left to None, the values in `config` are used.  
 These parameters are passed to the other powermake.
+
+
+### powermake.needs_update
 
 **documentation in progress...**
