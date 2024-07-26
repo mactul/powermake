@@ -59,6 +59,12 @@
         - [remove\_ld\_flags()](#remove_ld_flags)
         - [add\_exported\_headers()](#add_exported_headers)
         - [remove\_exported\_headers()](#remove_exported_headers)
+    - [get\_files](#get_files)
+    - [filter\_files](#filter_files)
+    - [compile\_files](#compile_files)
+    - [archive\_files](#archive_files)
+    - [delete\_files\_from\_disk](#delete_files_from_disk)
+    - [run\_another\_powermake](#run_another_powermake)
 
 
 ## What is PowerMake ?
@@ -746,5 +752,91 @@ Remove exported headers from [config.exported_headers](#exported_headers) if the
 This method is variadic so you can put as many headers as you want.  
 The list order is preserved.
 
+
+### get_files
+```py
+get_files(*patterns: str) -> set[str]
+```
+
+Returns a set of filepaths that matches at least one of the patterns.
+
+Authorized patterns are:
+- `*` to match a filename, for example `"foo/*.c"` will match `"foo/test.c"` but not `"foo/bar/test.c"`
+- `**/` to match recursive directories, for example, `"foo/**/test.c"` will match  `"foo/test.c"` and `"foo/bar/test.c"`.  
+  Warning: `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
+
+This function is variadic.
+
+
+### filter_files
+```py
+def filter_files(files: set[str], *patterns: str) -> set[str]
+```
+
+From a given set of filepaths, remove every file that matches at least one of the patterns.  
+Returns a new filepaths set, filtered.
+
+Authorized patterns are:
+- `*` to match a filename, for example `"foo/*.c"` will match `"foo/test.c"` but not `"foo/bar/test.c"`
+- `**/` to match recursive directories, for example, `"foo/**/test.c"` will match  `"foo/test.c"` and `"foo/bar/test.c"`.  
+  Warning: `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
+
+This function is variadic.
+
+
+### compile_files
+```py
+compile_files(config: powermake.Config, files: set[str], force: bool = None) -> set[str]
+```
+
+This function is a wrapper of lower level powermake functions.
+
+From a set of `.c`, `.cpp`, `.cc` and `.C` filepaths and a [powermake.Config](#powermakeconfig) object, it runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
+
+- If `force` is True, all files are recompiled, even if they are up to date.
+- If `force` is False, only the files that are not up to date are recompiled
+- If `force` is None (default), the value of `config.rebuild` is used.
+
+Returns a set of `.o` (or compiler equivalent) filepaths for the next step.
+
+
+### archive_files
+```py
+archive_files(config: powermake.Config, object_files: set[str], archive_name: str = None, force: bool = None) -> str
+```
+
+This function is a wrapper of lower level powermake functions.
+
+From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [compile_files](#compile_files) and a [powermake.Config](#powermakeconfig) object, it run the command to create a static library with the appropriate archiver and options in `config`.
+
+- if `archive_name` is None, the `config.target_name` is concatenated with the prefix `"lib"` so if `config.target_name` is `"XXX"`, the name will be `"libXXX"` and then the extension given by the type of archiver is added.
+- if `archiver_name` is not None, only the extension is added, if you want to use this parameter and you want your lib to be `"libXXX"`, you have to explicitly write `"libXXX"`.
+
+- If `force` is True, the archiver is re-created, even if it's up to date.
+- If `force` is False, the archiver is created only if not up to date.
+- If `force` is None (default), the value of `config.rebuild` is used.
+
+Returns the path of the static library generated.
+
+
+### delete_files_from_disk
+```py
+delete_files_from_disk(*filepaths: str)
+```
+
+Remove each filepath and skip if it doesn't exists.
+
+This function is variadic.
+
+
+### run_another_powermake
+```py
+run_another_powermake(config: Powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list[str]
+```
+
+Run a powermake from another directory and returns a list of path to all libraries generated.
+
+If the parameters `debug`, `rebuild`, `verbosity` and `nb_jobs` are left to None, the values in `config` are used.  
+These parameters are passed to the other powermake.
 
 **documentation in progress...**
