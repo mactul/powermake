@@ -23,6 +23,7 @@ from .architecture import simplify_architecture
 from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
+from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 
 
 def get_global_config():
@@ -51,6 +52,7 @@ class Config:
         self.cpp_compiler: Compiler = None
         self.archiver: Archiver = None
         self.linker: Linker = None
+        self.shared_linker: SharedLinker = None
 
         self.target_operating_system: str = None
         self.host_operating_system: str = None
@@ -78,6 +80,7 @@ class Config:
         cpp_compiler_tuple = None
         archiver_tuple = None
         linker_tuple = None
+        shared_linker_tuple = None
 
         if global_config is None:
             global_config = get_global_config()
@@ -99,6 +102,9 @@ class Config:
 
                     if linker_tuple is None:
                         linker_tuple = load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types)
+
+                    if shared_linker_tuple is None:
+                        shared_linker_tuple = load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types)
 
                     if self.target_operating_system is None and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]
@@ -205,12 +211,30 @@ class Config:
         self.archiver = load_tool_from_tuple(archiver_tuple, "archiver")
         self.linker = load_tool_from_tuple(linker_tuple, "linker")
 
+        if self.c_compiler is None and self.cpp_compiler is not None:
+            if self.cpp_compiler.type == "g++":
+                self.c_compiler = find_tool(GenericCompiler, "gcc")
+            elif self.cpp_compiler.type == "clang++":
+                self.c_compiler = find_tool(GenericCompiler, "clang")
+            elif self.cpp_compiler.type == "clang-cl":
+                self.c_compiler = find_tool(GenericCompiler, "clang-cl")
+            elif self.cpp_compiler.type == "msvc":
+                self.c_compiler = find_tool(GenericCompiler, "msvc")
         if self.c_compiler is None:
             if self.target_is_linux():
                 self.c_compiler = find_tool(GenericCompiler, "gcc", "clang")
             elif self.target_is_windows():
                 self.c_compiler = find_tool(GenericCompiler, "msvc", "gcc", "clang-cl")
-
+        
+        if self.cpp_compiler is None and self.c_compiler is not None:
+            if self.c_compiler.type == "gcc":
+                self.cpp_compiler = find_tool(GenericCompiler, "g++")
+            elif self.c_compiler.type == "clang":
+                self.cpp_compiler = find_tool(GenericCompiler, "clang++")
+            elif self.c_compiler.type == "clang-cl":
+                self.cpp_compiler = find_tool(GenericCompiler, "clang-cl")
+            elif self.c_compiler.type == "msvc":
+                self.cpp_compiler = find_tool(GenericCompiler, "msvc")
         if self.cpp_compiler is None:
             if self.target_is_linux():
                 self.cpp_compiler = find_tool(GenericCompiler, "g++", "clang++")
@@ -219,7 +243,7 @@ class Config:
 
         if self.archiver is None:
             if self.target_is_linux():
-                self.archiver = find_tool(GenericArchiver, "ar")
+                self.archiver = find_tool(GenericArchiver, "ar", "llvm-ar")
             elif self.target_is_windows():
                 self.archiver = find_tool(GenericArchiver, "msvc")
 
@@ -232,6 +256,14 @@ class Config:
                 self.linker = find_tool(GenericLinker, "g++", "clang++", "gcc", "clang")
             elif self.target_is_windows():
                 self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc", "clang-cl")
+        
+        if self.shared_linker is None and self.linker is not None:
+            self.shared_linker = find_tool(GenericSharedLinker, self.linker.type)
+        if self.shared_linker is None:
+            if self.target_is_linux():
+                self.shared_linker = find_tool(GenericSharedLinker, "g++", "clang++", "gcc", "clang")
+            elif self.target_is_windows():
+                self.shared_linker = find_tool(GenericSharedLinker, "msvc", "g++", "gcc", "clang-cl")
 
         self.set_debug(self.debug, True)
 
