@@ -5,6 +5,7 @@
   - [Simple C/C++ program without dependencies](#simple-cc-program-without-dependencies)
   - [C/C++ program with compilation arguments](#cc-program-with-compilation-arguments)
   - [C/C++ static library](#cc-static-library)
+  - [C/C++ shared library](#cc-shared-library)
 
 
 ## General Notes
@@ -106,6 +107,50 @@ def on_install(config: powermake.Config, location: str):
     
     # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
     # The .a (or .lib or equivalent) will be copied into /usr/local/lib/my_lib.a
+    config.add_exported_headers("my_lib.h", subfolder="my_lib")
+
+    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending of the verbosity level, etc...
+    powermake.default_on_install(config, location)
+
+
+powermake.run("my_lib", build_callback=on_build, install_callback=on_install)
+```
+
+
+## C/C++ shared library
+
+```py
+import powermake
+
+
+def on_build(config: powermake.Config):
+    files = powermake.get_files("**/*.c", "**/*.cpp")
+
+    config.add_includedirs("./", "/usr/include/mariadb/")
+
+    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
+
+    objects = powermake.compile_files(config, files)
+
+    # link all object files into a shared library.
+    # because no lib_name was provided, the config.target_name set by powermake.run is used
+    shared_lib_path = powermake.link_shared_lib(config, objects)
+
+    print(shared_lib_path)
+
+
+def on_install(config: powermake.Config, location: str):
+    if location is None:
+        # No location is explicitly provided so we change the default for our convenance.
+        # We choose this path differently whether we are on Windows or on other platforms (here we assume other platforms are all Unix-Like).
+        if config.target_is_windows():
+            # Note that their is no need for this folder to exists, if it doesn't exists and if the program has the right to do so, it will be created.
+            location = "C:/personal_libs/"
+        else:
+            location = "/usr/local/"
+    
+    # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
+    # The .so (or .dll and .lib - or equivalent) will be copied into /usr/local/lib/my_lib.so
     config.add_exported_headers("my_lib.h", subfolder="my_lib")
 
     # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending of the verbosity level, etc...

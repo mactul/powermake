@@ -23,6 +23,7 @@
         - [cpp\_compiler](#cpp_compiler)
         - [archiver](#archiver)
         - [linker](#linker)
+        - [shared\_linker](#shared_linker)
         - [obj\_build\_directory](#obj_build_directory)
         - [lib\_build\_directory](#lib_build_directory)
         - [exe\_build\_directory](#exe_build_directory)
@@ -57,6 +58,8 @@
         - [remove\_ar\_flags()](#remove_ar_flags)
         - [add\_ld\_flags()](#add_ld_flags)
         - [remove\_ld\_flags()](#remove_ld_flags)
+        - [add\_shared\_linker\_flags()](#add_shared_linker_flags)
+        - [remove\_shared\_linker\_flags()](#remove_shared_linker_flags)
         - [add\_exported\_headers()](#add_exported_headers)
         - [remove\_exported\_headers()](#remove_exported_headers)
     - [powermake.default\_on\_clean](#powermakedefault_on_clean)
@@ -65,6 +68,8 @@
     - [powermake.filter\_files](#powermakefilter_files)
     - [powermake.compile\_files](#powermakecompile_files)
     - [powermake.archive\_files](#powermakearchive_files)
+    - [powermake.link\_files](#powermakelink_files)
+    - [powermake.link\_shared\_lib](#powermakelink_shared_lib)
     - [powermake.delete\_files\_from\_disk](#powermakedelete_files_from_disk)
     - [powermake.run\_another\_powermake](#powermakerun_another_powermake)
     - [powermake.needs\_update](#powermakeneeds_update)
@@ -269,6 +274,10 @@ Please note that this example is incoherent, but it shows as many options as pos
         "type": "gnu",
         "path": "/usr/bin/cc"
     },
+    "shared_linker": {
+        "type": "g++",
+        "path": "/usr/bin/g++"
+    },
 
     "obj_build_directory": "./build/objects/",
     "lib_build_directory": "./build/lib/",
@@ -407,7 +416,20 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 - `clang++`
 - `msvc`
 
-Once loaded, the `config.linker` is a virtual class that inherit from `powermake.archivers.Linker`.
+Once loaded, the `config.linker` is a virtual class that inherit from `powermake.linkers.Linker`.
+
+
+##### shared_linker
+
+The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `gnu`
+- `gcc`
+- `g++`
+- `clang`
+- `clang++`
+- `msvc`
+
+Once loaded, the `config.shared_linker` is a virtual class that inherit from `powermake.shared_linkers.SharedLinker`.
 
 
 ##### obj_build_directory
@@ -737,6 +759,26 @@ This method is variadic so you can put as many flags as you want.
 The list order is preserved.
 
 
+##### add_shared_linker_flags()
+```py
+config.add_shared_linker_flags(*shared_linker_flags: str)
+```
+
+Add flags to [config.shared_linker_flags](#shared_linker_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_shared_linker_flags()
+```py
+config.remove_shared_linker_flags(*shared_linker_flags: str)
+```
+
+Remove flags from [config.shared_linker_flags](#shared_linker_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
 ##### add_exported_headers()
 ```py
 config.add_exported_headers(*exported_headers: str, subfolder: str = None)
@@ -855,11 +897,49 @@ From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by
 - if `archive_name` is None, the `config.target_name` is concatenated with the prefix `"lib"` so if `config.target_name` is `"XXX"`, the name will be `"libXXX"` and then the extension given by the type of archiver is added.
 - if `archiver_name` is not None, only the extension is added, if you want to use this parameter and you want your lib to be `"libXXX"`, you have to explicitly write `"libXXX"`.
 
-- If `force` is True, the archiver is re-created, even if it's up to date.
-- If `force` is False, the archiver is created only if not up to date.
+- If `force` is True, the archive is re-created, even if it's up to date.
+- If `force` is False, the archive is created only if not up to date.
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 Returns the path of the static library generated.
+
+
+### powermake.link_files
+```py
+powermake.link_files(config: powermake.Config, object_files: set[str], archives: list[str] = [], executable_name: str = None, force: bool = None) -> str
+```
+
+This function is a wrapper of lower level powermake functions.
+
+From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [powermake.compile_files](#powermakecompile_files) and a [powermake.Config](#powermakeconfig) object, it run the command to create a n executable with the appropriate linker and options in `config`.
+
+- if `executable_name` is None, the `config.target_name` is used with the extension given by the type of linker.
+- if `executable_name` is not None, his value is concatenated with the extension.
+
+- If `force` is True, the executable is re-created, even if it's up to date.
+- If `force` is False, the executable is created only if not up to date.
+- If `force` is None (default), the value of `config.rebuild` is used.
+
+Returns the path of the executable generated.
+
+
+### powermake.link_shared_lib
+```py
+powermake.link_shared_lib(config: Config, object_files: set[str], archives: list[str] = [], lib_name: str = None, force: bool = None) -> str
+```
+
+This function is a wrapper of lower level powermake functions.
+
+From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [powermake.compile_files](#powermakecompile_files) and a [powermake.Config](#powermakeconfig) object, it run the command to create a shared library with the appropriate shared linker and options in `config`.
+
+- if `lib_name` is None, the `config.target_name` is concatenated with the prefix `"lib"` so if `config.target_name` is `"XXX"`, the name will be `"libXXX"` and then the extension given by the type of shared linker is added.
+- if `lib_name` is not None, only the extension is added, if you want to use this parameter and you want your lib to be `"libXXX"`, you have to explicitly write `"libXXX"`.
+
+- If `force` is True, the lib is re-created, even if it's up to date.
+- If `force` is False, the lib is created only if not up to date.
+- If `force` is None (default), the value of `config.rebuild` is used.
+
+Returns the path of the shared library generated.
 
 
 ### powermake.delete_files_from_disk
