@@ -18,6 +18,7 @@ import json
 from .config import get_global_config
 from .linkers import get_all_linker_types
 from .archivers import get_all_archiver_types
+from .shared_linkers import get_all_shared_linker_types
 from .compilers import get_all_c_compiler_types, get_all_cpp_compiler_types
 
 
@@ -63,6 +64,7 @@ class InteractiveConfig:
     cpp_compiler = [None, None]
     archiver = [None, None]
     linker = [None, None]
+    shared_linker = [None, None]
 
     def __init__(self, global_config: str = None, local_config: str = "./powermake_config"):
         self.global_config = global_config
@@ -94,11 +96,12 @@ class InteractiveConfig:
 
     def toolchain_menu(self):
         answer = 0
-        while answer != 5:
+        while answer != 6:
             choices = [
                 "C compiler",
                 "C++ compiler",
                 "Archiver (to make static libraries)",
+                "Shared Linker (to make shared libraries)",
                 "Linker\n",
                 "Back to main menu"
             ]
@@ -111,6 +114,8 @@ class InteractiveConfig:
             elif answer == 3:
                 self.tool_menu(self.archiver, "Archiver", get_all_archiver_types())
             elif answer == 4:
+                self.tool_menu(self.shared_linker, "Shared Linker", get_all_shared_linker_types())
+            elif answer == 5:
                 self.tool_menu(self.linker, "Linker", get_all_linker_types())
 
     def tool_menu(self, tool: list[str, str], tool_name: str, tool_types: list[str]):
@@ -156,6 +161,7 @@ class InteractiveConfig:
         add_tool_dict(config, self.c_compiler, "c_compiler")
         add_tool_dict(config, self.cpp_compiler, "cpp_compiler")
         add_tool_dict(config, self.archiver, "archiver")
+        add_tool_dict(config, self.shared_linker, "shared_linker")
         add_tool_dict(config, self.linker, "linker")
 
         os.makedirs(os.path.dirname(filepath), exist_ok=True)

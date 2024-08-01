@@ -73,6 +73,7 @@ class Config:
         self.cpp_flags: list[str] = []
         self.ar_flags: list[str] = []
         self.ld_flags: list[str] = []
+        self.shared_linker_flags: list[str] = []
 
         self.exported_headers: list[tuple[str, str]] = []
 
@@ -166,6 +167,11 @@ class Config:
                         for ld_flag in conf["ld_flags"]:
                             if isinstance(ld_flag, str) and ld_flag not in self.ld_flags:
                                 self.ld_flags.append(ld_flag)
+                    
+                    if "shared_linker_flags" in conf and isinstance(conf["shared_linker_flags"], list):
+                        for shared_linker_flag in conf["shared_linker_flags"]:
+                            if isinstance(shared_linker_flag, str) and shared_linker_flag not in self.shared_linker_flags:
+                                self.shared_linker_flags.append(shared_linker_flag)
 
                     if "exported_headers" in conf and isinstance(conf["exported_headers"], list):
                         for exported_header in conf["exported_headers"]:
@@ -202,9 +208,11 @@ class Config:
         if self.target_simplified_architecture == "x86" or self.target_simplified_architecture == "arm32":
             self.add_c_cpp_flags("-m32")
             self.add_ld_flags("-m32")
+            self.add_shared_linker_flags("-m32")
         elif self.target_simplified_architecture == "x64" or self.target_simplified_architecture == "arm64":
             self.add_c_cpp_flags("-m64")
             self.add_ld_flags("-m64")
+            self.add_shared_linker_flags("-m64")
 
         self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
         self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")
@@ -412,6 +420,16 @@ class Config:
         for ld_flag in ld_flags:
             if ld_flag in self.ld_flags:
                 self.ld_flags.remove(ld_flag)
+    
+    def add_shared_linker_flags(self, *shared_linker_flags: str) -> None:
+        for shared_linker_flag in shared_linker_flags:
+            if shared_linker_flag not in self.shared_linker_flags:
+                self.shared_linker_flags.append(shared_linker_flag)
+
+    def remove_shared_linker_flags(self, *shared_linker_flags: str) -> None:
+        for shared_linker_flag in shared_linker_flags:
+            if shared_linker_flag in self.shared_linker_flags:
+                self.shared_linker_flags.remove(shared_linker_flag)
 
     def add_exported_headers(self, *exported_headers: str, subfolder: str = None) -> None:
         for exported_header in exported_headers:
