@@ -46,6 +46,13 @@ class CompilerGNU(Compiler):
         return [self.path, "-c", "-o", outputfile, inputfile, *args]
 
 
+class CompilerGNUPlusPLus(CompilerGNU):
+    type = "gnu++"
+
+    def __init__(self, path: str = "c++"):
+        super().__init__(path)
+
+
 class CompilerGCC(CompilerGNU):
     type = "gcc"
     translation_dict = _powermake_flags_to_gcc_flags

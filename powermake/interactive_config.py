@@ -19,7 +19,7 @@ from .config import get_global_config
 from .linkers import get_all_linker_types
 from .archivers import get_all_archiver_types
 from .shared_linkers import get_all_shared_linker_types
-from .compilers import get_all_c_compiler_types, get_all_cpp_compiler_types
+from .compilers import get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 
 
 def dp(string: str):
@@ -62,6 +62,8 @@ class InteractiveConfig:
     target_operating_system = None
     c_compiler = [None, None]
     cpp_compiler = [None, None]
+    as_compiler = [None, None]
+    asm_compiler = [None, None]
     archiver = [None, None]
     linker = [None, None]
     shared_linker = [None, None]
@@ -96,15 +98,17 @@ class InteractiveConfig:
 
     def toolchain_menu(self):
         answer = 0
-        while answer != 6:
-            choices = [
-                "C compiler",
-                "C++ compiler",
-                "Archiver (to make static libraries)",
-                "Shared Linker (to make shared libraries)",
-                "Linker\n",
-                "Back to main menu"
-            ]
+        choices = [
+            "C compiler",
+            "C++ compiler",
+            "AS compiler (.s and .S files)",
+            "ASM compiler (.asm files)",
+            "Archiver (to make static libraries)",
+            "Shared Linker (to make shared libraries)",
+            "Linker\n",
+            "Back to main menu"
+        ]
+        while answer != len(choices):
             answer = multiple_choices("What do you want to configure ?", choices, range(1, len(choices)+1))
 
             if answer == 1:
@@ -112,10 +116,14 @@ class InteractiveConfig:
             elif answer == 2:
                 self.tool_menu(self.cpp_compiler, "C++ compiler", get_all_cpp_compiler_types())
             elif answer == 3:
-                self.tool_menu(self.archiver, "Archiver", get_all_archiver_types())
+                self.tool_menu(self.as_compiler, "AS compiler", get_all_as_compiler_types())
             elif answer == 4:
-                self.tool_menu(self.shared_linker, "Shared Linker", get_all_shared_linker_types())
+                self.tool_menu(self.asm_compiler, "ASM compiler", get_all_asm_compiler_types())
             elif answer == 5:
+                self.tool_menu(self.archiver, "Archiver", get_all_archiver_types())
+            elif answer == 6:
+                self.tool_menu(self.shared_linker, "Shared Linker", get_all_shared_linker_types())
+            elif answer == 7:
                 self.tool_menu(self.linker, "Linker", get_all_linker_types())
 
     def tool_menu(self, tool: list[str, str], tool_name: str, tool_types: list[str]):
@@ -160,6 +168,8 @@ class InteractiveConfig:
 
         add_tool_dict(config, self.c_compiler, "c_compiler")
         add_tool_dict(config, self.cpp_compiler, "cpp_compiler")
+        add_tool_dict(config, self.as_compiler, "as_compiler")
+        add_tool_dict(config, self.asm_compiler, "asm_compiler")
         add_tool_dict(config, self.archiver, "archiver")
         add_tool_dict(config, self.shared_linker, "shared_linker")
         add_tool_dict(config, self.linker, "linker")

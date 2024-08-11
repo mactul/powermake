@@ -13,8 +13,9 @@
 # limitations under the License.
 
 from .common import Compiler
+from .asm import CompilerNASM
 from .msvc import CompilerMSVC, CompilerClang_CL
-from .gnu import CompilerGNU, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
+from .gnu import CompilerGNU, CompilerGNUPlusPLus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
 
 
 _c_compiler_types: dict[str, Compiler] = {
@@ -26,14 +27,29 @@ _c_compiler_types: dict[str, Compiler] = {
 }
 
 _cpp_compiler_types: dict[str, Compiler] = {
+    "gnu++": CompilerGNUPlusPLus,
     "g++": CompilerGPlusPlus,
     "clang++": CompilerClangPlusPlus,
-    "msvc": CompilerMSVC
+    "msvc": CompilerMSVC,
+    "clang-cl": CompilerClang_CL
+}
+
+
+_as_compiler_types: dict[str, Compiler] = {
+    "gnu": CompilerGNU,
+    "gcc": CompilerGCC,
+    "clang": CompilerClang
+}
+
+_asm_compiler_types: dict[str, Compiler] = {
+    "nasm": CompilerNASM
 }
 
 _compiler_types: dict[str, Compiler] = {
     **_c_compiler_types,
-    **_cpp_compiler_types
+    **_cpp_compiler_types,
+    **_as_compiler_types,
+    **_asm_compiler_types
 }
 
 
@@ -53,3 +69,11 @@ def get_all_c_compiler_types() -> list[str]:
 
 def get_all_cpp_compiler_types() -> list[str]:
     return _cpp_compiler_types.keys()
+
+
+def get_all_as_compiler_types() -> list[str]:
+    return _as_compiler_types.keys()
+
+
+def get_all_asm_compiler_types() -> list[str]:
+    return _asm_compiler_types.keys()

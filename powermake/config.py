@@ -20,7 +20,7 @@ import platform
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture
-from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types
+from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
@@ -31,6 +31,79 @@ def get_global_config():
     if global_config is None:
         global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
     return global_config
+
+
+def auto_toolchain(c_compiler: Compiler, cpp_compiler: Compiler, as_compiler: Compiler, asm_compiler: Compiler, archiver: Archiver, linker: Linker, shared_linker: SharedLinker) -> tuple[str, str, str, str, str, str, str]:
+    if c_compiler is not None:
+        c_compiler_type = c_compiler.type
+    else:
+        c_compiler_type = None
+    if cpp_compiler is not None:
+        cpp_compiler_type = cpp_compiler.type
+    else:
+        cpp_compiler_type = None
+    if as_compiler is not None:
+        as_compiler_type = as_compiler.type
+    else:
+        as_compiler_type = None
+    if asm_compiler is not None:
+        asm_compiler_type = asm_compiler.type
+    else:
+        asm_compiler_type = None
+    if archiver is not None:
+        archiver_type = archiver.type
+    else:
+        archiver_type = None
+    if linker is not None:
+        linker_type = linker.type
+    else:
+        linker_type = None
+    if shared_linker is not None:
+        shared_linker_type = shared_linker.type
+    else:
+        shared_linker_type = None
+
+    if c_compiler_type == "gnu" or cpp_compiler_type == "gnu++" or as_compiler_type == "gnu" or linker_type in ("gnu", "gnu++") or shared_linker_type in ("gnu", "gnu++") or archiver_type == "gnu":
+        # GNU toolchain
+        c_compiler_type = "gnu"
+        cpp_compiler_type = "gnu++"
+        as_compiler_type = "gnu"
+        archiver_type = "gnu"
+        linker_type = "gnu++"
+        shared_linker_type = "gnu++"
+    elif c_compiler_type == "gcc" or cpp_compiler_type == "g++" or as_compiler_type == "gcc" or linker_type in ("gcc", "g++") or shared_linker_type in ("gcc", "g++") or archiver_type == "ar":
+        # GCC toolchain
+        c_compiler_type = "gcc"
+        cpp_compiler_type = "g++"
+        as_compiler_type = "gcc"
+        archiver_type = "ar"
+        linker_type = "g++"
+        shared_linker_type = "g++"
+    elif c_compiler_type == "clang" or cpp_compiler_type == "clang++" or as_compiler_type == "clang" or linker_type in ("clang", "clang++") or shared_linker_type in ("clang", "clang++") or archiver_type == "llvm-ar":
+        # clang toolchain
+        c_compiler_type = "clang"
+        cpp_compiler_type = "clang++"
+        as_compiler_type = "clang"
+        archiver_type = "llvm-ar"
+        linker_type = "clang++"
+        shared_linker_type = "clang++"
+    elif c_compiler_type == "msvc" or cpp_compiler_type == "msvc" or linker_type == "msvc" or shared_linker_type == "msvc" or archiver_type == "msvc":
+        # MSVC toolchain
+        c_compiler_type = "msvc"
+        cpp_compiler_type = "msvc"
+        as_compiler_type = "clang"
+        archiver_type = "msvc"
+        linker_type = "msvc"
+        shared_linker_type = "msvc"
+
+    return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
+
+
+def replace_architecture(string: str, new_arch):
+    new_arch = "/" + new_arch + "/"
+    for arch in ("/x86/", "/x64/", "/arm32/", "/arm64/"):
+        string = string.replace(arch, new_arch)
+    return string
 
 
 class Config:
@@ -50,6 +123,8 @@ class Config:
 
         self.c_compiler: Compiler = None
         self.cpp_compiler: Compiler = None
+        self.as_compiler: Compiler = None
+        self.asm_compiler: Compiler = None
         self.archiver: Archiver = None
         self.linker: Linker = None
         self.shared_linker: SharedLinker = None
@@ -71,6 +146,8 @@ class Config:
         self.additional_includedirs: list[str] = []
         self.c_flags: list[str] = []
         self.cpp_flags: list[str] = []
+        self.as_flags: list[str] = []
+        self.asm_flags: list[str] = []
         self.ar_flags: list[str] = []
         self.ld_flags: list[str] = []
         self.shared_linker_flags: list[str] = []
@@ -79,12 +156,16 @@ class Config:
 
         c_compiler_tuple = None
         cpp_compiler_tuple = None
+        as_compiler_tuple = None
+        asm_compiler_tuple = None
         archiver_tuple = None
         linker_tuple = None
         shared_linker_tuple = None
 
         if global_config is None:
             global_config = get_global_config()
+
+        self.global_config_dir = os.path.dirname(global_config)
 
         for path in (local_config, global_config):
             if path is None:
@@ -97,6 +178,12 @@ class Config:
 
                     if cpp_compiler_tuple is None:
                         cpp_compiler_tuple = load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types)
+
+                    if as_compiler_tuple is None:
+                        as_compiler_tuple = load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types)
+
+                    if asm_compiler_tuple is None:
+                        asm_compiler_tuple = load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types)
 
                     if archiver_tuple is None:
                         archiver_tuple = load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types)
@@ -132,10 +219,10 @@ class Config:
                             if isinstance(define, str) and define not in self.defines:
                                 self.defines.append(define)
 
-                    if "shared_libs" in conf and isinstance(conf["shared_links"], list):
-                        for shared_link in conf["shared_links"]:
-                            if isinstance(shared_link, str) and shared_link not in self.shared_links:
-                                self.shared_links.append(shared_link)
+                    if "shared_libs" in conf and isinstance(conf["shared_libs"], list):
+                        for shared_lib in conf["shared_libs"]:
+                            if isinstance(shared_lib, str) and shared_lib not in self.shared_libs:
+                                self.shared_libs.append(shared_lib)
 
                     if "additional_includedirs" in conf and isinstance(conf["additional_includedirs"], list):
                         for includedir in conf["additional_includedirs"]:
@@ -146,10 +233,12 @@ class Config:
                         for c_flag in conf["c_flags"]:
                             if isinstance(c_flag, str) and c_flag not in self.c_flags:
                                 self.c_flags.append(c_flag)
+
                     if "cpp_flags" in conf and isinstance(conf["cpp_flags"], list):
                         for cpp_flag in conf["cpp_flags"]:
                             if isinstance(cpp_flag, str) and cpp_flag not in self.cpp_flags:
                                 self.cpp_flags.append(cpp_flag)
+
                     if "c_cpp_flags" in conf and isinstance(conf["c_cpp_flags"], list):
                         for c_cpp_flag in conf["c_cpp_flags"]:
                             if isinstance(c_cpp_flag, str):
@@ -157,6 +246,28 @@ class Config:
                                     self.c_flags.append(c_cpp_flag)
                                 if c_cpp_flag not in self.cpp_flags:
                                     self.cpp_flags.append(c_cpp_flag)
+
+                    if "c_cpp_as_asm_flags" in conf and isinstance(conf["c_cpp_as_asm_flags"], list):
+                        for c_cpp_as_asm_flag in conf["c_cpp_as_asm_flags"]:
+                            if isinstance(c_cpp_as_asm_flag, str):
+                                if c_cpp_as_asm_flag not in self.c_flags:
+                                    self.c_flags.append(c_cpp_as_asm_flag)
+                                if c_cpp_as_asm_flag not in self.cpp_flags:
+                                    self.cpp_flags.append(c_cpp_as_asm_flag)
+                                if c_cpp_as_asm_flag not in self.as_flags:
+                                    self.as_flags.append(c_cpp_as_asm_flag)
+                                if c_cpp_as_asm_flag not in self.asm_flags:
+                                    self.asm_flags.append(c_cpp_as_asm_flag)
+
+                    if "as_flags" in conf and isinstance(conf["as_flags"], list):
+                        for as_flag in conf["as_flags"]:
+                            if isinstance(as_flag, str) and as_flag not in self.as_flags:
+                                self.as_flags.append(as_flag)
+
+                    if "asm_flags" in conf and isinstance(conf["asm_flags"], list):
+                        for asm_flag in conf["asm_flags"]:
+                            if isinstance(asm_flag, str) and asm_flag not in self.asm_flags:
+                                self.asm_flags.append(asm_flag)
 
                     if "ar_flags" in conf and isinstance(conf["ar_flags"], list):
                         for ar_flag in conf["ar_flags"]:
@@ -167,7 +278,7 @@ class Config:
                         for ld_flag in conf["ld_flags"]:
                             if isinstance(ld_flag, str) and ld_flag not in self.ld_flags:
                                 self.ld_flags.append(ld_flag)
-                    
+
                     if "shared_linker_flags" in conf and isinstance(conf["shared_linker_flags"], list):
                         for shared_linker_flag in conf["shared_linker_flags"]:
                             if isinstance(shared_linker_flag, str) and shared_linker_flag not in self.shared_linker_flags:
@@ -196,88 +307,98 @@ class Config:
         if self.host_architecture is None:
             self.host_architecture = platform.machine()
 
-        self.target_simplified_architecture = simplify_architecture(self.target_architecture)
-        self.host_simplified_architecture = simplify_architecture(self.host_architecture)
-
-        if self.target_is_windows():
-            env = load_msvc_environment(os.path.join(os.path.dirname(global_config), "msvc_envs.json"), architecture=self.target_simplified_architecture)
-            if env is not None:
-                for var in env:
-                    os.environ[var] = env[var]
-
-        if self.target_simplified_architecture == "x86" or self.target_simplified_architecture == "arm32":
-            self.add_c_cpp_flags("-m32")
-            self.add_ld_flags("-m32")
-            self.add_shared_linker_flags("-m32")
-        elif self.target_simplified_architecture == "x64" or self.target_simplified_architecture == "arm64":
-            self.add_c_cpp_flags("-m64")
-            self.add_ld_flags("-m64")
-            self.add_shared_linker_flags("-m64")
+        self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
 
         self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
         self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")
         self.archiver = load_tool_from_tuple(archiver_tuple, "archiver")
         self.linker = load_tool_from_tuple(linker_tuple, "linker")
 
-        if self.c_compiler is None and self.cpp_compiler is not None:
-            if self.cpp_compiler.type == "g++":
-                self.c_compiler = find_tool(GenericCompiler, "gcc")
-            elif self.cpp_compiler.type == "clang++":
-                self.c_compiler = find_tool(GenericCompiler, "clang")
-            elif self.cpp_compiler.type == "clang-cl":
-                self.c_compiler = find_tool(GenericCompiler, "clang-cl")
-            elif self.cpp_compiler.type == "msvc":
-                self.c_compiler = find_tool(GenericCompiler, "msvc")
+        toolchain = auto_toolchain(self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
+
         if self.c_compiler is None:
             if self.target_is_linux():
-                self.c_compiler = find_tool(GenericCompiler, "gcc", "clang")
+                self.c_compiler = find_tool(GenericCompiler, toolchain[0], "gcc", "clang")
             elif self.target_is_windows():
-                self.c_compiler = find_tool(GenericCompiler, "msvc", "gcc", "clang-cl")
-        
-        if self.cpp_compiler is None and self.c_compiler is not None:
-            if self.c_compiler.type == "gcc":
-                self.cpp_compiler = find_tool(GenericCompiler, "g++")
-            elif self.c_compiler.type == "clang":
-                self.cpp_compiler = find_tool(GenericCompiler, "clang++")
-            elif self.c_compiler.type == "clang-cl":
-                self.cpp_compiler = find_tool(GenericCompiler, "clang-cl")
-            elif self.c_compiler.type == "msvc":
-                self.cpp_compiler = find_tool(GenericCompiler, "msvc")
+                self.c_compiler = find_tool(GenericCompiler, toolchain[0], "msvc", "gcc", "clang-cl", "clang")
+
         if self.cpp_compiler is None:
             if self.target_is_linux():
-                self.cpp_compiler = find_tool(GenericCompiler, "g++", "clang++")
+                self.cpp_compiler = find_tool(GenericCompiler, toolchain[1], "g++", "clang++")
             elif self.target_is_windows():
-                self.cpp_compiler = find_tool(GenericCompiler, "msvc", "g++", "clang-cl")
+                self.cpp_compiler = find_tool(GenericCompiler, toolchain[1], "msvc", "g++", "clang-cl", "clang")
+
+        if self.as_compiler is None:
+            self.as_compiler = find_tool(GenericCompiler, toolchain[2], "gcc", "clang")
+
+        if self.asm_compiler is None:
+            self.asm_compiler = find_tool(GenericCompiler, toolchain[3], "nasm")
 
         if self.archiver is None:
             if self.target_is_linux():
-                self.archiver = find_tool(GenericArchiver, "ar", "llvm-ar")
+                self.archiver = find_tool(GenericArchiver, toolchain[4], "ar", "llvm-ar")
             elif self.target_is_windows():
-                self.archiver = find_tool(GenericArchiver, "msvc")
+                self.archiver = find_tool(GenericArchiver, toolchain[4], "msvc", "ar", "llvm-ar")
 
-        if self.linker is None and self.cpp_compiler is not None:
-            self.linker = find_tool(GenericLinker, self.cpp_compiler.type)
-        if self.linker is None and self.c_compiler is not None:
-            self.linker = find_tool(GenericLinker, self.c_compiler.type)
         if self.linker is None:
             if self.target_is_linux():
-                self.linker = find_tool(GenericLinker, "g++", "clang++", "gcc", "clang")
+                self.linker = find_tool(GenericLinker, toolchain[5], "g++", "clang++", "gcc", "clang")
             elif self.target_is_windows():
-                self.linker = find_tool(GenericLinker, "msvc", "g++", "gcc", "clang-cl")
-        
-        if self.shared_linker is None and self.linker is not None:
-            self.shared_linker = find_tool(GenericSharedLinker, self.linker.type)
+                self.linker = find_tool(GenericLinker, toolchain[5], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang")
+
         if self.shared_linker is None:
             if self.target_is_linux():
-                self.shared_linker = find_tool(GenericSharedLinker, "g++", "clang++", "gcc", "clang")
+                self.shared_linker = find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang")
             elif self.target_is_windows():
-                self.shared_linker = find_tool(GenericSharedLinker, "msvc", "g++", "gcc", "clang-cl")
+                self.shared_linker = find_tool(GenericSharedLinker, toolchain[6], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang")
 
         self.set_debug(self.debug, True)
 
     @property
     def c_cpp_flags(self):
         return self.c_flags + self.cpp_flags
+
+    @property
+    def c_cpp_as_asm_flags(self):
+        return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
+
+    def reload_env(self):
+        self.target_simplified_architecture = simplify_architecture(self.target_architecture)
+        self.host_simplified_architecture = simplify_architecture(self.host_architecture)
+
+        if self.target_is_windows():
+            env = load_msvc_environment(os.path.join(self.global_config_dir, "msvc_envs.json"), architecture=self.target_simplified_architecture)
+            if env is not None:
+                for var in env:
+                    os.environ[var] = env[var]
+
+    def reload_tools(self):
+        for tool in (self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker):
+            tool.reload()
+        self.reload_env()
+
+    def reset_build_directories(self):
+        if self.debug:
+            mode = "debug"
+            old_mode = "release"
+        else:
+            mode = "release"
+            old_mode = "debug"
+
+        if self.obj_build_directory is None:
+            self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system, self.target_simplified_architecture, mode)
+        else:
+            self.obj_build_directory = replace_architecture(self.obj_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
+
+        if self.exe_build_directory is None:
+            self.exe_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "bin")
+        else:
+            self.exe_build_directory = replace_architecture(self.exe_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
+
+        if self.lib_build_directory is None:
+            self.lib_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "lib")
+        else:
+            self.lib_build_directory = replace_architecture(self.lib_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
 
     def export_json(self):
         return {
@@ -289,44 +410,57 @@ class Config:
 
     def set_debug(self, debug: bool = True, reset_optimization: bool = False):
         self.debug = debug
-        if self.debug:
-            mode = "debug"
-            old_mode = "release"
-        else:
-            mode = "release"
-            old_mode = "debug"
 
-        if self.obj_build_directory is None:
-            self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system, self.target_simplified_architecture, mode)
-        else:
-            self.obj_build_directory = self.obj_build_directory.replace(old_mode, mode)
-
-        if self.exe_build_directory is None:
-            self.exe_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "bin")
-        else:
-            self.exe_build_directory = self.exe_build_directory.replace(old_mode, mode)
-
-        if self.lib_build_directory is None:
-            self.lib_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "lib")
-        else:
-            self.lib_build_directory = self.lib_build_directory.replace(old_mode, mode)
+        self.reset_build_directories()
 
         if self.debug:
             self.add_defines("DEBUG")
             self.remove_defines("NDEBUG")
-            self.add_c_cpp_flags("-g")
+            self.add_c_cpp_as_asm_flags("-g")
             if reset_optimization:
                 self.set_optimization("-O0")
         else:
             self.add_defines("NDEBUG")
             self.remove_defines("DEBUG")
-            self.remove_c_cpp_flags("-g")
+            self.remove_c_cpp_as_asm_flags("-g")
             if reset_optimization:
                 self.set_optimization("-O3")
 
+    def set_target_architecture(self, architecture, reload_tools_and_build_dir: bool = True):
+        self.target_architecture = architecture
+        if reload_tools_and_build_dir:
+            self.reload_tools()
+            self.reset_build_directories()
+        else:
+            self.reload_env()
+
+        add = None
+        remove = None
+        if self.target_simplified_architecture in ("x86", "arm32"):
+            add = "32"
+            remove = "64"
+        elif self.target_simplified_architecture in ("x64", "arm64"):
+            add = "64"
+            remove = "32"
+        if add is not None and remove is not None:
+            self.remove_c_cpp_flags("-m"+remove)
+            self.add_c_cpp_flags("-m"+add)
+            self.remove_ld_flags("-m"+remove)
+            self.add_ld_flags("-m"+add)
+            self.remove_shared_linker_flags("-m"+remove)
+            self.add_shared_linker_flags("-m"+add)
+            self.remove_as_flags("-m"+remove)
+            self.add_as_flags("-m"+add)
+            if self.target_is_windows():
+                self.remove_asm_flags("-fwin"+remove)
+                self.add_asm_flags("-fwin"+add)
+            else:
+                self.remove_asm_flags("-felf"+remove)
+                self.add_asm_flags("-felf"+add)
+
     def set_optimization(self, opt_flag: str):
-        self.remove_c_cpp_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
-        self.add_c_cpp_flags(opt_flag)
+        self.remove_c_cpp_as_asm_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
+        self.add_c_cpp_as_asm_flags(opt_flag)
 
     def get_optimization_level(self):
         for flag in reversed(self.c_cpp_flags):
@@ -401,6 +535,38 @@ class Config:
         self.remove_c_flags(*c_cpp_flags)
         self.remove_cpp_flags(*c_cpp_flags)
 
+    def add_c_cpp_as_asm_flags(self, *c_cpp_as_asm_flags: str) -> None:
+        self.add_c_flags(*c_cpp_as_asm_flags)
+        self.add_cpp_flags(*c_cpp_as_asm_flags)
+        self.add_as_flags(*c_cpp_as_asm_flags)
+        self.add_asm_flags(*c_cpp_as_asm_flags)
+
+    def remove_c_cpp_as_asm_flags(self, *c_cpp_as_asm_flags: str) -> None:
+        self.remove_c_flags(*c_cpp_as_asm_flags)
+        self.remove_cpp_flags(*c_cpp_as_asm_flags)
+        self.remove_as_flags(*c_cpp_as_asm_flags)
+        self.remove_asm_flags(*c_cpp_as_asm_flags)
+
+    def add_as_flags(self, *as_flags: str) -> None:
+        for as_flag in as_flags:
+            if as_flag not in self.as_flags:
+                self.as_flags.append(as_flag)
+
+    def remove_as_flags(self, *as_flags: str) -> None:
+        for as_flag in as_flags:
+            if as_flag in self.as_flags:
+                self.as_flags.remove(as_flag)
+
+    def add_asm_flags(self, *asm_flags: str) -> None:
+        for asm_flag in asm_flags:
+            if asm_flag not in self.asm_flags:
+                self.asm_flags.append(asm_flag)
+
+    def remove_asm_flags(self, *asm_flags: str) -> None:
+        for asm_flag in asm_flags:
+            if asm_flag in self.asm_flags:
+                self.asm_flags.remove(asm_flag)
+
     def add_ar_flags(self, *ar_flags: str) -> None:
         for ar_flag in ar_flags:
             if ar_flag not in self.ar_flags:
@@ -420,7 +586,7 @@ class Config:
         for ld_flag in ld_flags:
             if ld_flag in self.ld_flags:
                 self.ld_flags.remove(ld_flag)
-    
+
     def add_shared_linker_flags(self, *shared_linker_flags: str) -> None:
         for shared_linker_flag in shared_linker_flags:
             if shared_linker_flag not in self.shared_linker_flags:

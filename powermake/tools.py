@@ -21,10 +21,14 @@ class Tool(abc.ABC):
     type = None
 
     def __init__(self, path):
-        self.path = shutil.which(path)
+        self._name = path
+        self.reload()
 
     def is_available(self):
         return self.path is not None
+
+    def reload(self):
+        self.path = shutil.which(self._name)
 
 
 def load_tool_tuple_from_file(conf: dict[str, str], tool_name: str, object_getter: callable, tool_list_getter: callable) -> Tool:
