@@ -40,6 +40,7 @@
         - [c\_cpp\_as\_asm\_flags](#c_cpp_as_asm_flags)
         - [ar\_flags](#ar_flags)
         - [ld\_flags](#ld_flags)
+        - [shared\_linker\_flags](#shared_linker_flags)
         - [exported\_headers](#exported_headers)
       - [Methods](#methods)
         - [set\_debug()](#set_debug)
@@ -277,6 +278,14 @@ Please note that this example is incoherent, but it shows as many options as pos
     "cpp_compiler": {
         "type": "clang++"
     },
+    "as_compiler": {
+      "type": "gcc",
+      "path": "/usr/bin/gcc"
+    },
+    "asm_compiler": {
+      "type": "nasm",
+      "path": "/usr/bin/nasm"
+    },
     "archiver": {
         "type": "ar",
         "path": "/usr/bin/ar"
@@ -299,9 +308,13 @@ Please note that this example is incoherent, but it shows as many options as pos
     "shared_libs": ["mariadb", "ssl", "crypto"],
     "c_flags": ["-fanalyzer", "-O3"],
     "cpp_flags": ["-g", "-O0"],
-    "c_cpp_flags": ["-Wall", "-Wextra"],
+    "c_cpp_flags": ["-Wswitch"],
+    "as_flags": [],
+    "asm_flags": ["-s"],
+    "c_cpp_as_asm_flags": ["-Wall", "-Wextra"],
     "ar_flags": [],
-    "ld_flags": ["-static"],
+    "ld_flags": ["-static", "-no-pie"],
+    "shared_linker_flags": ["-fPIE"]
 
     "exported_headers": ["my_lib.h", ["my_lib_linux.h", "my_lib/linux"], ["my_lib/windows.h", "my_lib/windows"]]
 }
@@ -591,6 +604,13 @@ If not, they are simply passed to the linker.
 
 - This list is merged from the local and global config
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ld_flags](#add_ld_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+##### shared_linker_flags
+
+A list of flags that will be passed to the linker when linking a shared library.
+
+This behave exactly like [config.ld_flags](#c_cpp_flags), with the same limitations.
 
 
 ##### exported_headers
