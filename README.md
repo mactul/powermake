@@ -21,6 +21,8 @@
         - [target\_architecture](#target_architecture)
         - [c\_compiler](#c_compiler)
         - [cpp\_compiler](#cpp_compiler)
+        - [as\_compiler](#as_compiler)
+        - [asm\_compiler](#asm_compiler)
         - [archiver](#archiver)
         - [linker](#linker)
         - [shared\_linker](#shared_linker)
@@ -33,6 +35,9 @@
         - [c\_flags](#c_flags)
         - [cpp\_flags](#cpp_flags)
         - [c\_cpp\_flags](#c_cpp_flags)
+        - [as\_flags](#as_flags)
+        - [asm\_flags](#asm_flags)
+        - [c\_cpp\_as\_asm\_flags](#c_cpp_as_asm_flags)
         - [ar\_flags](#ar_flags)
         - [ld\_flags](#ld_flags)
         - [exported\_headers](#exported_headers)
@@ -54,6 +59,12 @@
         - [remove\_cpp\_flags()](#remove_cpp_flags)
         - [add\_c\_cpp\_flags()](#add_c_cpp_flags)
         - [remove\_c\_cpp\_flags()](#remove_c_cpp_flags)
+        - [add\_as\_flags()](#add_as_flags)
+        - [remove\_as\_flags()](#remove_as_flags)
+        - [add\_asm\_flags()](#add_asm_flags)
+        - [remove\_asm\_flags()](#remove_asm_flags)
+        - [add\_c\_cpp\_as\_asm\_flags()](#add_c_cpp_as_asm_flags)
+        - [remove\_c\_cpp\_as\_asm\_flags()](#remove_c_cpp_as_asm_flags)
         - [add\_ar\_flags()](#add_ar_flags)
         - [remove\_ar\_flags()](#remove_ar_flags)
         - [add\_ld\_flags()](#add_ld_flags)
@@ -79,7 +90,7 @@
 
 ## What is PowerMake ?
 
-Powermake is an utility to compile C/C++ code, just like Make, Ninja, cmake or xmake.
+Powermake is an utility to compile C/C++/AS/ASM code, just like Make, Ninja, cmake or xmake.
 
 His goal is to give full power to the user, while being cross-platform, easier to use than Make and faster than Ninja.
 
@@ -95,7 +106,7 @@ PowerMake was specifically designed for complex projects that have very complica
 
 - Cross-Platform:
   - PowerMake is able to detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
-    - This currently works well with GCC/G++/Clang/Clang++/MSVC, but other compilers will be add.
+    - This currently works well with GCC/G++/Clang/Clang++/Clang-CL/MSVC/NASM, but other compilers will be add.
   - Because it's written in python it works in almost all machine and you can always write the compilation instructions for your machine and for your compiler.
 
 - Gives you complete control of what you are doing. Nothing is hidden and any behavior can be overwritten.
@@ -387,11 +398,35 @@ When the `powermake.Config` object is loaded, the `c_compiler` member is no long
 ##### cpp_compiler
 
 The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `gnu++`
 - `g++`
 - `clang++`
 - `msvc`
 
 You can also use one of the [c_compiler](#c_compiler) types, but in this case you **must** add a path or the compilers will not be C++ compilers.
+
+
+##### as_compiler
+
+This compiler is used to compile GNU Assembly (.s and .S files)
+
+The as_compiler behave exactly like the [c_compiler](#c_compiler) but the possible types are:
+- `gnu`
+- `gcc`
+- `clang`
+
+You can also use one of the [asm_compiler](#asm_compiler) types if you really have to compile a .s or .S file with `nasm` or something like this.
+
+
+##### asm_compiler
+
+This compiler is used to compile .asm files (generally Intel asm)
+
+The asm_compiler behave exactly like the [c_compiler](#c_compiler) but the only type currently supported is:
+- `nasm`
+
+You can also use one of the [as_compiler](#as_compiler) types if you really have to compile a .asm file with a GNU assembler.
+
 
 ##### archiver
 
@@ -410,6 +445,7 @@ Once loaded, the `config.archiver` is a virtual class that inherit from `powerma
 
 The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
 - `gnu`
+- `gnu++`
 - `gcc`
 - `g++`
 - `clang`
@@ -421,13 +457,7 @@ Once loaded, the `config.linker` is a virtual class that inherit from `powermake
 
 ##### shared_linker
 
-The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
-- `gnu`
-- `gcc`
-- `g++`
-- `clang`
-- `clang++`
-- `msvc`
+The configuration in the json behave exactly like [config.linker](#linker) but is used to link shared libraries.
 
 Once loaded, the `config.shared_linker` is a virtual class that inherit from `powermake.shared_linkers.SharedLinker`.
 
@@ -510,6 +540,35 @@ In the `powermake.Config` object, this list doesn't correspond to a real list, i
 
 - This list is merged from the local and global config
 - **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_cpp_flags](#add_c_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+##### as_flags
+
+A list of flags that will be passed to the GNU assembly compiler.
+
+If in the powermake known flags list, these flags are translated for the specific compiler.  
+If not, they are simply passed to the compiler.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_as_flags](#add_as_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+##### asm_flags
+
+A list of flags that will be passed to the Intel asm compiler.
+
+If in the powermake known flags list, these flags are translated for the specific compiler.  
+If not, they are simply passed to the compiler.
+
+- This list is merged from the local and global config
+- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_asm_flags](#add_asm_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+
+
+##### c_cpp_as_asm_flags
+
+A list of flags that will be passed to the C : AND the C++ compiler AND the AS compiler AND the ASM compiler.
+
+This behave exactly like [config.c_cpp_flags](#c_cpp_flags), with the same limitations.
 
 
 ##### ar_flags
@@ -719,6 +778,66 @@ This method is variadic so you can put as many flags as you want.
 The list order is preserved.
 
 
+##### add_as_flags()
+```py
+config.add_as_flags(*as_flags: str)
+```
+
+Add flags to [config.as_flags](#as_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_as_flags()
+```py
+config.remove_as_flags(*as_flags: str)
+```
+
+Remove flags from [config.as_flags](#as_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_asm_flags()
+```py
+config.add_asm_flags(*asm_flags: str)
+```
+
+Add flags to [config.asm_flags](#asm_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_asm_flags()
+```py
+config.remove_asm_flags(*asm_flags: str)
+```
+
+Remove flags from [config.asm_flags](#asm_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### add_c_cpp_as_asm_flags()
+```py
+config.add_c_cpp_as_asm_flags(*c_cpp_as_asm_flags: str)
+```
+
+Add flags to [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they do not exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_c_cpp_as_asm_flags()
+```py
+config.remove_c_cpp_as_asm_flags(*c_cpp_as_asm_flags: str)
+```
+
+Remove flags from [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
 ##### add_ar_flags()
 ```py
 config.add_ar_flags(*ar_flags: str)
@@ -876,7 +995,7 @@ powermake.compile_files(config: powermake.Config, files: set[str], force: bool =
 
 This function is a wrapper of lower level powermake functions.
 
-From a set of `.c`, `.cpp`, `.cc` and `.C` filepaths and a [powermake.Config](#powermakeconfig) object, it runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
+From a set of `.c`, `.cpp`, `.cc`, `.C`, `.s`, `.S` and `.asm` filepaths and a [powermake.Config](#powermakeconfig) object, it runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
 
 - If `force` is True, all files are recompiled, even if they are up to date.
 - If `force` is False, only the files that are not up to date are recompiled
@@ -982,7 +1101,7 @@ powermake.Operation(outputfile: str, dependencies: set[str], config: Config, com
 ```
 
 This is a simple object to execute a command only if needed.  
-It can be used to easily parallelize multiple commands. Note that you can use [powermake.compile_files](#powermakecompile_files) which do that for you, but only for C/C++ files.
+It can be used to easily parallelize multiple commands. Note that you can use [powermake.compile_files](#powermakecompile_files) which do that for you, but only for C/C++/AS/ASM files.
 
 The command should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
 This list is then directly passed to `subprocess.run`
