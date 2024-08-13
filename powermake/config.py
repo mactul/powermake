@@ -17,10 +17,11 @@ import os
 import json
 import platform
 
+from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture
-from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
+from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPLus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
@@ -308,6 +309,17 @@ class Config:
             self.host_architecture = platform.machine()
 
         self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
+
+        cc_env = os.getenv("CC")
+        print(cc_env)
+        if cc_env is not None:
+            c_compiler_tuple = (cc_env, CompilerGNU)
+            print_debug_info("Using CC environment variable instead of the config", verbosity)
+
+        cxx_env = os.getenv("CXX")
+        if cxx_env is not None:
+            cpp_compiler_tuple = (cxx_env, CompilerGNUPlusPLus)
+            print_debug_info("Using CXX environment variable instead of the config", verbosity)
 
         self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
         self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")

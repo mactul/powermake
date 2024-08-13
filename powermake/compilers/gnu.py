@@ -25,7 +25,7 @@ _powermake_flags_to_clang_flags = {
 }
 
 _powermake_flags_to_gnu_flags = {
-    "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"],
+    "-Weverything": ["-Wall", "-Wextra"],
     "-fanalyzer": []
 }
 
