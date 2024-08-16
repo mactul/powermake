@@ -17,16 +17,19 @@ from ..tools import translate_flags
 
 
 _powermake_flags_to_gcc_flags = {
-    "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"]
+    "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"],
+    "-ffuzzer": []
 }
 
 _powermake_flags_to_clang_flags = {
-    "-fanalyzer": []
+    "-fanalyzer": [],
+    "-ffuzzer": ["-fsanitize=address,fuzzer"]
 }
 
 _powermake_flags_to_gnu_flags = {
     "-Weverything": ["-Wall", "-Wextra"],
-    "-fanalyzer": []
+    "-fanalyzer": [],
+    "-ffuzzer": []
 }
 
 

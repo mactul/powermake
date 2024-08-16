@@ -12,19 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ..tools import translate_flags
 from .common import SharedLinker
+
+_powermake_flags_to_gnu_flags = {
+    "-ffuzzer": []
+}
+
+_powermake_flags_to_clang_flags = {
+    "-ffuzzer": ["-fsanitize=address,fuzzer"]
+}
 
 
 class SharedLinkerGNU(SharedLinker):
     type = "gnu"
     shared_lib_extension = ".so"
+    translation_dict = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
 
     @classmethod
     def format_args(self, shared_libs: list[str], flags: list[str]):
-        return ["-l"+lib for lib in shared_libs] + flags
+        return ["-l"+lib for lib in shared_libs] + translate_flags(flags)
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]
@@ -46,6 +56,7 @@ class SharedLinkerGPlusPlus(SharedLinkerGNU):
 
 class SharedLinkerClang(SharedLinkerGNU):
     type = "clang"
+    translation_dict = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
@@ -53,6 +64,7 @@ class SharedLinkerClang(SharedLinkerGNU):
 
 class SharedLinkerClangPlusPlus(SharedLinkerGNU):
     type = "clang++"
+    translation_dict = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

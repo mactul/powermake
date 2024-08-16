@@ -26,6 +26,7 @@ _powermake_warning_flags_to_msvc_flags = {
     "-Wswitch": ["/we4062"],
     "-Wswitch-enum": ["/we4061"],
     "-fanalyzer": ["/analyze"],
+    "-ffuzzer": ["/fsanitize=address,fuzzer"]
 }
 
 _powermake_optimization_flags_to_msvc_flags = {

@@ -87,6 +87,9 @@
     - [powermake.needs\_update](#powermakeneeds_update)
     - [powermake.Operation](#powermakeoperation)
       - [execute()](#execute)
+    - [Compatibility with other tools](#compatibility-with-other-tools)
+      - [Scan-Build](#scan-build)
+      - [LLVM libfuzzer](#llvm-libfuzzer)
 
 
 ## What is PowerMake ?
@@ -159,6 +162,8 @@ powermake.run("program_test", build_callback=on_build)
 ### [See more examples](./examples.md)
 
 ## Documentation
+
+**Note:** This documentation is not completed, if you struggle to do something, do not hesitate to ask a question in the [discussions section](https://github.com/mactul/powermake/discussions/categories/q-a), it may be that the feature you search for is undocumented.
 
 ### Command line arguments
 
@@ -247,10 +252,11 @@ It contains everything you need for your compilation journey. For example, it st
 
 Most of the time, this object is created by [powermake.run](#powermakerun) and you don't need to worry about the constructor of this object (which is a bit messy...).
 
-But one thing you have to know is that the construction of this object involve 3 steps:
-- step 1: It loads the local config file, by default stored at `./powermake_config.json` just next to the `makefile.py` (or whatever name your makefile have)
-- step 2: It complete the local config with the global config, by default, stored in your home, at `~/.powermake/powermake_config.json` (If you create an env variable named `POWERMAKE_CONFIG`, you can override this location.).
-- step 3: For all fields that are left empty, powermake will try to create a default value from your platform information.
+But one thing you have to know is that the construction of this object involve 4 steps:
+- step 1: It checks the value of the CC and CXX environment variables and if they are set, it set the path of the C compiler and the C++ compiler with these variables. This make sure that powermake is compatible with clang `scan-build` utility.
+- step 2: It loads the local config file, by default stored at `./powermake_config.json` just next to the `makefile.py` (or whatever name your makefile have)
+- step 3: It complete the local config with the global config, by default, stored in your home, at `~/.powermake/powermake_config.json` (If you create an env variable named `POWERMAKE_CONFIG`, you can override this location.).
+- step 4: For all fields that are left empty, powermake will try to create a default value from your platform information.
   
 In theory, after the end of these 3 steps, all members of the `powermake.Config` object should be set.  
 In rare case, if powermake was enable to detect a default compiler, the `c_compiler`, `cpp_compiler`, `archiver` and `linker` members can be None.  
@@ -1139,5 +1145,22 @@ If `force` is True, the command is run in any case.
 If you are parallelizing operations, you should set this mutex to avoid weird debug messages behavior.  
 If left to None, no mutex is used.
 
+### Compatibility with other tools
+
+#### Scan-Build
+
+Powermake is compatible with clang [scan-build](https://clang.llvm.org/docs/analyzer/user-docs/CommandLineUsage.html#scan-build) utility.  
+You can run `scan-build python makefile.py -rd` to compile your code with a static analysis.  
+Just remember that scan-build needs your program to be compiled in debug mode, hence the `-d` flag.  
+We recommend you to also try compiling your code with gcc and the `-fanalyzer` option to get the best results possible.
+
+#### LLVM libfuzzer
+
+Powermake helps you compiling with [LLVM libfuzzer](https://llvm.org/docs/LibFuzzer.html).
+
+You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_c_cpp_flags](#add_c_cpp_flags) and [config.add_ld_flags](#add_ld_flags).
+
+If you are using clang or MSVC, this will enable the address sanitizer and the fuzzer.
+Otherwise, the argument is ignored.
 
 **documentation in progress...**

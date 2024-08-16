@@ -23,6 +23,7 @@ _powermake_warning_flags_to_nasm_flags = {
     "-Wswitch": [],
     "-Wswitch-enum": [],
     "-fanalyzer": ["-Wall"],
+    "-ffuzzer": []
 }
 
 _powermake_optimization_flags_to_nasm_flags = {

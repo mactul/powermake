@@ -17,7 +17,8 @@ from .common import Linker
 
 _powermake_flags_to_msvc_flags = {
     "-m32": [],
-    "-m64": []
+    "-m64": [],
+    "-ffuzzer": ["/fsanitize=address,fuzzer"]
 }
 
 
