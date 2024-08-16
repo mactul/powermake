@@ -35,7 +35,7 @@ class LinkerGNU(Linker):
 
     @classmethod
     def format_args(self, shared_libs: list[str], flags: list[str]):
-        return ["-l"+lib for lib in shared_libs] + translate_flags(flags)
+        return ["-l"+lib for lib in shared_libs] + translate_flags(flags, self.translation_dict)
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
