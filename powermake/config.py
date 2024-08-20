@@ -108,7 +108,7 @@ def replace_architecture(string: str, new_arch):
 
 
 class Config:
-    def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: str = None, compile_commands_dir: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
         """Create an object that loads all configurations files and search for compilers.
 
         This objects hold all the configuration for the compilation.
@@ -121,6 +121,7 @@ class Config:
         self.rebuild = rebuild
         self.nb_jobs = nb_jobs
         self.single_file = single_file
+        self.compile_commands_dir = compile_commands_dir
 
         self.c_compiler: Compiler = None
         self.cpp_compiler: Compiler = None
@@ -214,6 +215,9 @@ class Config:
 
                     if self.nb_jobs == 0 and "nb_jobs" in conf:
                         self.nb_jobs = conf["nb_jobs"]
+
+                    if self.compile_commands_dir is None and "compile_commands_dir" in conf:
+                        self.compile_commands_dir = conf["compile_commands_dir"]
 
                     if "defines" in conf and isinstance(conf["defines"], list):
                         for define in conf["defines"]:

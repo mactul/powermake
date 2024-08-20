@@ -177,3 +177,14 @@ class Operation:
             else:
                 raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")
         return self.outputfile
+
+    def get_json_command(self):
+        json_command = {
+            "directory": os.getcwd(),
+            "arguments": self.command,
+            "output": self.outputfile
+        }
+        if len(self.dependencies) > 0:
+            json_command["file"] = self.dependencies[0]
+
+        return json_command

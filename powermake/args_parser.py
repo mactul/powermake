@@ -127,6 +127,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("-l", "--local-config", metavar="LOCAL_CONFIG_PATH", help="Set the path for the local config", default="./powermake_config.json")
         self.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
         self.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
+        self.add_argument("-o", "--compile-commands-dir", metavar="DIRECTORY", help="Run the compilation and generate a compile_commands.json file in the directory specified.", default=None)
         self.add_argument("--get-lib-build-folder", help="(Internal option) - Return the lib build folder path according to the config.", action="store_true")
         self.add_argument("--retransmit-colors", help="(Internal option) - Let all ANSI color codes intact, even if not in a terminal.", action="store_true")
 
@@ -189,7 +190,7 @@ def run(target_name: str, *, build_callback: callable, clean_callback: callable 
         interactive_config = True
         InteractiveConfig(global_config=args_parsed.global_config, local_config=args_parsed.local_config)
 
-    config = Config(target_name, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file)
+    config = Config(target_name, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir)
 
     if clean:
         clean_callback(config)

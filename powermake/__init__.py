@@ -16,6 +16,7 @@
 import os
 import sys
 import glob
+import json
 import fnmatch
 import subprocess
 import importlib.util
@@ -170,6 +171,15 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
         else:
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
         operations.add(Operation(output_file, [file], config, command))
+
+    if config.compile_commands_dir is not None:
+        json_commands = []
+        for op in operations:
+            json_commands.append(op.get_json_command())
+
+        os.makedirs(config.compile_commands_dir, exist_ok=True)
+        with open(os.path.join(config.compile_commands_dir, "compile_commands.json"), "w") as file:
+            json.dump(json_commands, file, indent=4)
 
     if config.single_file is not None:
         (op, ) = operations

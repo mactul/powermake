@@ -15,6 +15,7 @@
     - [powermake.Config](#powermakeconfig)
       - [Members](#members)
         - [nb\_jobs](#nb_jobs)
+        - [compile\_commands\_dir](#compile_commands_dir)
         - [host\_operating\_system](#host_operating_system)
         - [target\_operating\_system](#target_operating_system)
         - [host\_architecture](#host_architecture)
@@ -272,6 +273,7 @@ Please note that this example is incoherent, but it shows as many options as pos
 ```json
 {
     "nb_jobs": 8,
+    "compile_commands_dir": ".vscode/",
     "host_operating_system": "Linux",
     "target_operating_system": "Windows",
     "host_architecture": "x64",
@@ -320,7 +322,7 @@ Please note that this example is incoherent, but it shows as many options as pos
     "c_cpp_as_asm_flags": ["-Wall", "-Wextra"],
     "ar_flags": [],
     "ld_flags": ["-static", "-no-pie"],
-    "shared_linker_flags": ["-fPIE"]
+    "shared_linker_flags": ["-fPIE"],
 
     "exported_headers": ["my_lib.h", ["my_lib_linux.h", "my_lib/linux"], ["my_lib/windows.h", "my_lib/windows"]]
 }
@@ -339,6 +341,11 @@ If non-set or set to zero, this number is chosen according to the number of CPU 
 Set this to 1 to disable multithreading.
 
 This can be overwritten by the command-line.
+
+
+##### compile_commands_dir
+
+If this is set, [powermake.compile_files](#powermakecompile_files) will generate a `compile_commands.json` in the directory specified by this parameter.
 
 
 ##### host_operating_system
