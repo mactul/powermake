@@ -13,12 +13,13 @@
 # limitations under the License.
 
 from .common import Linker
-from .gnu import LinkerGNU, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
+from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 
 _linker_types: dict[str, Linker] = {
     "gnu": LinkerGNU,
+    "ld": LinkerLD,
     "gcc": LinkerGCC,
     "g++": LinkerGPlusPlus,
     "clang": LinkerClang,

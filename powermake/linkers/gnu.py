@@ -24,6 +24,15 @@ _powermake_flags_to_clang_flags = {
     "-ffuzzer": ["-fsanitize=address,fuzzer"]
 }
 
+_powermake_flags_to_ld_flags = {
+    "-ffuzzer": [],
+    "-Weverything": [],
+    "-Wall": [],
+    "-Wextra": [],
+    "-m32": [],
+    "-m64": []
+}
+
 
 class LinkerGNU(Linker):
     type = "gnu"
@@ -39,6 +48,14 @@ class LinkerGNU(Linker):
 
     def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
         return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
+
+
+class LinkerLD(LinkerGNU):
+    type = "ld"
+    translation_dict = _powermake_flags_to_ld_flags
+
+    def __init__(self, path: str = "ld"):
+        super().__init__(path)
 
 
 class LinkerGCC(LinkerGNU):

@@ -14,6 +14,7 @@
 
 
 import os
+import copy
 import json
 import platform
 
@@ -423,6 +424,9 @@ class Config:
                 "path": self.c_compiler.path
             }
         }
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     def set_debug(self, debug: bool = True, reset_optimization: bool = False):
         self.debug = debug

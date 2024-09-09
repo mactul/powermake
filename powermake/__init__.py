@@ -69,6 +69,13 @@ def get_files(*patterns: str) -> set[str]:
     return files
 
 
+def _match_a_pattern(file: str, patterns: list[str]) -> bool:
+    for pattern in patterns:
+        if fnmatch.fnmatch(file, pattern):
+            return True
+    return False
+
+
 def filter_files(files: set[str], *patterns: str) -> set[str]:
     """Create a copy of the set `files` with all elements that matches `pattern` removed.
 
@@ -83,9 +90,8 @@ def filter_files(files: set[str], *patterns: str) -> set[str]:
     """
     output = set()
     for file in files:
-        for pattern in patterns:
-            if not fnmatch.fnmatch(file, pattern):
-                output.add(file)
+        if not _match_a_pattern(file, patterns):
+            output.add(file)
     return output
 
 
