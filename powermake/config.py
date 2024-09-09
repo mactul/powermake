@@ -16,6 +16,7 @@
 import os
 import copy
 import json
+import argparse
 import platform
 
 from .display import print_debug_info
@@ -109,7 +110,7 @@ def replace_architecture(string: str, new_arch):
 
 
 class Config:
-    def __init__(self, target_name, *, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: str = None, compile_commands_dir: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, target_name, *, args_parsed: argparse.Namespace = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: str = None, compile_commands_dir: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
         """Create an object that loads all configurations files and search for compilers.
 
         This objects hold all the configuration for the compilation.
@@ -117,6 +118,7 @@ class Config:
         If you want to compile multiple set of files with different settings, you have to make a copy of this object and modify the copy.
         """
         self.target_name = target_name
+        self._args_parsed = args_parsed
         self.verbosity = verbosity
         self.debug = debug
         self.rebuild = rebuild
