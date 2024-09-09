@@ -1,8 +1,8 @@
 # PowerMake
 
 - [PowerMake](#powermake)
-  - [What is PowerMake ?](#what-is-powermake-)
-  - [For which project is PowerMake suitable ?](#for-which-project-is-powermake-suitable-)
+  - [What is PowerMake?](#what-is-powermake)
+  - [For which project is PowerMake suitable?](#for-which-project-is-powermake-suitable)
   - [Advantages of PowerMake](#advantages-of-powermake)
   - [Disadvantages of PowerMake](#disadvantages-of-powermake)
   - [Philosophy](#philosophy)
@@ -75,6 +75,7 @@
         - [remove\_shared\_linker\_flags()](#remove_shared_linker_flags)
         - [add\_exported\_headers()](#add_exported_headers)
         - [remove\_exported\_headers()](#remove_exported_headers)
+        - [copy()](#copy)
     - [powermake.default\_on\_clean](#powermakedefault_on_clean)
     - [powermake.default\_on\_install](#powermakedefault_on_install)
     - [powermake.get\_files](#powermakeget_files)
@@ -476,6 +477,7 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 - `g++`
 - `clang`
 - `clang++`
+- `ld`
 - `msvc`
 
 Once loaded, the `config.linker` is a virtual class that inherits from `powermake.linkers.Linker`.
@@ -951,6 +953,14 @@ config.remove_exported_headers(*exported_headers: str, subfolder: str = None)
 Remove exported headers from [config.exported_headers](#exported_headers) if they exists.  
 This method is variadic so you can put as many headers as you want.  
 The list order is preserved.
+
+
+##### copy()
+```py
+config.copy()
+```
+
+Returns a new config object which is a deepcopy of the config. It should be used to compile different set of files with different parameters.
 
 
 ### powermake.default_on_clean
