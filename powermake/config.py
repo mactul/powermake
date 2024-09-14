@@ -330,6 +330,8 @@ class Config:
 
         self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
         self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")
+        self.as_compiler = load_tool_from_tuple(as_compiler_tuple, "compiler")
+        self.asm_compiler = load_tool_from_tuple(asm_compiler_tuple, "compiler")
         self.archiver = load_tool_from_tuple(archiver_tuple, "archiver")
         self.linker = load_tool_from_tuple(linker_tuple, "linker")
 

@@ -19,6 +19,7 @@ import string
 import platform
 import tempfile
 import subprocess
+from .utils import makedirs
 
 
 if platform.platform().lower().startswith("win"):
@@ -164,7 +165,7 @@ def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict[str, s
 
 
 def store_envs_to_file(filepath: str, envs: dict[str, str]) -> None:
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(envs, file, indent=4)
 

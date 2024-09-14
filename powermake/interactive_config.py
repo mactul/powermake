@@ -15,6 +15,7 @@
 import os
 import json
 
+from .utils import makedirs
 from .config import get_global_config
 from .linkers import get_all_linker_types
 from .archivers import get_all_archiver_types
@@ -174,7 +175,7 @@ class InteractiveConfig:
         add_tool_dict(config, self.shared_linker, "shared_linker")
         add_tool_dict(config, self.linker, "linker")
 
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, "w") as file:
             json.dump(config, file, indent=4)
 

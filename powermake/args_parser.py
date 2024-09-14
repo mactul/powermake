@@ -17,6 +17,7 @@ import sys
 import shutil
 import argparse
 from .config import Config
+from .utils import makedirs
 from .interactive_config import InteractiveConfig
 from .display import print_info, print_debug_info, init_colors
 
@@ -70,7 +71,7 @@ def default_on_install(config: Config, location: str) -> None:
     if os.path.isdir(config.lib_build_directory):
         lib_files = os.listdir(config.lib_build_directory)
         if lib_files != []:
-            os.makedirs(lib_folder, exist_ok=True)
+            makedirs(lib_folder, exist_ok=True)
             for file in lib_files:
                 src = os.path.join(config.lib_build_directory, file)
                 dest = os.path.join(lib_folder, file)
@@ -81,7 +82,7 @@ def default_on_install(config: Config, location: str) -> None:
     if os.path.isdir(config.exe_build_directory):
         bin_files = os.listdir(config.exe_build_directory)
         if bin_files != []:
-            os.makedirs(bin_folder, exist_ok=True)
+            makedirs(bin_folder, exist_ok=True)
             for file in bin_files:
                 src = os.path.join(config.exe_build_directory, file)
                 dest = os.path.join(bin_folder, file)
@@ -90,12 +91,12 @@ def default_on_install(config: Config, location: str) -> None:
                 shutil.copy(src, dest)
 
     if len(config.exported_headers) != 0:
-        os.makedirs(include_folder, exist_ok=True)
+        makedirs(include_folder, exist_ok=True)
     for (src, subfolder) in config.exported_headers:
         if subfolder is None:
             dest = os.path.join(include_folder, os.path.basename(src))
         else:
-            os.makedirs(os.path.join(include_folder, subfolder), exist_ok=True)
+            makedirs(os.path.join(include_folder, subfolder), exist_ok=True)
             dest = os.path.join(include_folder, subfolder, os.path.basename(src))
         print_debug_info(f"copying {src} to {dest}", config.verbosity)
         nb_files_installed += 1

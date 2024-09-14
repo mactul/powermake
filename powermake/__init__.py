@@ -25,6 +25,7 @@ from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
+from .utils import makedirs
 from .display import print_info, print_debug_info
 from .operation import Operation, needs_update
 from .args_parser import run, default_on_clean, default_on_install
@@ -156,7 +157,7 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
 
     for file in files:
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        makedirs(os.path.dirname(output_file), exist_ok=True)
 
         if file.endswith(".c"):
             if config.c_compiler is None:
@@ -183,7 +184,7 @@ def compile_files(config: Config, files: set[str], force: bool = None) -> set[st
         for op in operations:
             json_commands.append(op.get_json_command())
 
-        os.makedirs(config.compile_commands_dir, exist_ok=True)
+        makedirs(config.compile_commands_dir, exist_ok=True)
         with open(os.path.join(config.compile_commands_dir, "compile_commands.json"), "w") as file:
             json.dump(json_commands, file, indent=4)
 
@@ -227,7 +228,7 @@ def archive_files(config: Config, object_files: set[str], archive_name: str = No
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.lib_build_directory + "/" + archive_name + config.archiver.static_lib_extension)
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
     return Operation(output_file, object_files, config, command).execute(force=force)
 
@@ -258,7 +259,7 @@ def link_files(config: Config, object_files: set[str], archives: list[str] = [],
     if config.linker is None:
         raise RuntimeError("No linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, object_files.union(archives), config, command).execute(force=force)
@@ -290,7 +291,7 @@ def link_shared_lib(config: Config, object_files: set[str], archives: list[str] 
     if config.shared_linker is None:
         raise RuntimeError("No shared linker has been specified and the default config didn't find any")
     output_file = os.path.normpath(config.lib_build_directory + "/" + lib_name + config.shared_linker.shared_lib_extension)
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
     command = config.shared_linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, object_files.union(archives), config, command).execute(force=force)
