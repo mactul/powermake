@@ -1002,7 +1002,7 @@ If `location` is None, the default is `./install/`.
 
 ### powermake.get_files
 ```py
-powermake.get_files(*patterns: str) -> set[str]
+powermake.get_files(*patterns: str) -> set
 ```
 
 Returns a set of filepaths that matches at least one of the patterns.
@@ -1017,7 +1017,7 @@ This function is variadic.
 
 ### powermake.filter_files
 ```py
-powermake.filter_files(files: set[str], *patterns: str) -> set[str]
+powermake.filter_files(files: set, *patterns: str) -> set
 ```
 
 From a given set of filepaths, remove every file that matches at least one of the patterns.  
@@ -1033,23 +1033,24 @@ This function is variadic.
 
 ### powermake.compile_files
 ```py
-powermake.compile_files(config: powermake.Config, files: set[str], force: bool = None) -> set[str]
+powermake.compile_files(config: powermake.Config, files: set, force: bool = None) -> set
 ```
 
 This function is a wrapper of lower-level powermake functions.
 
-From a set of `.c`, `.cpp`, `.cc`, `.C`, `.s`, `.S` and `.asm` filepaths and a [powermake.Config](#powermakeconfig) object, runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
+From a set or a list of `.c`, `.cpp`, `.cc`, `.C`, `.s`, `.S` and `.asm` filepaths and a [powermake.Config](#powermakeconfig) object, runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
 
 - If `force` is True, all files are recompiled, even if they are up to date.
 - If `force` is False, only the files that are not up to date are recompiled
 - If `force` is None (default), the value of `config.rebuild` is used.
 
-Returns a set of `.o` (or compiler equivalent) filepaths for the next step.
+Returns a set of `.o` (or compiler equivalent) filepaths for the next step.  
+If `files` is a list, the function returns a list with the order preserved.
 
 
 ### powermake.archive_files
 ```py
-powermake.archive_files(config: powermake.Config, object_files: set[str], archive_name: str = None, force: bool = None) -> str
+powermake.archive_files(config: powermake.Config, object_files: set, archive_name: str = None, force: bool = None) -> str
 ```
 
 This function is a wrapper of lower-level powermake functions.
@@ -1068,7 +1069,7 @@ Returns the path of the static library generated.
 
 ### powermake.link_files
 ```py
-powermake.link_files(config: powermake.Config, object_files: set[str], archives: list[str] = [], executable_name: str = None, force: bool = None) -> str
+powermake.link_files(config: powermake.Config, object_files: set, archives: list = [], executable_name: str = None, force: bool = None) -> str
 ```
 
 This function is a wrapper of lower-level powermake functions.
@@ -1087,7 +1088,7 @@ Returns the path of the executable generated.
 
 ### powermake.link_shared_lib
 ```py
-powermake.link_shared_lib(config: Config, object_files: set[str], archives: list[str] = [], lib_name: str = None, force: bool = None) -> str
+powermake.link_shared_lib(config: Config, object_files: set, archives: list = [], lib_name: str = None, force: bool = None) -> str
 ```
 
 This function is a wrapper of lower-level powermake functions.
@@ -1116,7 +1117,7 @@ This function is variadic.
 
 ### powermake.run_another_powermake
 ```py
-powermake.run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list[str]
+powermake.run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list
 ```
 
 Run a powermake from another directory and return a list of paths to all libraries generated.
@@ -1127,7 +1128,7 @@ These parameters are passed to the other powermake.
 
 ### powermake.needs_update
 ```py
-powermake.needs_update(outputfile: str, dependencies: set[str], additional_includedirs: list[str]) -> bool
+powermake.needs_update(outputfile: str, dependencies: set, additional_includedirs: list) -> bool
 ```
 
 This function is low-level.
@@ -1140,7 +1141,7 @@ The `additional_includedirs` list is required to discover hidden dependencies. Y
 
 ### powermake.Operation
 ```py
-powermake.Operation(outputfile: str, dependencies: set[str], config: Config, command: list[str])
+powermake.Operation(outputfile: str, dependencies: set, config: Config, command: list)
 ```
 
 This is a simple object to execute a command only if needed.  
