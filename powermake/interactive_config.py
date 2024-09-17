@@ -40,7 +40,7 @@ def add_tool_dict(dictionary, tool, tool_name):
         dictionary[tool_name]["path"] = tool[1]
 
 
-def multiple_choices(question: str, choices: list[str], values: list[str] = None):
+def multiple_choices(question: str, choices: list, values: list = None):
     if values is None:
         values = choices
     assert len(choices) == len(values)
@@ -127,7 +127,7 @@ class InteractiveConfig:
             elif answer == 7:
                 self.tool_menu(self.linker, "Linker", get_all_linker_types())
 
-    def tool_menu(self, tool: list[str, str], tool_name: str, tool_types: list[str]):
+    def tool_menu(self, tool: list, tool_name: str, tool_types: list):
         answer = 0
         while answer != 3:
             choices = [

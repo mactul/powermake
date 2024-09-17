@@ -149,14 +149,14 @@ def _find_vcvarsall():
     return None, None
 
 
-def is_msvc_loaded_correctly(env: dict[str, str]):
+def is_msvc_loaded_correctly(env: dict):
     for var in vcvars:
         if var not in env:
             return False
     return True
 
 
-def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict[str, str]:
+def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict:
     try:
         with open(filepath, "r") as file:
             return json.load(file)
@@ -164,13 +164,13 @@ def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict[str, s
         return {}
 
 
-def store_envs_to_file(filepath: str, envs: dict[str, str]) -> None:
+def store_envs_to_file(filepath: str, envs: dict) -> None:
     makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(envs, file, indent=4)
 
 
-def load_msvc_environment(storage_path: str, architecture: str = "x86") -> dict[str, str]:
+def load_msvc_environment(storage_path: str, architecture: str = "x86") -> dict:
     envs = load_envs_from_file(storage_path)
     if architecture in envs and is_msvc_loaded_correctly(envs[architecture]):
         return envs[architecture]

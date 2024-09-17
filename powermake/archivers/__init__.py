@@ -18,7 +18,7 @@ from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR
 from .msvc import ArchiverMSVC
 
 
-_archiver_types: dict[str, Archiver] = {
+_archiver_types: dict = {
     "gnu": ArchiverGNU,
     "ar": ArchiverAR,
     "llvm-ar": ArchiverLLVM_AR,
@@ -32,5 +32,5 @@ def GenericArchiver(archiver_type: str) -> Archiver:
     return _archiver_types[archiver_type]
 
 
-def get_all_archiver_types() -> set[str]:
+def get_all_archiver_types() -> set:
     return _archiver_types.keys()

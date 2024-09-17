@@ -25,5 +25,5 @@ class Archiver(Tool, abc.ABC):
         Tool.__init__(self, path)
 
     @abc.abstractmethod
-    def basic_archive_command(self, outputfile: str, inputfiles: set[str], args: list[str] = []) -> list[str]:
+    def basic_archive_command(self, outputfile: str, inputfiles: set, args: list = []) -> list:
         return []

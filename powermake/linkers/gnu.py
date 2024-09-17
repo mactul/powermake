@@ -43,10 +43,10 @@ class LinkerGNU(Linker):
         super().__init__(path)
 
     @classmethod
-    def format_args(self, shared_libs: list[str], flags: list[str]):
+    def format_args(self, shared_libs: list, flags: list):
         return ["-l"+lib for lib in shared_libs] + translate_flags(flags, self.translation_dict)
 
-    def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
+    def basic_link_command(self, outputfile: str, objectfiles: set, archives: list = [], args: list = []) -> list:
         return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
 
 

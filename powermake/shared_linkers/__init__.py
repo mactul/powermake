@@ -17,7 +17,7 @@ from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLink
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
 
 
-_shared_linker_types: dict[str, SharedLinker] = {
+_shared_linker_types: dict = {
     "gnu": SharedLinkerGNU,
     "gcc": SharedLinkerGCC,
     "g++": SharedLinkerGPlusPlus,
@@ -34,5 +34,5 @@ def GenericSharedLinker(shared_linker_type: str) -> SharedLinker:
     return _shared_linker_types[shared_linker_type]
 
 
-def get_all_shared_linker_types() -> list[str]:
+def get_all_shared_linker_types() -> list:
     return _shared_linker_types.keys()

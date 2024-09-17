@@ -17,7 +17,7 @@ from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, L
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 
-_linker_types: dict[str, Linker] = {
+_linker_types: dict = {
     "gnu": LinkerGNU,
     "ld": LinkerLD,
     "gcc": LinkerGCC,
@@ -35,5 +35,5 @@ def GenericLinker(linker_type: str) -> Linker:
     return _linker_types[linker_type]
 
 
-def get_all_linker_types() -> list[str]:
+def get_all_linker_types() -> list:
     return _linker_types.keys()

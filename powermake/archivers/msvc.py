@@ -22,5 +22,5 @@ class ArchiverMSVC(Archiver):
     def __init__(self, path: str = "lib"):
         super().__init__(path)
 
-    def basic_archive_command(self, outputfile: str, inputfiles: set[str], args: list[str] = []) -> list[str]:
+    def basic_archive_command(self, outputfile: str, inputfiles: set, args: list = []) -> list:
         return [self.path, "/nologo", *args, "/out:"+outputfile, *inputfiles]

@@ -18,7 +18,7 @@ from .msvc import CompilerMSVC, CompilerClang_CL
 from .gnu import CompilerGNU, CompilerGNUPlusPLus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
 
 
-_c_compiler_types: dict[str, Compiler] = {
+_c_compiler_types: dict = {
     "gnu": CompilerGNU,
     "gcc": CompilerGCC,
     "clang": CompilerClang,
@@ -26,7 +26,7 @@ _c_compiler_types: dict[str, Compiler] = {
     "clang-cl": CompilerClang_CL
 }
 
-_cpp_compiler_types: dict[str, Compiler] = {
+_cpp_compiler_types: dict = {
     "gnu++": CompilerGNUPlusPLus,
     "g++": CompilerGPlusPlus,
     "clang++": CompilerClangPlusPlus,
@@ -35,17 +35,17 @@ _cpp_compiler_types: dict[str, Compiler] = {
 }
 
 
-_as_compiler_types: dict[str, Compiler] = {
+_as_compiler_types: dict = {
     "gnu": CompilerGNU,
     "gcc": CompilerGCC,
     "clang": CompilerClang
 }
 
-_asm_compiler_types: dict[str, Compiler] = {
+_asm_compiler_types: dict = {
     "nasm": CompilerNASM
 }
 
-_compiler_types: dict[str, Compiler] = {
+_compiler_types: dict = {
     **_c_compiler_types,
     **_cpp_compiler_types,
     **_as_compiler_types,
@@ -59,21 +59,21 @@ def GenericCompiler(compiler_type: str) -> Compiler:
     return _compiler_types[compiler_type]
 
 
-def get_all_compiler_types() -> list[str]:
+def get_all_compiler_types() -> list:
     return _compiler_types.keys()
 
 
-def get_all_c_compiler_types() -> list[str]:
+def get_all_c_compiler_types() -> list:
     return _c_compiler_types.keys()
 
 
-def get_all_cpp_compiler_types() -> list[str]:
+def get_all_cpp_compiler_types() -> list:
     return _cpp_compiler_types.keys()
 
 
-def get_all_as_compiler_types() -> list[str]:
+def get_all_as_compiler_types() -> list:
     return _as_compiler_types.keys()
 
 
-def get_all_asm_compiler_types() -> list[str]:
+def get_all_asm_compiler_types() -> list:
     return _asm_compiler_types.keys()

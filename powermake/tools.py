@@ -31,7 +31,7 @@ class Tool(abc.ABC):
         self.path = shutil.which(self._name)
 
 
-def load_tool_tuple_from_file(conf: dict[str, str], tool_name: str, object_getter: callable, tool_list_getter: callable) -> Tool:
+def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: callable, tool_list_getter: callable):
     if tool_name not in conf:
         return None
 
@@ -83,7 +83,7 @@ def find_tool(object_getter: callable, *tool_types: str):
     return None
 
 
-def translate_flags(flags: list[str], translation_dict: dict[str, list[str]]):
+def translate_flags(flags: list, translation_dict: dict):
     translated_flags = []
     for flag in flags:
         if flag in translation_dict:

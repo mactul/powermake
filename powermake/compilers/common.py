@@ -26,9 +26,9 @@ class Compiler(Tool, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
+    def format_args(self, defines: list, includedirs: list, flags: list = []):
         return []
 
     @abc.abstractmethod
-    def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: list = []) -> list:
         return []

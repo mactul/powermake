@@ -69,10 +69,10 @@ class CompilerMSVC(Compiler):
         super().__init__(path)
 
     @classmethod
-    def format_args(self, defines: list[str], includedirs: list[str], flags: list[str] = []):
+    def format_args(self, defines: list, includedirs: list, flags: list = []):
         return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + translate_flags(flags, self.translation_dict)
 
-    def basic_compile_command(self, outputfile: str, inputfile: str, args: list[str] = []) -> list[str]:
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: list = []) -> list:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
 

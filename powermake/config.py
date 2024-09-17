@@ -36,7 +36,7 @@ def get_global_config():
     return global_config
 
 
-def auto_toolchain(c_compiler: Compiler, cpp_compiler: Compiler, as_compiler: Compiler, asm_compiler: Compiler, archiver: Archiver, linker: Linker, shared_linker: SharedLinker) -> tuple[str, str, str, str, str, str, str]:
+def auto_toolchain(c_compiler: Compiler, cpp_compiler: Compiler, as_compiler: Compiler, asm_compiler: Compiler, archiver: Archiver, linker: Linker, shared_linker: SharedLinker) -> tuple:
     if c_compiler is not None:
         c_compiler_type = c_compiler.type
     else:
@@ -146,18 +146,18 @@ class Config:
         self.exe_build_directory: str = None
         self.lib_build_directory: str = None
 
-        self.defines: list[str] = []
-        self.shared_libs: list[str] = []
-        self.additional_includedirs: list[str] = []
-        self.c_flags: list[str] = []
-        self.cpp_flags: list[str] = []
-        self.as_flags: list[str] = []
-        self.asm_flags: list[str] = []
-        self.ar_flags: list[str] = []
-        self.ld_flags: list[str] = []
-        self.shared_linker_flags: list[str] = []
+        self.defines: list = []
+        self.shared_libs: list = []
+        self.additional_includedirs: list = []
+        self.c_flags: list = []
+        self.cpp_flags: list = []
+        self.as_flags: list = []
+        self.asm_flags: list = []
+        self.ar_flags: list = []
+        self.ld_flags: list = []
+        self.shared_linker_flags: list = []
 
-        self.exported_headers: list[tuple[str, str]] = []
+        self.exported_headers: list = []
 
         c_compiler_tuple = None
         cpp_compiler_tuple = None
@@ -318,7 +318,6 @@ class Config:
         self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
 
         cc_env = os.getenv("CC")
-        print(cc_env)
         if cc_env is not None:
             c_compiler_tuple = (cc_env, CompilerGNU)
             print_debug_info("Using CC environment variable instead of the config", verbosity)

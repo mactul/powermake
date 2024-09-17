@@ -21,7 +21,7 @@ from .config import Config
 from .display import print_info, print_debug_info
 
 
-def resolve_path(current_folder: str, additional_includedirs: list[str], filepath: str) -> str:
+def resolve_path(current_folder: str, additional_includedirs: list, filepath: str) -> str:
     path = os.path.join(current_folder, filepath)
     if os.path.exists(path):
         return path
@@ -32,7 +32,7 @@ def resolve_path(current_folder: str, additional_includedirs: list[str], filepat
     return None
 
 
-def is_file_uptodate_recursive(output_date: float, filename: str, additional_includedirs: list[str], headers_already_found: list[str] = []) -> bool:
+def is_file_uptodate_recursive(output_date: float, filename: str, additional_includedirs: list, headers_already_found: list = []) -> bool:
     try:
         if os.path.getmtime(filename) >= output_date:
             return False
@@ -105,15 +105,15 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     return True
 
 
-def needs_update(outputfile: str, dependencies: set[str], additional_includedirs: list[str]) -> bool:
+def needs_update(outputfile: str, dependencies: set, additional_includedirs: list) -> bool:
     """Returns whether or not `outputfile` is up to date with all his dependencies
 
     If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
 
     Args:
         outputfile (str): the path to the target file
-        dependencies (set[str]): a set of all files on which `outputfile` depends
-        additional_includedirs (list[str]): The list of additional includedirs used by the compiler. This is necessary to discover hidden dependencies.
+        dependencies (set): a set of all files on which `outputfile` depends
+        additional_includedirs (list): The list of additional includedirs used by the compiler. This is necessary to discover hidden dependencies.
 
     Returns:
         bool: True if `outputfile` is **not** up to date with all his dependencies and hidden dependencies.
@@ -131,14 +131,14 @@ def needs_update(outputfile: str, dependencies: set[str], additional_includedirs
 
 
 class Operation:
-    def __init__(self, outputfile: str, dependencies: set[str], config: Config, command: list[str]):
+    def __init__(self, outputfile: str, dependencies: set, config: Config, command: list):
         """Provide a simple object that can execute a command only if it's needed.
 
         Args:
             outputfile (str): the path to the target file
-            dependencies (set[str]): a set of all files on which `outputfile` depends
+            dependencies (set): a set of all files on which `outputfile` depends
             config (Config): A powermake.Config object, the additional_includedirs in it should be completed
-            command (list[str]): The command that will be executed by subprocess. It's a list representing the argv that will be passed to the program at the first list position.
+            command (list): The command that will be executed by subprocess. It's a list representing the argv that will be passed to the program at the first list position.
         """
         self.outputfile = outputfile
         self.dependencies = dependencies

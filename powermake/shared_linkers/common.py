@@ -26,9 +26,9 @@ class SharedLinker(Tool, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def format_args(self, shared_libs: list[str], flags: list[str]):
+    def format_args(self, shared_libs: list, flags: list):
         return []
 
     @abc.abstractmethod
-    def basic_link_command(self, outputfile: str, objectfiles: set[str], archives: list[str] = [], args: list[str] = []) -> list[str]:
+    def basic_link_command(self, outputfile: str, objectfiles: set, archives: list = [], args: list = []) -> list:
         return []
