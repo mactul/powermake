@@ -76,6 +76,7 @@
         - [add\_exported\_headers()](#add_exported_headers)
         - [remove\_exported\_headers()](#remove_exported_headers)
         - [copy()](#copy)
+        - [empty\_copy()](#empty_copy)
     - [powermake.default\_on\_clean](#powermakedefault_on_clean)
     - [powermake.default\_on\_install](#powermakedefault_on_install)
     - [powermake.get\_files](#powermakeget_files)
@@ -89,6 +90,12 @@
     - [powermake.needs\_update](#powermakeneeds_update)
     - [powermake.Operation](#powermakeoperation)
       - [execute()](#execute)
+    - [Having more control than what powermake.run offers](#having-more-control-than-what-powermakerun-offers)
+      - [powermake.ArgumentParser](#powermakeargumentparser)
+        - [add\_argument()](#add_argument)
+        - [parse\_args()](#parse_args)
+      - [powermake.generate\_config](#powermakegenerate_config)
+      - [powermake.run\_callbacks](#powermakerun_callbacks)
     - [Compatibility with other tools](#compatibility-with-other-tools)
       - [Scan-Build](#scan-build)
       - [LLVM libfuzzer](#llvm-libfuzzer)
@@ -190,7 +197,7 @@ All these options can be listed by running `python makefile.py -h` (or `python m
 
 ### powermake.run
 ```py
-powermake.run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install)
+powermake.run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install, args_parsed: argparse.Namespace = None)
 ```
 It's the entry point of most programs.  
 This function parses the command line and generates a [powermake.Config](#powermakeconfig) object, containing all the information required for the compilation, from the compiler path to the level of verbosity to use.
@@ -246,6 +253,8 @@ def on_install(config: powermake.Config, location: str):
 
 powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
 ```
+
+The `args_parsed` argument should be left to None in most cases, to understand his purpose, see [powermake.ArgumentsParser.parse_args](#parse_args)
 
 ### powermake.Config
 
@@ -963,6 +972,15 @@ config.copy()
 Returns a new config object which is a deepcopy of the config. It should be used to compile different set of files with different parameters.
 
 
+##### empty_copy()
+```py
+config.empty_copy(local_config: str = None) -> powermake.Config
+```
+
+Generate a new fresh config object without anything inside. By default, even the local config file isn't loaded.  
+It can be very helpful if you have a local config file specifying a cross compiler but you want to have the default compiler at some point during the compilation step.
+
+
 ### powermake.default_on_clean
 ```py
 powermake.default_on_clean(config: powermake.Config)
@@ -1152,7 +1170,7 @@ This list is then directly passed to `subprocess.run`
 
 #### execute()
 ```py
-execute(self, force: bool = False, print_lock: threading.Lock = None) -> str
+operation.execute(self, force: bool = False, print_lock: threading.Lock = None) -> str
 ```
 
 Run the `command` if `outputfile` is not up to date.
@@ -1162,6 +1180,82 @@ If `force` is True, the command is run in any case.
 `print_lock` is a mutex that ensures that debug prints are not mixed.  
 If you are parallelizing operations, you should set this mutex to avoid weird debug message behavior.  
 If left to None, no mutex is used.
+
+
+### Having more control than what powermake.run offers
+
+**Warning** This section is advanced.
+
+#### powermake.ArgumentParser
+```py
+powermake.ArgumentParser(prog: str = None, description: str = None, **kwargs)
+```
+
+This object is a superset of [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html), you can read the documentation of argparse, it works exactly the same.
+**Use this object and never argparse.ArgumentParser directly** or you will break some powermake features. Obviously the usual command line options will be broken but you will also break other features like the [powermake.run_another_powermake](#powermakerun_another_powermake) function. This object ensure that none of this is broken.
+
+##### add_argument()
+
+See the [argparse documentation](https://docs.python.org/3/library/argparse.html) to understand how to add an argument
+
+##### parse_args()
+```py
+parser.parse_args()
+```
+
+Returns a namespace containing each value parsed from the command line.  
+This namespace can be used to take decisions and should then be passed to [powermake.run](#powermakerun) or [powermake.generate_config](#powermakegenerate_config).  
+Example:
+```py
+import powermake
+
+def on_build(config: powermake.Config):
+    ...
+
+parser = powermake.ArgumentParser()
+parser.add_argument("--foo")
+
+args_parsed = parser.parse_args()
+
+print(args_parsed.foo)
+
+powermake.run("program_test", build_callback=on_build, args_parsed=args_parsed)
+```
+
+
+#### powermake.generate_config
+```py
+powermake.generate_config(target_name: str, args_parsed: argparse.Namespace = None)
+```
+
+This function behave like the first part of [powermake.run](#powermakerun), it generate a config object according to the command line. The difference with [powermake.run](#powermakerun) is that it stop at this point and returns the config generated.  
+It can be helpful if you want a global instance of the config.
+
+In most cases you should let `args_parsed` to None, and this function will automatically parse the command line.
+
+
+#### powermake.run_callbacks
+```py
+run_callbacks(config: Config, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install)
+```
+
+This function only make sense after a call of [powermake.generate_config](#powermakegenerate_config).  
+It takes a newly generated config and run each callback according to the command line.
+
+**/!\\ WARNING /!\\ If neither this function nor powermake.run is used, the powermake.run_another_powermake function will be partially broken**
+
+Example:
+```py
+import powermake
+
+def on_build(config: powermake.Config):
+    ...
+
+config = powermake.generate_config("program_test")
+
+powermake.run_callbacks(config, build_callback=on_build)
+```
+
 
 ### Compatibility with other tools
 

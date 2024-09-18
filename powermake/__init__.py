@@ -28,12 +28,8 @@ from .config import Config
 from .utils import makedirs
 from .display import print_info, print_debug_info
 from .operation import Operation, needs_update
-from .args_parser import run, default_on_clean, default_on_install
+from .args_parser import run, default_on_clean, default_on_install, ArgumentParser
 
-
-__all__ = [
-    "import_module", "get_files", "filter_files", "compile_files", "link_files", "archive_files", "link_shared_lib"
-]
 
 if hasattr(__makefile__, '__file__'):
     os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
@@ -41,7 +37,7 @@ if hasattr(__makefile__, '__file__'):
 
 def run_command(config: Config, command: list, shell=False):
     print_debug_info(command, config.verbosity)
-    subprocess.run(command, shell=shell)
+    return subprocess.run(command, shell=shell).returncode
 
 
 def import_module(module_name: str, module_path: str = None):

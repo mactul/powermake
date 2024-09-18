@@ -106,12 +106,12 @@ def default_on_install(config: Config, location: str) -> None:
 
 
 class ArgumentParser(argparse.ArgumentParser):
-    def __init__(self, prog: str = None, description: str = None):
+    def __init__(self, prog: str = None, description: str = None, **kwargs):
         if prog is None:
             prog = "powermake"
         if description is None:
             description = "Makefile Utility"
-        super().__init__(prog=prog, description=description)
+        super().__init__(prog=prog, description=description, **kwargs)
 
         self.add_argument("action", choices=["build", "clean", "install", "config"], nargs='?')
         self.add_argument("install_location", nargs='?', help="Only if the action is set to install, indicate in which folder the installation should be")
