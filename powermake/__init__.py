@@ -28,7 +28,7 @@ from .config import Config
 from .utils import makedirs
 from .display import print_info, print_debug_info
 from .operation import Operation, needs_update
-from .args_parser import run, default_on_clean, default_on_install, ArgumentParser
+from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
 
 if hasattr(__makefile__, '__file__'):
