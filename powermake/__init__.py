@@ -174,6 +174,8 @@ def compile_files(config: Config, files: set, force: bool = None) -> set:
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
+        file = os.path.abspath(file)
+
         if file.endswith(".c"):
             if config.c_compiler is None:
                 raise RuntimeError("No C compiler has been specified and the default config didn't find any")
