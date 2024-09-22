@@ -56,7 +56,8 @@ _powermake_flags_to_msvc_flags = {
     **_powermake_warning_flags_to_msvc_flags,
     **_powermake_optimization_flags_to_msvc_flags,
     **_powermake_machine_flags_to_msvc_flags,
-    "-g": ["/Z7"]
+    "-g": ["/Z7"],
+    "-fdiagnostics-color": []
 }
 
 
