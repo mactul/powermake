@@ -386,6 +386,11 @@ class Config:
         self.target_simplified_architecture = simplify_architecture(self.target_architecture)
         self.host_simplified_architecture = simplify_architecture(self.host_architecture)
 
+        if self.target_simplified_architecture is None:
+            self.target_simplified_architecture = self.target_architecture
+        if self.host_simplified_architecture is None:
+            self.host_simplified_architecture = self.host_architecture
+
         if self.target_is_windows():
             env = load_msvc_environment(os.path.join(self.global_config_dir, "msvc_envs.json"), architecture=self.target_simplified_architecture)
             if env is not None:
