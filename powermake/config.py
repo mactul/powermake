@@ -467,30 +467,29 @@ class Config:
             self.reset_build_directories()
         else:
             self.reload_env()
-
-        add = None
-        remove = None
-        if self.target_simplified_architecture in ("x86", "arm32"):
-            add = "32"
-            remove = "64"
-        elif self.target_simplified_architecture in ("x64", "arm64"):
-            add = "64"
-            remove = "32"
-        if add is not None and remove is not None:
-            self.remove_c_cpp_flags("-m"+remove)
-            self.add_c_cpp_flags("-m"+add)
-            self.remove_ld_flags("-m"+remove)
-            self.add_ld_flags("-m"+add)
-            self.remove_shared_linker_flags("-m"+remove)
-            self.add_shared_linker_flags("-m"+add)
-            self.remove_as_flags("-m"+remove)
-            self.add_as_flags("-m"+add)
-            if self.target_is_windows():
-                self.remove_asm_flags("-fwin"+remove)
-                self.add_asm_flags("-fwin"+add)
-            else:
-                self.remove_asm_flags("-felf"+remove)
-                self.add_asm_flags("-felf"+add)
+        
+        if self.target_simplified_architecture != self.host_simplified_architecture:
+            if self.target_simplified_architecture in ("x86", "x64"):
+                if self.target_simplified_architecture == "x86":
+                    add = "32"
+                    remove = "64"
+                else:
+                    add = "64"
+                    remove = "32"
+                self.add_c_cpp_flags("-m"+add)
+                self.add_ld_flags("-m"+add)
+                self.add_shared_linker_flags("-m"+add)
+                self.add_as_flags("-m"+add)
+                self.remove_c_cpp_flags("-m"+remove)
+                self.remove_ld_flags("-m"+remove)
+                self.remove_shared_linker_flags("-m"+remove)
+                self.remove_as_flags("-m"+remove)
+                if self.target_is_windows():
+                    self.add_asm_flags("-fwin"+add)
+                    self.remove_asm_flags("-fwin"+remove)
+                else:
+                    self.add_asm_flags("-felf"+add)
+                    self.remove_asm_flags("-felf"+remove)
 
     def set_optimization(self, opt_flag: str):
         self.remove_c_cpp_as_asm_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")

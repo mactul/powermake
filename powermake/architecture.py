@@ -21,10 +21,10 @@ def simplify_architecture(architecture: str) -> str:
     if arch in ["x86_64", "x86-64", "x64", "amd64", "intel64"]:
         return "x64"
 
-    if arch in ["arm32", "arm", "armv6", "armv6-m", "armv7a", "armv7s", "armv7m", "armv7r", "armv7-a", "armv7-m", "armv7-r", "armeabi", "armeabi-v7a"]:
+    if arch in ["arm32", "arm", "armeabi", "armv4", "armv4t", "armv5", "armv5t", "armv5te", "armv6", "armv6-m", "armv6j", "armv6k", "armv6kz", "armv6t2", "armv6z", "armv6zk", "armv6s-m", "armv7", "armv7a", "armv7s", "armv7m", "armv7r", "armv7l", "armv7-a", "armv7-m", "armv7-r", "armeabi-v7a", "armv7ve", "armv7-r", "armv7-m", "armv7e-m"]:
         return "arm32"
 
-    if arch in ["arm64", "aarch64", "armv8-a", "armv8.2-a", "armv8.3-a", "armv8-m", "armv8-r"]:
+    if arch in ["arm64", "aarch64", "armv8", "armv8-a", "armv8.2-a", "armv8.3-a", "armv8-m", "armv8-r", "armv8.1-a", "armv8.4-a", "armv8.5-a", "armv8.6-a", "armv8-m.base", "armv8-m.main", "armv8.1-m.main", "armv9", "armv9-a", "iwmmxt", "iwmmxt2"]:
         return "arm64"
 
     return None
