@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Callable
 
 from .common import Archiver
 from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR
@@ -26,11 +27,11 @@ _archiver_types: dict = {
 }
 
 
-def GenericArchiver(archiver_type: str) -> Archiver:
+def GenericArchiver(archiver_type: str) -> Callable[[], Archiver]:
     if archiver_type not in _archiver_types:
         return None
     return _archiver_types[archiver_type]
 
 
-def get_all_archiver_types() -> set:
+def get_all_archiver_types() -> list:
     return _archiver_types.keys()

@@ -14,6 +14,7 @@
 
 import os
 import json
+import typing as T
 
 from .utils import makedirs
 from .config import get_global_config
@@ -23,7 +24,7 @@ from .shared_linkers import get_all_shared_linker_types
 from .compilers import get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 
 
-def dp(string: str):
+def dp(string: T.Union[str, None]):
     if string is None:
         return "Let the program decide"
     return string
@@ -40,20 +41,20 @@ def add_tool_dict(dictionary, tool, tool_name):
         dictionary[tool_name]["path"] = tool[1]
 
 
-def multiple_choices(question: str, choices: list, values: list = None):
+def multiple_choices(question: str, choices: T.List[T.Union[str, None]], values: T.Union[T.List[T.Any], None] = None):
     if values is None:
         values = choices
     assert len(choices) == len(values)
 
-    answer = None
+    answer = 0
     while answer not in range(1, len(choices)+1):
         print("\033[H\033[2J", end="")
         print(question)
         for i in range(1, len(choices)+1):
             print(f"[{i}]: {dp(choices[i-1])}")
-        answer = input(f"{' '.join([str(i) for i in range(1, len(choices)+1)])}: ")
-        if answer.isnumeric():
-            answer = int(answer)
+        answer_str = input(f"{' '.join([str(i) for i in range(1, len(choices)+1)])}: ")
+        if answer_str.isnumeric():
+            answer = int(answer_str)
 
     return values[answer-1]
 
@@ -69,18 +70,18 @@ class InteractiveConfig:
     linker = [None, None]
     shared_linker = [None, None]
 
-    def __init__(self, global_config: str = None, local_config: str = "./powermake_config"):
+    def __init__(self, global_config: T.Union[str, None] = None, local_config: str = "./powermake_config"):
         self.global_config = global_config
         self.local_config = local_config
         answer = 0
         while answer != 4:
-            choices = [
+            choices: T.List[T.Union[str, None]] = [
                 f"Target operating system ({dp(self.target_operating_system)})",
                 f"Target architecture ({dp(self.target_architecture)})",
                 "Toolchain\n",
                 "Save configuration"
             ]
-            answer = multiple_choices("What do you want to configure ?", choices, range(1, len(choices)+1))
+            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices)+1)])
 
             if answer == 1:
                 self.target_operating_system = multiple_choices("Select the target operating system", [None, "Linux", "Windows", "MacOS", "Write my own string"])
@@ -130,12 +131,12 @@ class InteractiveConfig:
     def tool_menu(self, tool: list, tool_name: str, tool_types: list):
         answer = 0
         while answer != 3:
-            choices = [
+            choices: T.List[T.Union[str, None]] = [
                 f"{tool_name} type (what syntax) ({dp(tool[0])})",
                 f"{tool_name} path ({dp(tool[1])})\n",
                 "Back to toolchain menu"
             ]
-            answer = multiple_choices("What do you want to configure ?", choices, range(1, len(choices)+1))
+            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices)+1)])
 
             if answer == 1:
                 tool[0] = multiple_choices(f"Select the {tool_name} type", [None] + list(tool_types))

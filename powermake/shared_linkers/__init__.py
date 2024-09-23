@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Callable
+
 from .common import SharedLinker
 from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLinkerGPlusPlus, SharedLinkerClangPlusPlus
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
@@ -28,7 +30,7 @@ _shared_linker_types: dict = {
 }
 
 
-def GenericSharedLinker(shared_linker_type: str) -> SharedLinker:
+def GenericSharedLinker(shared_linker_type: str) -> Callable[[], SharedLinker]:
     if shared_linker_type not in _shared_linker_types:
         return None
     return _shared_linker_types[shared_linker_type]

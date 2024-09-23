@@ -14,16 +14,17 @@
 
 
 import abc
+import typing as T
 
 from ..tools import Tool
 
 
 class Archiver(Tool, abc.ABC):
-    static_lib_extension = None
+    static_lib_extension = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)
 
     @abc.abstractmethod
-    def basic_archive_command(self, outputfile: str, inputfiles: set, args: list = []) -> list:
+    def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> list:
         return []

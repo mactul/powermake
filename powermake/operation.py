@@ -15,13 +15,14 @@
 
 import os
 import subprocess
+import typing as T
 from threading import Lock
 
 from .config import Config
 from .display import print_info, print_debug_info
 
 
-def resolve_path(current_folder: str, additional_includedirs: list, filepath: str) -> str:
+def resolve_path(current_folder: str, additional_includedirs: T.List[str], filepath: str) -> T.Union[str, None]:
     path = os.path.join(current_folder, filepath)
     if os.path.exists(path):
         return path
@@ -32,7 +33,7 @@ def resolve_path(current_folder: str, additional_includedirs: list, filepath: st
     return None
 
 
-def is_file_uptodate_recursive(output_date: float, filename: str, additional_includedirs: list, headers_already_found: list = []) -> bool:
+def is_file_uptodate_recursive(output_date: float, filename: str, additional_includedirs: T.List[str], headers_already_found: T.List[str] = []) -> bool:
     try:
         if os.path.getmtime(filename) >= output_date:
             return False
@@ -105,7 +106,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     return True
 
 
-def needs_update(outputfile: str, dependencies: set, additional_includedirs: list) -> bool:
+def needs_update(outputfile: str, dependencies: T.Iterable, additional_includedirs: T.List[str]) -> bool:
     """Returns whether or not `outputfile` is up to date with all his dependencies
 
     If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
@@ -122,7 +123,7 @@ def needs_update(outputfile: str, dependencies: set, additional_includedirs: lis
         output_date = os.path.getmtime(outputfile)
     except OSError:
         return True
-    headers_already_found = []
+    headers_already_found: T.List[str] = []
     for dep in dependencies:
         if not is_file_uptodate_recursive(output_date, dep, additional_includedirs, headers_already_found):
             return True
@@ -131,7 +132,7 @@ def needs_update(outputfile: str, dependencies: set, additional_includedirs: lis
 
 
 class Operation:
-    def __init__(self, outputfile: str, dependencies: set, config: Config, command: list):
+    def __init__(self, outputfile: str, dependencies: T.Iterable, config: Config, command: T.List[str]):
         """Provide a simple object that can execute a command only if it's needed.
 
         Args:
@@ -146,7 +147,7 @@ class Operation:
         self.command = command
         self.config = config
 
-    def execute(self, force: bool = False, print_lock: Lock = None) -> str:
+    def execute(self, force: bool = False, print_lock: T.Union[Lock, None] = None) -> str:
         """Verify if the outputfile is up to date with his dependencies and if not, execute the command.
 
         Args:

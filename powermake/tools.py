@@ -15,6 +15,8 @@
 
 import abc
 import shutil
+import typing as T
+from collections.abc import Callable
 
 
 class Tool(abc.ABC):
@@ -31,7 +33,7 @@ class Tool(abc.ABC):
         self.path = shutil.which(self._name)
 
 
-def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: callable, tool_list_getter: callable):
+def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: Callable[[str], Callable[[], Tool]], tool_list_getter: Callable[[], T.List[str]]):
     if tool_name not in conf:
         return None
 
@@ -56,7 +58,7 @@ def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: callabl
 
 
 def load_tool_from_tuple(tool_tuple, tool_name):
-    tool: Tool = None
+    tool: Tool
     if tool_tuple is not None:
         if tool_tuple[0] is None:
             tool = tool_tuple[1]()
@@ -72,7 +74,7 @@ def load_tool_from_tuple(tool_tuple, tool_name):
     return tool
 
 
-def find_tool(object_getter: callable, *tool_types: str):
+def find_tool(object_getter: Callable[[str], Callable[[], Tool]], *tool_types: str):
     for tool_type in tool_types:
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:

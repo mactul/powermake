@@ -19,6 +19,8 @@ import string
 import platform
 import tempfile
 import subprocess
+import typing as T
+
 from .utils import makedirs
 
 
@@ -170,7 +172,7 @@ def store_envs_to_file(filepath: str, envs: dict) -> None:
         json.dump(envs, file, indent=4)
 
 
-def load_msvc_environment(storage_path: str, architecture: str = "x86") -> dict:
+def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Union[dict, None]:
     envs = load_envs_from_file(storage_path)
     if architecture in envs and is_msvc_loaded_correctly(envs[architecture]):
         return envs[architecture]

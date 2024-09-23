@@ -14,12 +14,13 @@
 
 
 import abc
+import typing as T
 
 from ..tools import Tool
 
 
 class SharedLinker(Tool, abc.ABC):
-    shared_lib_extension = None
+    shared_lib_extension = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)
@@ -30,5 +31,5 @@ class SharedLinker(Tool, abc.ABC):
         return []
 
     @abc.abstractmethod
-    def basic_link_command(self, outputfile: str, objectfiles: set, archives: list = [], args: list = []) -> list:
+    def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return []

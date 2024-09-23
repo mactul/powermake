@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Callable
+
 from .common import Compiler
 from .asm import CompilerNASM
 from .msvc import CompilerMSVC, CompilerClang_CL
@@ -53,7 +55,7 @@ _compiler_types: dict = {
 }
 
 
-def GenericCompiler(compiler_type: str) -> Compiler:
+def GenericCompiler(compiler_type: str) -> Callable[[], Compiler]:
     if compiler_type not in _compiler_types:
         return None
     return _compiler_types[compiler_type]

@@ -14,12 +14,13 @@
 
 
 import abc
+import typing as T
 
 from ..tools import Tool
 
 
 class Linker(Tool, abc.ABC):
-    exe_extension = None
+    exe_extension = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)
@@ -30,5 +31,5 @@ class Linker(Tool, abc.ABC):
         return []
 
     @abc.abstractmethod
-    def basic_link_command(self, outputfile: str, objectfiles: set, archives: list = [], args: list = []) -> list:
+    def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return []

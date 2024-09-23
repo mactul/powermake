@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
 
-def simplify_architecture(architecture: str) -> str:
+
+def simplify_architecture(architecture: str) -> T.Union[str, None]:
     arch = architecture.lower()
     if arch in ["x86", "x32", "80x86", "8086", "80386", "i286", "i386", "i486", "i586", "i686", "i786", "amd386", "am386", "amd486", "am486", "amd-k5", "amd-k6", "amd-k7"]:
         return "x86"

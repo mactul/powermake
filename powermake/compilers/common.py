@@ -19,7 +19,7 @@ from ..tools import Tool
 
 class Compiler(Tool, abc.ABC):
     type = None
-    obj_extension = None
+    obj_extension = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)

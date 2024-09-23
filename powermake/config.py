@@ -18,6 +18,7 @@ import copy
 import json
 import argparse
 import platform
+import typing as T
 
 from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
@@ -110,7 +111,7 @@ def replace_architecture(string: str, new_arch):
 
 
 class Config:
-    def __init__(self, target_name, *, args_parsed: argparse.Namespace = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: str = None, compile_commands_dir: str = None, local_config: str = "./powermake_config.json", global_config: str = None):
+    def __init__(self, target_name, *, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None):
         """Create an object that loads all configurations files and search for compilers.
 
         This objects hold all the configuration for the compilation.
@@ -126,25 +127,25 @@ class Config:
         self.single_file = single_file
         self.compile_commands_dir = compile_commands_dir
 
-        self.c_compiler: Compiler = None
-        self.cpp_compiler: Compiler = None
-        self.as_compiler: Compiler = None
-        self.asm_compiler: Compiler = None
-        self.archiver: Archiver = None
-        self.linker: Linker = None
-        self.shared_linker: SharedLinker = None
+        self.c_compiler: T.Union[Compiler, None] = None
+        self.cpp_compiler: T.Union[Compiler, None] = None
+        self.as_compiler: T.Union[Compiler, None] = None
+        self.asm_compiler: T.Union[Compiler, None] = None
+        self.archiver: T.Union[Archiver, None] = None
+        self.linker: T.Union[Linker, None] = None
+        self.shared_linker: T.Union[SharedLinker, None] = None
 
-        self.target_operating_system: str = None
-        self.host_operating_system: str = None
+        self.target_operating_system: T.Union[str, None] = None
+        self.host_operating_system: T.Union[str, None] = None
 
-        self.target_architecture: str = None
-        self.target_simplified_architecture: str = None
-        self.host_architecture: str = None
-        self.host_simplified_architecture: str = None
+        self.target_architecture: T.Union[str, None] = None
+        self.target_simplified_architecture: T.Union[str, None] = None
+        self.host_architecture: T.Union[str, None] = None
+        self.host_simplified_architecture: T.Union[str, None] = None
 
-        self.obj_build_directory: str = None
-        self.exe_build_directory: str = None
-        self.lib_build_directory: str = None
+        self.obj_build_directory: T.Union[str, None] = None
+        self.exe_build_directory: T.Union[str, None] = None
+        self.lib_build_directory: T.Union[str, None] = None
 
         self.defines: list = []
         self.shared_libs: list = []
@@ -333,6 +334,7 @@ class Config:
         self.asm_compiler = load_tool_from_tuple(asm_compiler_tuple, "compiler")
         self.archiver = load_tool_from_tuple(archiver_tuple, "archiver")
         self.linker = load_tool_from_tuple(linker_tuple, "linker")
+        self.shared_linker = load_tool_from_tuple(shared_linker_tuple, "shared_linker")
 
         toolchain = auto_toolchain(self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
 
@@ -383,6 +385,9 @@ class Config:
         return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
 
     def reload_env(self):
+        if self.target_architecture is None or self.host_architecture is None:
+            raise RuntimeError("Unable to load environment because architecture is undetermined")
+        
         self.target_simplified_architecture = simplify_architecture(self.target_architecture)
         self.host_simplified_architecture = simplify_architecture(self.host_architecture)
 
@@ -399,7 +404,8 @@ class Config:
 
     def reload_tools(self):
         for tool in (self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker):
-            tool.reload()
+            if tool is not None:
+                tool.reload()
         self.reload_env()
 
     def reset_build_directories(self):
@@ -426,17 +432,18 @@ class Config:
             self.lib_build_directory = replace_architecture(self.lib_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
 
     def export_json(self):
-        return {
-            "c_compiler": {
+        output = {}
+        if self.c_compiler is not None:
+            output["c_compiler"] = {
                 "type": self.c_compiler.type,
                 "path": self.c_compiler.path
             }
-        }
+        return output
 
     def copy(self):
         return copy.deepcopy(self)
 
-    def empty_copy(self, local_config: str = None):
+    def empty_copy(self, local_config: T.Union[str, None] = None):
         """Generate a new fresh config object without anything inside. By default, even the local config file isn't used.  
         It can be very helpful if you have a local config file specifying a cross compiler but you want to have the default compiler at some point during the compilation step.
         """
@@ -460,7 +467,7 @@ class Config:
             if reset_optimization:
                 self.set_optimization("-O3")
 
-    def set_target_architecture(self, architecture, reload_tools_and_build_dir: bool = True):
+    def set_target_architecture(self, architecture: str, reload_tools_and_build_dir: bool = True):
         self.target_architecture = architecture
         if reload_tools_and_build_dir:
             self.reload_tools()
@@ -630,12 +637,12 @@ class Config:
             if shared_linker_flag in self.shared_linker_flags:
                 self.shared_linker_flags.remove(shared_linker_flag)
 
-    def add_exported_headers(self, *exported_headers: str, subfolder: str = None) -> None:
+    def add_exported_headers(self, *exported_headers: str, subfolder: T.Union[str, None] = None) -> None:
         for exported_header in exported_headers:
             if (exported_header, subfolder) not in self.exported_headers:
                 self.exported_headers.append((exported_header, subfolder))
 
-    def remove_exported_headers(self, *exported_headers: str, subfolder: str = None) -> None:
+    def remove_exported_headers(self, *exported_headers: str, subfolder: T.Union[str, None] = None) -> None:
         for exported_header in exported_headers:
             if (exported_header, subfolder) in self.exported_headers:
                 self.exported_headers.remove((exported_header, subfolder))

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Callable
+
 from .common import Linker
 from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
 from .msvc import LinkerMSVC, LinkerClang_CL
@@ -29,7 +31,7 @@ _linker_types: dict = {
 }
 
 
-def GenericLinker(linker_type: str) -> Linker:
+def GenericLinker(linker_type: str) -> Callable[[], Linker]:
     if linker_type not in _linker_types:
         return None
     return _linker_types[linker_type]
