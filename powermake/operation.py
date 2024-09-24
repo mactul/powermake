@@ -185,8 +185,8 @@ class Operation:
             "arguments": self.command,
             "output": self.outputfile
         }
-        l = list(self.dependencies)
-        if len(l) > 0:
-            json_command["file"] = l[0]
+        deps = list(self.dependencies)
+        if len(deps) > 0:
+            json_command["file"] = deps[0]
 
         return json_command

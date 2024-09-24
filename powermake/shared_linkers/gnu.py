@@ -36,7 +36,7 @@ class SharedLinkerGNU(SharedLinker):
 
     @classmethod
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
-        return ["-l"+lib for lib in shared_libs] + translate_flags(flags, self.translation_dict)
+        return ["-l" + lib for lib in shared_libs] + translate_flags(flags, self.translation_dict)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]

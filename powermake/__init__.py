@@ -257,7 +257,7 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         force = config.rebuild
 
     if archive_name is None:
-        archive_name = "lib"+config.target_name
+        archive_name = "lib" + config.target_name
 
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
@@ -320,7 +320,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         force = config.rebuild
 
     if lib_name is None:
-        lib_name = "lib"+config.target_name
+        lib_name = "lib" + config.target_name
 
     if config.shared_linker is None:
         raise RuntimeError("No shared linker has been specified and the default config didn't find any")

@@ -18,8 +18,6 @@ __all__ = [
 
 import typing as T
 
-
-
 from .common import Linker
 from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
 from .msvc import LinkerMSVC, LinkerClang_CL

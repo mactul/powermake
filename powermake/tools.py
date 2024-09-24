@@ -18,7 +18,6 @@ import shutil
 import typing as T
 
 
-
 class Tool(abc.ABC):
     type: T.ClassVar = ""
 
@@ -75,7 +74,7 @@ def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], T.Calla
             else:
                 tool_path = tool_tuple[0]
             raise ValueError("The %s %s could not be found on your machine" % (tool_name, tool_path))
-        
+
         return tool
     return None
 

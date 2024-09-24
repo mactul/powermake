@@ -18,7 +18,6 @@ __all__ = [
 
 import typing as T
 
-
 from .common import SharedLinker
 from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLinkerGPlusPlus, SharedLinkerClangPlusPlus
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL

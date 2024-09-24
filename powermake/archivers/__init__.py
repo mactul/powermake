@@ -18,8 +18,6 @@ __all__ = [
 
 import typing as T
 
-
-
 from .common import Archiver
 from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR
 from .msvc import ArchiverMSVC

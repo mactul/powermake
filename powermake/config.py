@@ -20,7 +20,6 @@ import argparse
 import platform
 import typing as T
 
-
 from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
@@ -388,7 +387,7 @@ class Config:
     def reload_env(self) -> None:
         if self.target_architecture == "" or self.host_architecture == "":
             raise RuntimeError("Unable to load environment because architecture is undetermined")
-        
+
         self.target_simplified_architecture = simplify_architecture(self.target_architecture)
         self.host_simplified_architecture = simplify_architecture(self.host_architecture)
 
@@ -475,7 +474,7 @@ class Config:
             self.reset_build_directories()
         else:
             self.reload_env()
-        
+
         if self.target_simplified_architecture != self.host_simplified_architecture:
             if self.target_simplified_architecture in ("x86", "x64"):
                 if self.target_simplified_architecture == "x86":
@@ -484,20 +483,20 @@ class Config:
                 else:
                     add = "64"
                     remove = "32"
-                self.add_c_cpp_flags("-m"+add)
-                self.add_ld_flags("-m"+add)
-                self.add_shared_linker_flags("-m"+add)
-                self.add_as_flags("-m"+add)
-                self.remove_c_cpp_flags("-m"+remove)
-                self.remove_ld_flags("-m"+remove)
-                self.remove_shared_linker_flags("-m"+remove)
-                self.remove_as_flags("-m"+remove)
+                self.add_c_cpp_flags("-m" + add)
+                self.add_ld_flags("-m" + add)
+                self.add_shared_linker_flags("-m" + add)
+                self.add_as_flags("-m" + add)
+                self.remove_c_cpp_flags("-m" + remove)
+                self.remove_ld_flags("-m" + remove)
+                self.remove_shared_linker_flags("-m" + remove)
+                self.remove_as_flags("-m" + remove)
                 if self.target_is_windows():
-                    self.add_asm_flags("-fwin"+add)
-                    self.remove_asm_flags("-fwin"+remove)
+                    self.add_asm_flags("-fwin" + add)
+                    self.remove_asm_flags("-fwin" + remove)
                 else:
-                    self.add_asm_flags("-felf"+add)
-                    self.remove_asm_flags("-felf"+remove)
+                    self.add_asm_flags("-felf" + add)
+                    self.remove_asm_flags("-felf" + remove)
 
     def set_optimization(self, opt_flag: str) -> None:
         self.remove_c_cpp_as_asm_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")

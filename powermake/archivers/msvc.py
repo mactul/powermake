@@ -25,4 +25,4 @@ class ArchiverMSVC(Archiver):
         super().__init__(path)
 
     def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> T.List[str]:
-        return [self.path, "/nologo", *args, "/out:"+outputfile, *inputfiles]
+        return [self.path, "/nologo", *args, "/out:" + outputfile, *inputfiles]

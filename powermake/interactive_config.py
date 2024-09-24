@@ -47,16 +47,16 @@ def multiple_choices(question: str, choices: T.List[T.Union[str, None]], values:
     assert len(choices) == len(values)
 
     answer = 0
-    while answer not in range(1, len(choices)+1):
+    while answer not in range(1, len(choices) + 1):
         print("\033[H\033[2J", end="")
         print(question)
-        for i in range(1, len(choices)+1):
-            print(f"[{i}]: {dp(choices[i-1])}")
-        answer_str = input(f"{' '.join([str(i) for i in range(1, len(choices)+1)])}: ")
+        for i in range(1, len(choices) + 1):
+            print(f"[{i}]: {dp(choices[i - 1])}")
+        answer_str = input(f"{' '.join([str(i) for i in range(1, len(choices) + 1)])}: ")
         if answer_str.isnumeric():
             answer = int(answer_str)
 
-    return values[answer-1]
+    return values[answer - 1]
 
 
 class InteractiveConfig:
@@ -81,7 +81,7 @@ class InteractiveConfig:
                 "Toolchain\n",
                 "Save configuration"
             ]
-            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices)+1)])
+            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices) + 1)])
 
             if answer == 1:
                 self.target_operating_system = multiple_choices("Select the target operating system", [None, "Linux", "Windows", "MacOS", "Write my own string"])
@@ -111,7 +111,7 @@ class InteractiveConfig:
             "Back to main menu"
         ]
         while answer != len(choices):
-            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices)+1)])
+            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices) + 1)])
 
             if answer == 1:
                 self.tool_menu(self.c_compiler, "C compiler", get_all_c_compiler_types())
@@ -136,7 +136,7 @@ class InteractiveConfig:
                 f"{tool_name} path ({dp(tool[1])})\n",
                 "Back to toolchain menu"
             ]
-            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices)+1)])
+            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices) + 1)])
 
             if answer == 1:
                 tool[0] = multiple_choices(f"Select the {tool_name} type", [None] + list(tool_types))
