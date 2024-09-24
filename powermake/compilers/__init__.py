@@ -19,7 +19,7 @@ __all__ = [
 
 import typing as T
 
-from collections.abc import Callable
+
 
 from .common import Compiler
 from .asm import CompilerNASM
@@ -27,7 +27,7 @@ from .msvc import CompilerMSVC, CompilerClang_CL
 from .gnu import CompilerGNU, CompilerGNUPlusPLus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
 
 
-_c_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
+_c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gnu": CompilerGNU,
     "gcc": CompilerGCC,
     "clang": CompilerClang,
@@ -35,7 +35,7 @@ _c_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
     "clang-cl": CompilerClang_CL
 }
 
-_cpp_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
+_cpp_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gnu++": CompilerGNUPlusPLus,
     "g++": CompilerGPlusPlus,
     "clang++": CompilerClangPlusPlus,
@@ -44,17 +44,17 @@ _cpp_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
 }
 
 
-_as_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
+_as_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gnu": CompilerGNU,
     "gcc": CompilerGCC,
     "clang": CompilerClang
 }
 
-_asm_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
+_asm_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "nasm": CompilerNASM
 }
 
-_compiler_types: T.Dict[str, Callable[[], Compiler]] = {
+_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     **_c_compiler_types,
     **_cpp_compiler_types,
     **_as_compiler_types,
@@ -62,7 +62,7 @@ _compiler_types: T.Dict[str, Callable[[], Compiler]] = {
 }
 
 
-def GenericCompiler(compiler_type: str) -> T.Union[Callable[[], Compiler], None]:
+def GenericCompiler(compiler_type: str) -> T.Union[T.Callable[[], Compiler], None]:
     if compiler_type not in _compiler_types:
         return None
     return _compiler_types[compiler_type]

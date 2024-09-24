@@ -18,14 +18,14 @@ __all__ = [
 
 import typing as T
 
-from collections.abc import Callable
+
 
 from .common import Archiver
 from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR
 from .msvc import ArchiverMSVC
 
 
-_archiver_types: T.Dict[str, Callable[[], Archiver]] = {
+_archiver_types: T.Dict[str, T.Callable[[], Archiver]] = {
     "gnu": ArchiverGNU,
     "ar": ArchiverAR,
     "llvm-ar": ArchiverLLVM_AR,
@@ -33,7 +33,7 @@ _archiver_types: T.Dict[str, Callable[[], Archiver]] = {
 }
 
 
-def GenericArchiver(archiver_type: str) -> T.Union[Callable[[], Archiver], None]:
+def GenericArchiver(archiver_type: str) -> T.Union[T.Callable[[], Archiver], None]:
     if archiver_type not in _archiver_types:
         return None
     return _archiver_types[archiver_type]

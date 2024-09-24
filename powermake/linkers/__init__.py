@@ -18,14 +18,14 @@ __all__ = [
 
 import typing as T
 
-from collections.abc import Callable
+
 
 from .common import Linker
 from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 
-_linker_types: T.Dict[str, Callable[[], Linker]] = {
+_linker_types: T.Dict[str, T.Callable[[], Linker]] = {
     "gnu": LinkerGNU,
     "ld": LinkerLD,
     "gcc": LinkerGCC,
@@ -37,7 +37,7 @@ _linker_types: T.Dict[str, Callable[[], Linker]] = {
 }
 
 
-def GenericLinker(linker_type: str) -> T.Union[Callable[[], Linker], None]:
+def GenericLinker(linker_type: str) -> T.Union[T.Callable[[], Linker], None]:
     if linker_type not in _linker_types:
         return None
     return _linker_types[linker_type]

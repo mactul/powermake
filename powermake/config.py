@@ -19,7 +19,7 @@ import json
 import argparse
 import platform
 import typing as T
-from collections.abc import Callable
+
 
 from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
@@ -161,13 +161,13 @@ class Config:
 
         self.exported_headers: T.List[T.Tuple[str, T.Union[str, None]]] = []
 
-        c_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
-        cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
-        as_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
-        asm_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
-        archiver_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Archiver]], None] = None
-        linker_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Linker]], None] = None
-        shared_linker_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], SharedLinker]], None] = None
+        c_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
+        cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
+        as_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
+        asm_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
+        archiver_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver]], None] = None
+        linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker]], None] = None
+        shared_linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker]], None] = None
 
         if global_config is None:
             global_config = get_global_config()
@@ -181,25 +181,25 @@ class Config:
                 with open(path, "r") as file:
                     conf: T.Dict[str, T.Any] = json.load(file)
                     if c_compiler_tuple is None:
-                        c_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types))
+                        c_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types))
 
                     if cpp_compiler_tuple is None:
-                        cpp_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types))
+                        cpp_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types))
 
                     if as_compiler_tuple is None:
-                        as_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types))
+                        as_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types))
 
                     if asm_compiler_tuple is None:
-                        asm_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types))
+                        asm_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types))
 
                     if archiver_tuple is None:
-                        archiver_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Archiver]], None], load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types))
+                        archiver_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver]], None], load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types))
 
                     if linker_tuple is None:
-                        linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Linker]], None], load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types))
+                        linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker]], None], load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types))
 
                     if shared_linker_tuple is None:
-                        shared_linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], SharedLinker]], None], load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types))
+                        shared_linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker]], None], load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types))
 
                     if self.target_operating_system == "" and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]

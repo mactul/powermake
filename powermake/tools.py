@@ -16,7 +16,7 @@
 import abc
 import shutil
 import typing as T
-from collections.abc import Callable
+
 
 
 class Tool(abc.ABC):
@@ -37,7 +37,7 @@ class Tool(abc.ABC):
             self.path = path
 
 
-def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], tool_list_getter: Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], Callable[[], Tool]], None]:
+def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None]:
     if tool_name not in conf:
         return None
 
@@ -61,13 +61,13 @@ def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_g
     return None
 
 
-def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Tool]], None], tool_name: str) -> T.Union[Tool, None]:
+def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None], tool_name: str) -> T.Union[Tool, None]:
     if tool_tuple is not None:
         tool: Tool
         if tool_tuple[0] is None:
             tool = tool_tuple[1]()
         else:
-            tool = T.cast(Callable[[str], Tool], tool_tuple[1])(tool_tuple[0])
+            tool = T.cast(T.Callable[[str], Tool], tool_tuple[1])(tool_tuple[0])
 
         if not tool.is_available():
             if tool_tuple[0] is None:
@@ -80,7 +80,7 @@ def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], Callabl
     return None
 
 
-def find_tool(object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], *tool_types: str) -> T.Union[Tool, None]:
+def find_tool(object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], *tool_types: str) -> T.Union[Tool, None]:
     for tool_type in tool_types:
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:

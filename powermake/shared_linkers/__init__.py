@@ -17,14 +17,14 @@ __all__ = [
 ]
 
 import typing as T
-from collections.abc import Callable
+
 
 from .common import SharedLinker
 from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLinkerGPlusPlus, SharedLinkerClangPlusPlus
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
 
 
-_shared_linker_types: T.Dict[str, Callable[[], SharedLinker]] = {
+_shared_linker_types: T.Dict[str, T.Callable[[], SharedLinker]] = {
     "gnu": SharedLinkerGNU,
     "gcc": SharedLinkerGCC,
     "g++": SharedLinkerGPlusPlus,
@@ -35,7 +35,7 @@ _shared_linker_types: T.Dict[str, Callable[[], SharedLinker]] = {
 }
 
 
-def GenericSharedLinker(shared_linker_type: str) -> T.Union[Callable[[], SharedLinker], None]:
+def GenericSharedLinker(shared_linker_type: str) -> T.Union[T.Callable[[], SharedLinker], None]:
     if shared_linker_type not in _shared_linker_types:
         return None
     return _shared_linker_types[shared_linker_type]
