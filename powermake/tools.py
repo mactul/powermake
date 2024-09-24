@@ -26,7 +26,7 @@ class Tool(abc.ABC):
         self.reload()
 
     def is_available(self) -> bool:
-        return self.path is not None
+        return self.path != ""
 
     def reload(self) -> None:
         path = shutil.which(self._name)
