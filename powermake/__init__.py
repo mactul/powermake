@@ -36,12 +36,12 @@ if hasattr(__makefile__, '__file__'):
     os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
 
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, **kwargs):
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, **kwargs: T.Any) -> int:
     print_debug_info(command, config.verbosity)
     return subprocess.run(command, shell=shell, **kwargs).returncode
 
 
-def import_module(module_name: str, module_path: T.Union[str, None] = None):
+def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T.Any:
     """Import a custom module from a path
 
     Args:
@@ -60,7 +60,7 @@ def import_module(module_name: str, module_path: T.Union[str, None] = None):
     return module
 
 
-def get_files(*patterns: str) -> set:
+def get_files(*patterns: str) -> T.Set[str]:
     """Return all files on the disk that matches one of the patterns given
 
     Supported patterns are `*`, like `./*.c` and `**/` like `./**/*.c` to search all .c recursively, starting at `./`
@@ -86,7 +86,7 @@ def _match_a_pattern(file: str, patterns: T.Iterable[str]) -> bool:
     return False
 
 
-def filter_files(files: T.Set[str], *patterns: str) -> set:
+def filter_files(files: T.Set[str], *patterns: str) -> T.Set[str]:
     """Create a copy of the set `files` with all elements that matches `pattern` removed.
 
     This function will equally works if `files` is an iterable but will always returns a set.
@@ -158,22 +158,22 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
     if config.c_compiler is not None:
         c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags)
     else:
-        c_args = None
+        c_args = []
 
     if config.cpp_compiler is not None:
         cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags)
     else:
-        cpp_args = None
+        cpp_args = []
 
     if config.as_compiler is not None:
         as_args = config.as_compiler.format_args(config.defines, config.additional_includedirs, config.as_flags)
     else:
-        as_args = None
+        as_args = []
 
     if config.asm_compiler is not None:
         asm_args = config.asm_compiler.format_args(config.defines, config.additional_includedirs, config.asm_flags)
     else:
-        asm_args = None
+        asm_args = []
 
     for file in files:
         if config.c_compiler is not None:
@@ -208,9 +208,9 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
         op = Operation(output_file, {file}, config, command)
         if isinstance(files, set):
-            T.cast(set, operations).add(op)
+            T.cast(T.Set[Operation], operations).add(op)
         else:
-            T.cast(list, operations).append(op)
+            T.cast(T.List[Operation], operations).append(op)
 
     if config.compile_commands_dir is not None:
         json_commands = []

@@ -24,13 +24,13 @@ from .shared_linkers import get_all_shared_linker_types
 from .compilers import get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 
 
-def dp(string: T.Union[str, None]):
+def dp(string: T.Union[str, None]) -> str:
     if string is None:
         return "Let the program decide"
     return string
 
 
-def add_tool_dict(dictionary, tool, tool_name):
+def add_tool_dict(dictionary: T.Dict[T.Any, T.Any], tool: T.List[T.Union[str, None]], tool_name: str) -> None:
     if tool[0] is not None:
         if tool_name not in dictionary:
             dictionary[tool_name] = {}
@@ -41,7 +41,7 @@ def add_tool_dict(dictionary, tool, tool_name):
         dictionary[tool_name]["path"] = tool[1]
 
 
-def multiple_choices(question: str, choices: T.List[T.Union[str, None]], values: T.Union[T.List[T.Any], None] = None):
+def multiple_choices(question: str, choices: T.List[T.Union[str, None]], values: T.Union[T.List[T.Any], None] = None) -> T.Any:
     if values is None:
         values = choices
     assert len(choices) == len(values)
@@ -61,15 +61,15 @@ def multiple_choices(question: str, choices: T.List[T.Union[str, None]], values:
 
 class InteractiveConfig:
     def __init__(self, global_config: T.Union[str, None] = None, local_config: str = "./powermake_config"):
-        self.target_architecture = None
-        self.target_operating_system = None
-        self.c_compiler = [None, None]
-        self.cpp_compiler = [None, None]
-        self.as_compiler = [None, None]
-        self.asm_compiler = [None, None]
-        self.archiver = [None, None]
-        self.linker = [None, None]
-        self.shared_linker = [None, None]
+        self.target_architecture: T.Union[str, None] = None
+        self.target_operating_system: T.Union[str, None] = None
+        self.c_compiler: T.List[T.Union[str, None]] = [None, None]
+        self.cpp_compiler: T.List[T.Union[str, None]] = [None, None]
+        self.as_compiler: T.List[T.Union[str, None]] = [None, None]
+        self.asm_compiler: T.List[T.Union[str, None]] = [None, None]
+        self.archiver: T.List[T.Union[str, None]] = [None, None]
+        self.linker: T.List[T.Union[str, None]] = [None, None]
+        self.shared_linker: T.List[T.Union[str, None]] = [None, None]
 
         self.global_config = global_config
         self.local_config = local_config
@@ -98,7 +98,7 @@ class InteractiveConfig:
         else:
             self.save_config(global_config or get_global_config())
 
-    def toolchain_menu(self):
+    def toolchain_menu(self) -> None:
         answer = 0
         choices: T.List[T.Union[str, None]] = [
             "C compiler",
@@ -128,7 +128,7 @@ class InteractiveConfig:
             elif answer == 7:
                 self.tool_menu(self.linker, "Linker", get_all_linker_types())
 
-    def tool_menu(self, tool: list, tool_name: str, tool_types: T.Set[str]):
+    def tool_menu(self, tool: T.List[T.Union[str, None]], tool_name: str, tool_types: T.Set[str]) -> None:
         answer = 0
         while answer != 3:
             choices: T.List[T.Union[str, None]] = [
@@ -146,7 +146,7 @@ class InteractiveConfig:
                 if tool[1] == "":
                     tool[1] = None
 
-    def save_config(self, filepath):
+    def save_config(self, filepath: str) -> None:
         config = {}
         if os.path.isfile(filepath):
             verif = 'n'

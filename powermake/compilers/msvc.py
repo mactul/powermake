@@ -68,19 +68,19 @@ class CompilerMSVC(Compiler):
     obj_extension: T.ClassVar = ".obj"
     translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
-    def __init__(self, path: str = "cl"):
+    def __init__(self, path: str = "cl") -> None:
         super().__init__(path)
 
     @classmethod
-    def format_args(self, defines: list, includedirs: list, flags: list = []):
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
         return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + translate_flags(flags, self.translation_dict)
 
-    def basic_compile_command(self, outputfile: str, inputfile: str, args: list = []) -> list:
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
 
 class CompilerClang_CL(CompilerMSVC):
     type: T.ClassVar = "clang-cl"
 
-    def __init__(self, path: str = "clang-cl"):
+    def __init__(self, path: str = "clang-cl") -> None:
         super().__init__(path)

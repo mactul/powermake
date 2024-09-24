@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+__all__ = [
+    "Archiver", "ArchiverGNU", "ArchiverAR", "ArchiverLLVM_AR", "ArchiverMSVC"
+]
+
 import typing as T
 
 from collections.abc import Callable
@@ -21,7 +25,7 @@ from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR
 from .msvc import ArchiverMSVC
 
 
-_archiver_types: dict = {
+_archiver_types: T.Dict[str, Callable[[], Archiver]] = {
     "gnu": ArchiverGNU,
     "ar": ArchiverAR,
     "llvm-ar": ArchiverLLVM_AR,

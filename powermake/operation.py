@@ -106,7 +106,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     return True
 
 
-def needs_update(outputfile: str, dependencies: T.Iterable, additional_includedirs: T.List[str]) -> bool:
+def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_includedirs: T.List[str]) -> bool:
     """Returns whether or not `outputfile` is up to date with all his dependencies
 
     If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
@@ -132,7 +132,7 @@ def needs_update(outputfile: str, dependencies: T.Iterable, additional_includedi
 
 
 class Operation:
-    def __init__(self, outputfile: str, dependencies: T.Iterable, config: Config, command: T.List[str]):
+    def __init__(self, outputfile: str, dependencies: T.Iterable[str], config: Config, command: T.List[str]):
         """Provide a simple object that can execute a command only if it's needed.
 
         Args:
@@ -179,7 +179,7 @@ class Operation:
                 raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")
         return self.outputfile
 
-    def get_json_command(self):
+    def get_json_command(self) -> T.Dict[str, T.Any]:
         json_command = {
             "directory": os.getcwd(),
             "arguments": self.command,

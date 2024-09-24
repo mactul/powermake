@@ -22,12 +22,12 @@ from ..tools import Tool
 class Linker(Tool, abc.ABC):
     exe_extension: T.ClassVar = ""
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         Tool.__init__(self, path)
 
     @classmethod
     @abc.abstractmethod
-    def format_args(self, shared_libs: list, flags: list):
+    def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
         return []
 
     @abc.abstractmethod

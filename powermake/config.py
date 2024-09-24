@@ -31,14 +31,14 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 
 
-def get_global_config():
+def get_global_config() -> str:
     global_config = os.getenv("POWERMAKE_CONFIG")
     if global_config is None:
         global_config = os.path.normpath(os.path.expanduser("~/.powermake/powermake_config.json"))
     return global_config
 
 
-def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None]) -> tuple:
+def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None]) -> T.Tuple[str, str, str, str, str, str, str]:
     if c_compiler is not None:
         c_compiler_type = c_compiler.type
     else:
@@ -104,7 +104,7 @@ def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Co
     return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
 
 
-def replace_architecture(string: str, new_arch: str):
+def replace_architecture(string: str, new_arch: str) -> str:
     new_arch = "/" + new_arch + "/"
     for arch in ("/x86/", "/x64/", "/arm32/", "/arm64/"):
         string = string.replace(arch, new_arch)
@@ -112,7 +112,7 @@ def replace_architecture(string: str, new_arch: str):
 
 
 class Config:
-    def __init__(self, target_name, *, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None):
+    def __init__(self, target_name: str, *, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None) -> None:
         """Create an object that loads all configurations files and search for compilers.
 
         This objects hold all the configuration for the compilation.
@@ -148,18 +148,18 @@ class Config:
         self.exe_build_directory: str = ""
         self.lib_build_directory: str = ""
 
-        self.defines: list = []
-        self.shared_libs: list = []
-        self.additional_includedirs: list = []
-        self.c_flags: list = []
-        self.cpp_flags: list = []
-        self.as_flags: list = []
-        self.asm_flags: list = []
-        self.ar_flags: list = []
-        self.ld_flags: list = []
-        self.shared_linker_flags: list = []
+        self.defines: T.List[str] = []
+        self.shared_libs: T.List[str] = []
+        self.additional_includedirs: T.List[str] = []
+        self.c_flags: T.List[str] = []
+        self.cpp_flags: T.List[str] = []
+        self.as_flags: T.List[str] = []
+        self.asm_flags: T.List[str] = []
+        self.ar_flags: T.List[str] = []
+        self.ld_flags: T.List[str] = []
+        self.shared_linker_flags: T.List[str] = []
 
-        self.exported_headers: list = []
+        self.exported_headers: T.List[T.Tuple[str, T.Union[str, None]]] = []
 
         c_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
         cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
@@ -179,7 +179,7 @@ class Config:
                 continue
             try:
                 with open(path, "r") as file:
-                    conf: dict = json.load(file)
+                    conf: T.Dict[str, T.Any] = json.load(file)
                     if c_compiler_tuple is None:
                         c_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types))
 
@@ -298,7 +298,7 @@ class Config:
                         for exported_header in conf["exported_headers"]:
                             if isinstance(exported_header, str) and (exported_header, None) not in self.exported_headers:
                                 self.exported_headers.append((exported_header, None))
-                            elif isinstance(exported_header, list) and len(exported_header) == 2 and exported_header not in self.exported_headers:
+                            elif isinstance(exported_header, list) and len(exported_header) == 2 and tuple(exported_header) not in self.exported_headers:
                                 self.exported_headers.append((exported_header[0], exported_header[1]))
 
             except OSError:
@@ -385,7 +385,7 @@ class Config:
     def c_cpp_as_asm_flags(self) -> T.List[str]:
         return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
 
-    def reload_env(self):
+    def reload_env(self) -> None:
         if self.target_architecture == "" or self.host_architecture == "":
             raise RuntimeError("Unable to load environment because architecture is undetermined")
         
@@ -403,13 +403,13 @@ class Config:
                 for var in env:
                     os.environ[var] = env[var]
 
-    def reload_tools(self):
+    def reload_tools(self) -> None:
         for tool in (self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker):
             if tool is not None:
                 tool.reload()
         self.reload_env()
 
-    def reset_build_directories(self):
+    def reset_build_directories(self) -> None:
         if self.debug:
             mode = "debug"
             old_mode = "release"
@@ -432,7 +432,7 @@ class Config:
         else:
             self.lib_build_directory = replace_architecture(self.lib_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
 
-    def export_json(self):
+    def export_json(self) -> T.Dict[str, T.Any]:
         output = {}
         if self.c_compiler is not None:
             output["c_compiler"] = {
@@ -441,16 +441,16 @@ class Config:
             }
         return output
 
-    def copy(self):
+    def copy(self) -> T.Any:
         return copy.deepcopy(self)
 
-    def empty_copy(self, local_config: T.Union[str, None] = None):
+    def empty_copy(self, local_config: T.Union[str, None] = None) -> T.Any:
         """Generate a new fresh config object without anything inside. By default, even the local config file isn't used.  
         It can be very helpful if you have a local config file specifying a cross compiler but you want to have the default compiler at some point during the compilation step.
         """
         return Config(self.target_name, args_parsed=self._args_parsed, debug=self.debug, rebuild=self.rebuild, verbosity=self.verbosity, nb_jobs=self.nb_jobs, single_file=self.single_file, compile_commands_dir=self.compile_commands_dir, local_config=local_config)
 
-    def set_debug(self, debug: bool = True, reset_optimization: bool = False):
+    def set_debug(self, debug: bool = True, reset_optimization: bool = False) -> None:
         self.debug = debug
 
         self.reset_build_directories()
@@ -468,7 +468,7 @@ class Config:
             if reset_optimization:
                 self.set_optimization("-O3")
 
-    def set_target_architecture(self, architecture: str, reload_tools_and_build_dir: bool = True):
+    def set_target_architecture(self, architecture: str, reload_tools_and_build_dir: bool = True) -> None:
         self.target_architecture = architecture
         if reload_tools_and_build_dir:
             self.reload_tools()
@@ -499,23 +499,23 @@ class Config:
                     self.add_asm_flags("-felf"+add)
                     self.remove_asm_flags("-felf"+remove)
 
-    def set_optimization(self, opt_flag: str):
+    def set_optimization(self, opt_flag: str) -> None:
         self.remove_c_cpp_as_asm_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
         self.add_c_cpp_as_asm_flags(opt_flag)
 
-    def get_optimization_level(self):
+    def get_optimization_level(self) -> T.Union[str, None]:
         for flag in reversed(self.c_cpp_flags):
             if flag in ("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer"):
                 return flag
         return None
 
-    def target_is_windows(self):
+    def target_is_windows(self) -> bool:
         return self.target_operating_system.lower().startswith("win")
 
-    def target_is_linux(self):
+    def target_is_linux(self) -> bool:
         return self.target_operating_system.lower().startswith("linux")
 
-    def target_is_mingw(self):
+    def target_is_mingw(self) -> bool:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
 
     def add_defines(self, *defines: str) -> None:

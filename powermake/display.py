@@ -14,17 +14,18 @@
 
 
 import colorama
+import typing as T
 
 
-def init_colors():
+def init_colors() -> None:
     colorama.init()
 
 
-def print_info(string, verbosity: int):
+def print_info(string: T.Any, verbosity: int) -> None:
     if verbosity >= 1:
         print(colorama.Fore.LIGHTMAGENTA_EX + str(string) + colorama.Style.RESET_ALL)
 
 
-def print_debug_info(string, verbosity: int):
+def print_debug_info(string: T.Any, verbosity: int) -> None:
     if verbosity >= 2:
         print(colorama.Fore.LIGHTBLACK_EX + str(string) + colorama.Style.RESET_ALL)

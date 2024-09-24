@@ -20,9 +20,9 @@ from ..tools import Tool
 
 
 class Archiver(Tool, abc.ABC):
-    static_lib_extension = ""
+    static_lib_extension: T.ClassVar = ""
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         Tool.__init__(self, path)
 
     @abc.abstractmethod

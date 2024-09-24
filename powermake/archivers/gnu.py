@@ -18,8 +18,8 @@ from .common import Archiver
 
 
 class ArchiverGNU(Archiver):
-    type = "gnu"
-    static_lib_extension = ".a"
+    type: T.ClassVar = "gnu"
+    static_lib_extension: T.ClassVar = ".a"
 
     def __init__(self, path: str = "ar"):
         super().__init__(path)
@@ -29,14 +29,14 @@ class ArchiverGNU(Archiver):
 
 
 class ArchiverAR(ArchiverGNU):
-    type = "ar"
+    type: T.ClassVar = "ar"
 
     def __init__(self, path: str = "ar"):
         super().__init__(path)
 
 
 class ArchiverLLVM_AR(ArchiverGNU):
-    type = "llvm-ar"
+    type: T.ClassVar = "llvm-ar"
 
     def __init__(self, path: str = "llvm-ar"):
         super().__init__(path)

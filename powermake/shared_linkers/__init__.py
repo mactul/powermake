@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+__all__ = [
+    "SharedLinker", "SharedLinkerGNU", "SharedLinkerGCC", "SharedLinkerClang", "SharedLinkerGPlusPlus", "SharedLinkerClangPlusPlus", "SharedLinkerMSVC", "SharedLinkerClang_CL"
+]
+
 import typing as T
 from collections.abc import Callable
 
@@ -20,7 +24,7 @@ from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLink
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
 
 
-_shared_linker_types: dict = {
+_shared_linker_types: T.Dict[str, Callable[[], SharedLinker]] = {
     "gnu": SharedLinkerGNU,
     "gcc": SharedLinkerGCC,
     "g++": SharedLinkerGPlusPlus,

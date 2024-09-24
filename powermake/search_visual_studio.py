@@ -25,10 +25,10 @@ import typing as T
 from .utils import makedirs
 
 
-def get_drives():
+def get_drives() -> T.List[str]:
     if platform.platform().lower().startswith("win") and hasattr(ctypes, 'windll'):
         drives = []
-        bitmask = ctypes.windll.kernel32.GetLogicalDrives()  # type: ignore[attr-defined]
+        bitmask = ctypes.windll.kernel32.GetLogicalDrives()
         for letter in string.ascii_uppercase:
             if bitmask & 1:
                 drives.append(letter + ":\\")
@@ -85,7 +85,7 @@ vsvers = {
 }
 
 
-def _load_vcvarsall(vcvarsall_path, version, architecture):
+def _load_vcvarsall(vcvarsall_path: str, version: str, architecture: str) -> T.Dict[str, str]:
     tempdir = tempfile.TemporaryDirectory("powermake")
     genvcvars_filepath = os.path.join(tempdir.name, "genvcvars.bat")
     file = open(genvcvars_filepath, "w")
@@ -120,7 +120,7 @@ def _load_vcvarsall(vcvarsall_path, version, architecture):
     return variables
 
 
-def _find_vcvarsall():
+def _find_vcvarsall() -> T.Tuple[T.Union[str, None], T.Union[str, None]]:
     for version in vsvers:
         for logical_drive in get_drives():
             paths = []
@@ -149,31 +149,31 @@ def _find_vcvarsall():
     return None, None
 
 
-def is_msvc_loaded_correctly(env: dict):
+def is_msvc_loaded_correctly(env: T.Dict[str, str]) -> bool:
     for var in vcvars:
         if var not in env:
             return False
     return True
 
 
-def load_envs_from_file(filepath: str, architecture: str = "x86") -> dict:
+def load_envs_from_file(filepath: str, architecture: str = "x86") -> T.Dict[str, T.Any]:
     try:
         with open(filepath, "r") as file:
-            return json.load(file)
+            return dict(json.load(file))
     except OSError:
         return {}
 
 
-def store_envs_to_file(filepath: str, envs: dict) -> None:
+def store_envs_to_file(filepath: str, envs: T.Dict[str, T.Any]) -> None:
     makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(envs, file, indent=4)
 
 
-def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Union[dict, None]:
+def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Union[T.Dict[str, str], None]:
     envs = load_envs_from_file(storage_path)
     if architecture in envs and is_msvc_loaded_correctly(envs[architecture]):
-        return envs[architecture]
+        return dict(envs[architecture])
 
     if "vcvarsall_path" not in envs or "vcversion" not in envs:
         vcvarsall_path, vcversion = _find_vcvarsall()

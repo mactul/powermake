@@ -18,8 +18,8 @@ from .common import Archiver
 
 
 class ArchiverMSVC(Archiver):
-    type = "msvc"
-    static_lib_extension = ".lib"
+    type: T.ClassVar = "msvc"
+    static_lib_extension: T.ClassVar = ".lib"
 
     def __init__(self, path: str = "lib"):
         super().__init__(path)

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+__all__ = [
+    "Linker", "LinkerGNU", "LinkerLD", "LinkerGCC", "LinkerClang", "LinkerGPlusPlus", "LinkerClangPlusPlus", "LinkerMSVC", "LinkerClang_CL"
+]
+
 import typing as T
 
 from collections.abc import Callable
@@ -21,7 +25,7 @@ from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, L
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 
-_linker_types: dict = {
+_linker_types: T.Dict[str, Callable[[], Linker]] = {
     "gnu": LinkerGNU,
     "ld": LinkerLD,
     "gcc": LinkerGCC,

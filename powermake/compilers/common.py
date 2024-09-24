@@ -22,14 +22,14 @@ class Compiler(Tool, abc.ABC):
     type: T.ClassVar = ""
     obj_extension: T.ClassVar = ""
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         Tool.__init__(self, path)
 
     @classmethod
     @abc.abstractmethod
-    def format_args(self, defines: list, includedirs: list, flags: list = []):
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
         return []
 
     @abc.abstractmethod
-    def basic_compile_command(self, outputfile: str, inputfile: str, args: list = []) -> list:
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return []

@@ -29,11 +29,11 @@ class SharedLinkerMSVC(SharedLinker):
     shared_lib_extension: T.ClassVar = ".dll"
     translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
-    def __init__(self, path: str = "link"):
+    def __init__(self, path: str = "link") -> None:
         super().__init__(path)
 
     @classmethod
-    def format_args(self, shared_libs: T.List[str], flags: T.List[str]):
+    def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
         return [(lib if lib.endswith(".lib") else lib+".lib") for lib in shared_libs] + translate_flags(flags, self.translation_dict)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
@@ -43,5 +43,5 @@ class SharedLinkerMSVC(SharedLinker):
 class SharedLinkerClang_CL(SharedLinkerMSVC):
     type = "clang-cl"
 
-    def __init__(self, path: str = "clang-cl"):
+    def __init__(self, path: str = "clang-cl") -> None:
         super().__init__(path)
