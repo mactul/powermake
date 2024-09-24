@@ -37,9 +37,9 @@ _powermake_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
 
 
 class LinkerGNU(Linker):
-    type = "gnu"
-    exe_extension = ""
-    translation_dict = _powermake_flags_to_gnu_flags
+    type: T.ClassVar = "gnu"
+    exe_extension: T.ClassVar = ""
+    translation_dict: T.ClassVar = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
@@ -53,38 +53,38 @@ class LinkerGNU(Linker):
 
 
 class LinkerLD(LinkerGNU):
-    type = "ld"
-    translation_dict = _powermake_flags_to_ld_flags
+    type: T.ClassVar = "ld"
+    translation_dict: T.ClassVar = _powermake_flags_to_ld_flags
 
     def __init__(self, path: str = "ld"):
         super().__init__(path)
 
 
 class LinkerGCC(LinkerGNU):
-    type = "gcc"
+    type: T.ClassVar = "gcc"
 
     def __init__(self, path: str = "gcc"):
         super().__init__(path)
 
 
 class LinkerGPlusPlus(LinkerGNU):
-    type = "g++"
+    type: T.ClassVar = "g++"
 
     def __init__(self, path: str = "g++"):
         super().__init__(path)
 
 
 class LinkerClang(LinkerGNU):
-    type = "clang"
-    translation_dict = _powermake_flags_to_clang_flags
+    type: T.ClassVar = "clang"
+    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
 
 
 class LinkerClangPlusPlus(LinkerGNU):
-    type = "clang++"
-    translation_dict = _powermake_flags_to_clang_flags
+    type: T.ClassVar = "clang++"
+    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

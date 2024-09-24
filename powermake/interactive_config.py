@@ -60,17 +60,17 @@ def multiple_choices(question: str, choices: T.List[T.Union[str, None]], values:
 
 
 class InteractiveConfig:
-    target_architecture = None
-    target_operating_system = None
-    c_compiler = [None, None]
-    cpp_compiler = [None, None]
-    as_compiler = [None, None]
-    asm_compiler = [None, None]
-    archiver = [None, None]
-    linker = [None, None]
-    shared_linker = [None, None]
-
     def __init__(self, global_config: T.Union[str, None] = None, local_config: str = "./powermake_config"):
+        self.target_architecture = None
+        self.target_operating_system = None
+        self.c_compiler = [None, None]
+        self.cpp_compiler = [None, None]
+        self.as_compiler = [None, None]
+        self.asm_compiler = [None, None]
+        self.archiver = [None, None]
+        self.linker = [None, None]
+        self.shared_linker = [None, None]
+
         self.global_config = global_config
         self.local_config = local_config
         answer = 0

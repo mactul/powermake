@@ -19,6 +19,7 @@ import json
 import argparse
 import platform
 import typing as T
+from collections.abc import Callable
 
 from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
@@ -37,7 +38,7 @@ def get_global_config():
     return global_config
 
 
-def auto_toolchain(c_compiler: Compiler, cpp_compiler: Compiler, as_compiler: Compiler, asm_compiler: Compiler, archiver: Archiver, linker: Linker, shared_linker: SharedLinker) -> tuple:
+def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None]) -> tuple:
     if c_compiler is not None:
         c_compiler_type = c_compiler.type
     else:
@@ -103,7 +104,7 @@ def auto_toolchain(c_compiler: Compiler, cpp_compiler: Compiler, as_compiler: Co
     return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
 
 
-def replace_architecture(string: str, new_arch):
+def replace_architecture(string: str, new_arch: str):
     new_arch = "/" + new_arch + "/"
     for arch in ("/x86/", "/x64/", "/arm32/", "/arm64/"):
         string = string.replace(arch, new_arch)
@@ -160,13 +161,13 @@ class Config:
 
         self.exported_headers: list = []
 
-        c_compiler_tuple = None
-        cpp_compiler_tuple = None
-        as_compiler_tuple = None
-        asm_compiler_tuple = None
-        archiver_tuple = None
-        linker_tuple = None
-        shared_linker_tuple = None
+        c_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
+        cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
+        as_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
+        asm_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None] = None
+        archiver_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Archiver]], None] = None
+        linker_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Linker]], None] = None
+        shared_linker_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], SharedLinker]], None] = None
 
         if global_config is None:
             global_config = get_global_config()
@@ -180,25 +181,25 @@ class Config:
                 with open(path, "r") as file:
                     conf: dict = json.load(file)
                     if c_compiler_tuple is None:
-                        c_compiler_tuple = load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types)
+                        c_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types))
 
                     if cpp_compiler_tuple is None:
-                        cpp_compiler_tuple = load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types)
+                        cpp_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types))
 
                     if as_compiler_tuple is None:
-                        as_compiler_tuple = load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types)
+                        as_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types))
 
                     if asm_compiler_tuple is None:
-                        asm_compiler_tuple = load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types)
+                        asm_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types))
 
                     if archiver_tuple is None:
-                        archiver_tuple = load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types)
+                        archiver_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Archiver]], None], load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types))
 
                     if linker_tuple is None:
-                        linker_tuple = load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types)
+                        linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], Linker]], None], load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types))
 
                     if shared_linker_tuple is None:
-                        shared_linker_tuple = load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types)
+                        shared_linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], Callable[[], SharedLinker]], None], load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types))
 
                     if self.target_operating_system == "" and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]
@@ -328,60 +329,60 @@ class Config:
             cpp_compiler_tuple = (cxx_env, CompilerGNUPlusPLus)
             print_debug_info("Using CXX environment variable instead of the config", verbosity)
 
-        self.c_compiler = load_tool_from_tuple(c_compiler_tuple, "compiler")
-        self.cpp_compiler = load_tool_from_tuple(cpp_compiler_tuple, "compiler")
-        self.as_compiler = load_tool_from_tuple(as_compiler_tuple, "compiler")
-        self.asm_compiler = load_tool_from_tuple(asm_compiler_tuple, "compiler")
-        self.archiver = load_tool_from_tuple(archiver_tuple, "archiver")
-        self.linker = load_tool_from_tuple(linker_tuple, "linker")
-        self.shared_linker = load_tool_from_tuple(shared_linker_tuple, "shared_linker")
+        self.c_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(c_compiler_tuple, "compiler"))
+        self.cpp_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(cpp_compiler_tuple, "compiler"))
+        self.as_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(as_compiler_tuple, "compiler"))
+        self.asm_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(asm_compiler_tuple, "compiler"))
+        self.archiver = T.cast(T.Union[Archiver, None], load_tool_from_tuple(archiver_tuple, "archiver"))
+        self.linker = T.cast(T.Union[Linker, None], load_tool_from_tuple(linker_tuple, "linker"))
+        self.shared_linker = T.cast(T.Union[SharedLinker, None], load_tool_from_tuple(shared_linker_tuple, "shared_linker"))
 
         toolchain = auto_toolchain(self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
 
         if self.c_compiler is None:
             if self.target_is_linux():
-                self.c_compiler = find_tool(GenericCompiler, toolchain[0], "gcc", "clang")
+                self.c_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[0], "gcc", "clang"))
             elif self.target_is_windows():
-                self.c_compiler = find_tool(GenericCompiler, toolchain[0], "msvc", "gcc", "clang-cl", "clang")
+                self.c_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[0], "msvc", "gcc", "clang-cl", "clang"))
 
         if self.cpp_compiler is None:
             if self.target_is_linux():
-                self.cpp_compiler = find_tool(GenericCompiler, toolchain[1], "g++", "clang++")
+                self.cpp_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[1], "g++", "clang++"))
             elif self.target_is_windows():
-                self.cpp_compiler = find_tool(GenericCompiler, toolchain[1], "msvc", "g++", "clang-cl", "clang")
+                self.cpp_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[1], "msvc", "g++", "clang-cl", "clang"))
 
         if self.as_compiler is None:
-            self.as_compiler = find_tool(GenericCompiler, toolchain[2], "gcc", "clang")
+            self.as_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[2], "gcc", "clang"))
 
         if self.asm_compiler is None:
-            self.asm_compiler = find_tool(GenericCompiler, toolchain[3], "nasm")
+            self.asm_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[3], "nasm"))
 
         if self.archiver is None:
             if self.target_is_linux():
-                self.archiver = find_tool(GenericArchiver, toolchain[4], "ar", "llvm-ar")
+                self.archiver = T.cast(T.Union[Archiver, None], find_tool(GenericArchiver, toolchain[4], "ar", "llvm-ar"))
             elif self.target_is_windows():
-                self.archiver = find_tool(GenericArchiver, toolchain[4], "msvc", "ar", "llvm-ar")
+                self.archiver = T.cast(T.Union[Archiver, None], find_tool(GenericArchiver, toolchain[4], "msvc", "ar", "llvm-ar"))
 
         if self.linker is None:
             if self.target_is_linux():
-                self.linker = find_tool(GenericLinker, toolchain[5], "g++", "clang++", "gcc", "clang")
+                self.linker = T.cast(T.Union[Linker, None], find_tool(GenericLinker, toolchain[5], "g++", "clang++", "gcc", "clang"))
             elif self.target_is_windows():
-                self.linker = find_tool(GenericLinker, toolchain[5], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang")
+                self.linker = T.cast(T.Union[Linker, None], find_tool(GenericLinker, toolchain[5], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
 
         if self.shared_linker is None:
             if self.target_is_linux():
-                self.shared_linker = find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang")
+                self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang"))
             elif self.target_is_windows():
-                self.shared_linker = find_tool(GenericSharedLinker, toolchain[6], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang")
+                self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
 
         self.set_debug(self.debug, True)
 
     @property
-    def c_cpp_flags(self):
+    def c_cpp_flags(self) -> T.List[str]:
         return self.c_flags + self.cpp_flags
 
     @property
-    def c_cpp_as_asm_flags(self):
+    def c_cpp_as_asm_flags(self) -> T.List[str]:
         return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
 
     def reload_env(self):

@@ -27,9 +27,9 @@ _powermake_flags_to_clang_flags: T.Dict[str, T.List[str]] = {
 
 
 class SharedLinkerGNU(SharedLinker):
-    type = "gnu"
-    shared_lib_extension = ".so"
-    translation_dict = _powermake_flags_to_gnu_flags
+    type: T.ClassVar = "gnu"
+    shared_lib_extension: T.ClassVar = ".so"
+    translation_dict: T.ClassVar = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
@@ -43,30 +43,30 @@ class SharedLinkerGNU(SharedLinker):
 
 
 class SharedLinkerGCC(SharedLinkerGNU):
-    type = "gcc"
+    type: T.ClassVar = "gcc"
 
     def __init__(self, path: str = "gcc"):
         super().__init__(path)
 
 
 class SharedLinkerGPlusPlus(SharedLinkerGNU):
-    type = "g++"
+    type: T.ClassVar = "g++"
 
     def __init__(self, path: str = "g++"):
         super().__init__(path)
 
 
 class SharedLinkerClang(SharedLinkerGNU):
-    type = "clang"
-    translation_dict = _powermake_flags_to_clang_flags
+    type: T.ClassVar = "clang"
+    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
 
 
 class SharedLinkerClangPlusPlus(SharedLinkerGNU):
-    type = "clang++"
-    translation_dict = _powermake_flags_to_clang_flags
+    type: T.ClassVar = "clang++"
+    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

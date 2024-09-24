@@ -13,13 +13,14 @@
 # limitations under the License.
 
 import abc
+import typing as T
 
 from ..tools import Tool
 
 
 class Compiler(Tool, abc.ABC):
-    type = ""
-    obj_extension = ""
+    type: T.ClassVar = ""
+    obj_extension: T.ClassVar = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)

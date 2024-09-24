@@ -20,7 +20,7 @@ from ..tools import Tool
 
 
 class SharedLinker(Tool, abc.ABC):
-    shared_lib_extension = ""
+    shared_lib_extension: T.ClassVar = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)

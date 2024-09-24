@@ -20,7 +20,7 @@ from ..tools import Tool
 
 
 class Linker(Tool, abc.ABC):
-    exe_extension = ""
+    exe_extension: T.ClassVar = ""
 
     def __init__(self, path):
         Tool.__init__(self, path)

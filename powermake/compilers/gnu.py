@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
+
 from .common import Compiler
 from ..tools import translate_flags
 
 
-_powermake_flags_to_gcc_flags = {
+_powermake_flags_to_gcc_flags: T.Dict[str, T.List[str]] = {
     "-Weverything": ["-Wall", "-Wextra", "-fanalyzer"],
     "-ffuzzer": []
 }
 
-_powermake_flags_to_clang_flags = {
+_powermake_flags_to_clang_flags: T.Dict[str, T.List[str]] = {
     "-fanalyzer": [],
     "-ffuzzer": ["-fsanitize=address,fuzzer"]
 }
 
-_powermake_flags_to_gnu_flags = {
+_powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
     "-Weverything": ["-Wall", "-Wextra"],
     "-fanalyzer": [],
     "-ffuzzer": []
@@ -34,9 +36,9 @@ _powermake_flags_to_gnu_flags = {
 
 
 class CompilerGNU(Compiler):
-    type = "gnu"
-    obj_extension = ".o"
-    translation_dict = _powermake_flags_to_gnu_flags
+    type: T.ClassVar = "gnu"
+    obj_extension: T.ClassVar = ".o"
+    translation_dict: T.ClassVar = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
@@ -50,39 +52,39 @@ class CompilerGNU(Compiler):
 
 
 class CompilerGNUPlusPLus(CompilerGNU):
-    type = "gnu++"
+    type: T.ClassVar = "gnu++"
 
     def __init__(self, path: str = "c++"):
         super().__init__(path)
 
 
 class CompilerGCC(CompilerGNU):
-    type = "gcc"
-    translation_dict = _powermake_flags_to_gcc_flags
+    type: T.ClassVar = "gcc"
+    translation_dict: T.ClassVar = _powermake_flags_to_gcc_flags
 
     def __init__(self, path: str = "gcc"):
         super().__init__(path)
 
 
 class CompilerGPlusPlus(CompilerGNU):
-    type = "g++"
-    translation_dict = _powermake_flags_to_gcc_flags
+    type: T.ClassVar = "g++"
+    translation_dict: T.ClassVar = _powermake_flags_to_gcc_flags
 
     def __init__(self, path: str = "g++"):
         super().__init__(path)
 
 
 class CompilerClang(CompilerGNU):
-    type = "clang"
-    translation_dict = _powermake_flags_to_clang_flags
+    type: T.ClassVar = "clang"
+    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
 
 
 class CompilerClangPlusPlus(CompilerGNU):
-    type = "clang++"
-    translation_dict = _powermake_flags_to_clang_flags
+    type: T.ClassVar = "clang++"
+    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

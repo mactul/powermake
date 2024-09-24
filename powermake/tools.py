@@ -20,20 +20,24 @@ from collections.abc import Callable
 
 
 class Tool(abc.ABC):
-    type = ""
+    type: T.ClassVar = ""
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         self._name = path
         self.reload()
 
-    def is_available(self):
+    def is_available(self) -> bool:
         return self.path is not None
 
-    def reload(self):
-        self.path = shutil.which(self._name)
+    def reload(self) -> None:
+        path = shutil.which(self._name)
+        if path is None:
+            self.path = ""
+        else:
+            self.path = path
 
 
-def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], tool_list_getter: Callable[[], T.Set[str]]):
+def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], tool_list_getter: Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], Callable[[], Tool]], None]:
     if tool_name not in conf:
         return None
 
@@ -57,13 +61,13 @@ def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: Callabl
     return None
 
 
-def load_tool_from_tuple(tool_tuple, tool_name):
+def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], Callable[[], Tool]], None], tool_name: str) -> T.Union[Tool, None]:
     if tool_tuple is not None:
         tool: Tool
         if tool_tuple[0] is None:
             tool = tool_tuple[1]()
         else:
-            tool = tool_tuple[1](tool_tuple[0])
+            tool = T.cast(Callable[[str], Tool], tool_tuple[1])(tool_tuple[0])
 
         if not tool.is_available():
             if tool_tuple[0] is None:
@@ -76,7 +80,7 @@ def load_tool_from_tuple(tool_tuple, tool_name):
     return None
 
 
-def find_tool(object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], *tool_types: str):
+def find_tool(object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], *tool_types: str) -> T.Union[Tool, None]:
     for tool_type in tool_types:
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:
@@ -87,7 +91,7 @@ def find_tool(object_getter: Callable[[str], T.Union[Callable[[], Tool], None]],
     return None
 
 
-def translate_flags(flags: list, translation_dict: dict):
+def translate_flags(flags: T.List[str], translation_dict: T.Dict[str, T.List[str]]) -> T.List[str]:
     translated_flags = []
     for flag in flags:
         if flag in translation_dict:

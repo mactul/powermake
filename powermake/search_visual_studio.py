@@ -25,8 +25,8 @@ import typing as T
 from .utils import makedirs
 
 
-if platform.platform().lower().startswith("win") and hasattr(ctypes, 'windll'):
-    def get_drives():
+def get_drives():
+    if platform.platform().lower().startswith("win") and hasattr(ctypes, 'windll'):
         drives = []
         bitmask = ctypes.windll.kernel32.GetLogicalDrives()  # type: ignore[attr-defined]
         for letter in string.ascii_uppercase:
@@ -35,9 +35,8 @@ if platform.platform().lower().startswith("win") and hasattr(ctypes, 'windll'):
             bitmask >>= 1
 
         return drives
-else:
-    def get_drives():
-        return []
+
+    return []
 
 
 vcvars = [

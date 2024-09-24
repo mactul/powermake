@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
+
 from .common import Compiler
 from ..tools import translate_flags
 
 
-_powermake_warning_flags_to_nasm_flags = {
+_powermake_warning_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-Wextra": ["-Wall"],
     "-Weverything": ["-Wall"],
     "-Wpedantic": [],
@@ -26,7 +28,7 @@ _powermake_warning_flags_to_nasm_flags = {
     "-ffuzzer": []
 }
 
-_powermake_optimization_flags_to_nasm_flags = {
+_powermake_optimization_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-Og": ["-O1"],
     "-O2": ["-Ox"],
     "-O3": ["-Ox"],
@@ -36,7 +38,7 @@ _powermake_optimization_flags_to_nasm_flags = {
     "-fomit-frame-pointer": [],
 }
 
-_powermake_machine_flags_to_nasm_flags = {
+_powermake_machine_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-m32": ["-felf32"],
     "-m64": ["-felf64"],
     "-mmmx": [],
@@ -47,7 +49,7 @@ _powermake_machine_flags_to_nasm_flags = {
     "-mavx2": []
 }
 
-_powermake_flags_to_nasm_flags = {
+_powermake_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     **_powermake_warning_flags_to_nasm_flags,
     **_powermake_optimization_flags_to_nasm_flags,
     **_powermake_machine_flags_to_nasm_flags,
@@ -56,9 +58,9 @@ _powermake_flags_to_nasm_flags = {
 
 
 class CompilerNASM(Compiler):
-    type = "nasm"
-    obj_extension = ".o"
-    translation_dict = _powermake_flags_to_nasm_flags
+    type: T.ClassVar = "nasm"
+    obj_extension: T.ClassVar = ".o"
+    translation_dict: T.ClassVar = _powermake_flags_to_nasm_flags
 
     def __init__(self, path: str = "nasm"):
         super().__init__(path)

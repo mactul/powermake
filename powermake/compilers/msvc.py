@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
+
 from .common import Compiler
 from ..tools import translate_flags
 
 
-_powermake_warning_flags_to_msvc_flags = {
+_powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-w": ["/W0"],
     "-Wall": ["/W3"],
     "-Wextra": ["/W4"],
@@ -29,7 +31,7 @@ _powermake_warning_flags_to_msvc_flags = {
     "-ffuzzer": ["/fsanitize=address,fuzzer"]
 }
 
-_powermake_optimization_flags_to_msvc_flags = {
+_powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-O0": ["/Od"],
     "-Og": ["/Od"],
     "-O1": ["/O1"],
@@ -41,7 +43,7 @@ _powermake_optimization_flags_to_msvc_flags = {
     "-fomit-frame-pointer": ["/Oy"],
 }
 
-_powermake_machine_flags_to_msvc_flags = {
+_powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-m32": [],
     "-m64": [],
     "-mmmx": ["/arch:MMX"],
@@ -52,7 +54,7 @@ _powermake_machine_flags_to_msvc_flags = {
     "-mavx2": ["/arch:AVX2"]
 }
 
-_powermake_flags_to_msvc_flags = {
+_powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     **_powermake_warning_flags_to_msvc_flags,
     **_powermake_optimization_flags_to_msvc_flags,
     **_powermake_machine_flags_to_msvc_flags,
@@ -62,9 +64,9 @@ _powermake_flags_to_msvc_flags = {
 
 
 class CompilerMSVC(Compiler):
-    type = "msvc"
-    obj_extension = ".obj"
-    translation_dict = _powermake_flags_to_msvc_flags
+    type: T.ClassVar = "msvc"
+    obj_extension: T.ClassVar = ".obj"
+    translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "cl"):
         super().__init__(path)
@@ -78,7 +80,7 @@ class CompilerMSVC(Compiler):
 
 
 class CompilerClang_CL(CompilerMSVC):
-    type = "clang-cl"
+    type: T.ClassVar = "clang-cl"
 
     def __init__(self, path: str = "clang-cl"):
         super().__init__(path)

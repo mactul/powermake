@@ -17,7 +17,7 @@ import typing as T
 from ..tools import translate_flags
 from .common import SharedLinker
 
-_powermake_flags_to_msvc_flags = {
+_powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-m32": [],
     "-m64": [],
     "-ffuzzer": ["/fsanitize=address,fuzzer"]
@@ -25,9 +25,9 @@ _powermake_flags_to_msvc_flags = {
 
 
 class SharedLinkerMSVC(SharedLinker):
-    type = "msvc"
-    shared_lib_extension = ".dll"
-    translation_dict = _powermake_flags_to_msvc_flags
+    type: T.ClassVar = "msvc"
+    shared_lib_extension: T.ClassVar = ".dll"
+    translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "link"):
         super().__init__(path)
