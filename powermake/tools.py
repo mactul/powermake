@@ -20,7 +20,7 @@ from collections.abc import Callable
 
 
 class Tool(abc.ABC):
-    type = None
+    type = ""
 
     def __init__(self, path):
         self._name = path
@@ -33,7 +33,7 @@ class Tool(abc.ABC):
         self.path = shutil.which(self._name)
 
 
-def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: Callable[[str], Callable[[], Tool]], tool_list_getter: Callable[[], T.List[str]]):
+def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], tool_list_getter: Callable[[], T.Set[str]]):
     if tool_name not in conf:
         return None
 
@@ -74,7 +74,7 @@ def load_tool_from_tuple(tool_tuple, tool_name):
     return tool
 
 
-def find_tool(object_getter: Callable[[str], Callable[[], Tool]], *tool_types: str):
+def find_tool(object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], *tool_types: str):
     for tool_type in tool_types:
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:

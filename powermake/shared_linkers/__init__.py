@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
 from collections.abc import Callable
 
 from .common import SharedLinker
@@ -30,11 +31,11 @@ _shared_linker_types: dict = {
 }
 
 
-def GenericSharedLinker(shared_linker_type: str) -> Callable[[], SharedLinker]:
+def GenericSharedLinker(shared_linker_type: str) -> T.Union[Callable[[], SharedLinker], None]:
     if shared_linker_type not in _shared_linker_types:
         return None
     return _shared_linker_types[shared_linker_type]
 
 
-def get_all_shared_linker_types() -> list:
-    return _shared_linker_types.keys()
+def get_all_shared_linker_types() -> T.Set[str]:
+    return set(_shared_linker_types.keys())

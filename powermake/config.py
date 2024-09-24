@@ -135,17 +135,17 @@ class Config:
         self.linker: T.Union[Linker, None] = None
         self.shared_linker: T.Union[SharedLinker, None] = None
 
-        self.target_operating_system: T.Union[str, None] = None
-        self.host_operating_system: T.Union[str, None] = None
+        self.target_operating_system: str = ""
+        self.host_operating_system: str = ""
 
-        self.target_architecture: T.Union[str, None] = None
-        self.target_simplified_architecture: T.Union[str, None] = None
-        self.host_architecture: T.Union[str, None] = None
-        self.host_simplified_architecture: T.Union[str, None] = None
+        self.target_architecture: str = ""
+        self.target_simplified_architecture: str = ""
+        self.host_architecture: str = ""
+        self.host_simplified_architecture: str = ""
 
-        self.obj_build_directory: T.Union[str, None] = None
-        self.exe_build_directory: T.Union[str, None] = None
-        self.lib_build_directory: T.Union[str, None] = None
+        self.obj_build_directory: str = ""
+        self.exe_build_directory: str = ""
+        self.lib_build_directory: str = ""
 
         self.defines: list = []
         self.shared_libs: list = []
@@ -200,21 +200,21 @@ class Config:
                     if shared_linker_tuple is None:
                         shared_linker_tuple = load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types)
 
-                    if self.target_operating_system is None and "target_operating_system" in conf:
+                    if self.target_operating_system == "" and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]
-                    if self.host_operating_system is None and "host_operating_system" in conf:
+                    if self.host_operating_system == "" and "host_operating_system" in conf:
                         self.host_operating_system = conf["host_operating_system"]
 
-                    if self.target_architecture is None and "target_architecture" in conf:
+                    if self.target_architecture == "" and "target_architecture" in conf:
                         self.target_architecture = conf["target_architecture"]
-                    if self.host_architecture is None and "host_architecture" in conf:
+                    if self.host_architecture == "" and "host_architecture" in conf:
                         self.host_architecture = conf["host_architecture"]
 
-                    if self.obj_build_directory is None and "obj_build_directory" in conf:
+                    if self.obj_build_directory == "" and "obj_build_directory" in conf:
                         self.obj_build_directory = conf["obj_build_directory"]
-                    if self.exe_build_directory is None and "exe_build_directory" in conf:
+                    if self.exe_build_directory == "" and "exe_build_directory" in conf:
                         self.exe_build_directory = conf["exe_build_directory"]
-                    if self.lib_build_directory is None and "lib_build_directory" in conf:
+                    if self.lib_build_directory == "" and "lib_build_directory" in conf:
                         self.lib_build_directory = conf["lib_build_directory"]
 
                     if self.nb_jobs == 0 and "nb_jobs" in conf:
@@ -306,14 +306,14 @@ class Config:
         if self.nb_jobs == 0:
             self.nb_jobs = os.cpu_count() or 8
 
-        if self.target_operating_system is None:
+        if self.target_operating_system == "":
             self.target_operating_system = platform.system()
-        if self.host_operating_system is None:
+        if self.host_operating_system == "":
             self.host_operating_system = platform.system()
 
-        if self.target_architecture is None:
+        if self.target_architecture == "":
             self.target_architecture = platform.machine()
-        if self.host_architecture is None:
+        if self.host_architecture == "":
             self.host_architecture = platform.machine()
 
         self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
@@ -385,15 +385,15 @@ class Config:
         return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
 
     def reload_env(self):
-        if self.target_architecture is None or self.host_architecture is None:
+        if self.target_architecture == "" or self.host_architecture == "":
             raise RuntimeError("Unable to load environment because architecture is undetermined")
         
         self.target_simplified_architecture = simplify_architecture(self.target_architecture)
         self.host_simplified_architecture = simplify_architecture(self.host_architecture)
 
-        if self.target_simplified_architecture is None:
+        if self.target_simplified_architecture == "":
             self.target_simplified_architecture = self.target_architecture
-        if self.host_simplified_architecture is None:
+        if self.host_simplified_architecture == "":
             self.host_simplified_architecture = self.host_architecture
 
         if self.target_is_windows():

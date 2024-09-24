@@ -18,7 +18,7 @@ from ..tools import Tool
 
 
 class Compiler(Tool, abc.ABC):
-    type = None
+    type = ""
     obj_extension = ""
 
     def __init__(self, path):

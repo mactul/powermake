@@ -183,7 +183,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         else:
             raise RuntimeError("No C/C++ compiler has been specified and the default config didn't find any")
 
-        output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + config.c_compiler.obj_extension)
+        output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
         file = os.path.abspath(file)
@@ -208,9 +208,9 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
             raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
         op = Operation(output_file, {file}, config, command)
         if isinstance(files, set):
-            operations.add(op)
+            T.cast(set, operations).add(op)
         else:
-            operations.append(op)
+            T.cast(list, operations).append(op)
 
     if config.compile_commands_dir is not None:
         json_commands = []
@@ -228,11 +228,11 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
     print_lock = Lock()
     with ThreadPoolExecutor(max_workers=config.nb_jobs) as executor:
-        generated_objects = executor.map(lambda op: op.execute(force, print_lock), operations)
+        output = executor.map(lambda op: op.execute(force, print_lock), operations)
         if isinstance(files, set):
-            generated_objects = set(generated_objects)
+            generated_objects = set(output)
         else:
-            generated_objects = list(generated_objects)
+            generated_objects = list(output)
 
     return generated_objects
 

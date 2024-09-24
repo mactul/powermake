@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
+
 from collections.abc import Callable
 
 from .common import Linker
@@ -31,11 +33,11 @@ _linker_types: dict = {
 }
 
 
-def GenericLinker(linker_type: str) -> Callable[[], Linker]:
+def GenericLinker(linker_type: str) -> T.Union[Callable[[], Linker], None]:
     if linker_type not in _linker_types:
         return None
     return _linker_types[linker_type]
 
 
-def get_all_linker_types() -> list:
-    return _linker_types.keys()
+def get_all_linker_types() -> T.Set[str]:
+    return set(_linker_types.keys())

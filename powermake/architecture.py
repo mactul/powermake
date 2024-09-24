@@ -15,7 +15,7 @@
 import typing as T
 
 
-def simplify_architecture(architecture: str) -> T.Union[str, None]:
+def simplify_architecture(architecture: str) -> str:
     arch = architecture.lower()
     if arch in ["x86", "x32", "80x86", "8086", "80386", "i286", "i386", "i486", "i586", "i686", "i786", "amd386", "am386", "amd486", "am486", "amd-k5", "amd-k6", "amd-k7"]:
         return "x86"
@@ -29,4 +29,4 @@ def simplify_architecture(architecture: str) -> T.Union[str, None]:
     if arch in ["arm64", "aarch64", "armv8", "armv8-a", "armv8.2-a", "armv8.3-a", "armv8-m", "armv8-r", "armv8.1-a", "armv8.4-a", "armv8.5-a", "armv8.6-a", "armv8-m.base", "armv8-m.main", "armv8.1-m.main", "armv9", "armv9-a", "iwmmxt", "iwmmxt2"]:
         return "arm64"
 
-    return None
+    return ""

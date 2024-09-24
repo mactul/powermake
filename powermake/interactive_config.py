@@ -100,7 +100,7 @@ class InteractiveConfig:
 
     def toolchain_menu(self):
         answer = 0
-        choices = [
+        choices: T.List[T.Union[str, None]] = [
             "C compiler",
             "C++ compiler",
             "AS compiler (.s and .S files)",
@@ -111,7 +111,7 @@ class InteractiveConfig:
             "Back to main menu"
         ]
         while answer != len(choices):
-            answer = multiple_choices("What do you want to configure ?", choices, range(1, len(choices)+1))
+            answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices)+1)])
 
             if answer == 1:
                 self.tool_menu(self.c_compiler, "C compiler", get_all_c_compiler_types())
@@ -128,7 +128,7 @@ class InteractiveConfig:
             elif answer == 7:
                 self.tool_menu(self.linker, "Linker", get_all_linker_types())
 
-    def tool_menu(self, tool: list, tool_name: str, tool_types: list):
+    def tool_menu(self, tool: list, tool_name: str, tool_types: T.Set[str]):
         answer = 0
         while answer != 3:
             choices: T.List[T.Union[str, None]] = [
@@ -153,7 +153,7 @@ class InteractiveConfig:
             while verif == 'n':
                 answer = multiple_choices(f"Their is already a file at {filepath}\nWhat should we do ?", ["Merge", "Overwrite"], [1, 2])
                 if answer == 2:
-                    verif = None
+                    verif = ''
                     while verif != 'y' and verif != 'n':
                         verif = input("Are you sure you want to erase all your precedent configuration ?\ny/n: ").lower()
                 else:

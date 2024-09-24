@@ -15,6 +15,7 @@
 
 import os
 import json
+import ctypes
 import string
 import platform
 import tempfile
@@ -24,12 +25,10 @@ import typing as T
 from .utils import makedirs
 
 
-if platform.platform().lower().startswith("win"):
-    from ctypes import windll
-
+if platform.platform().lower().startswith("win") and hasattr(ctypes, 'windll'):
     def get_drives():
         drives = []
-        bitmask = windll.kernel32.GetLogicalDrives()
+        bitmask = ctypes.windll.kernel32.GetLogicalDrives()  # type: ignore[attr-defined]
         for letter in string.ascii_uppercase:
             if bitmask & 1:
                 drives.append(letter + ":\\")

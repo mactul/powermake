@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
+
 from ..tools import translate_flags
 from .common import SharedLinker
 
-_powermake_flags_to_gnu_flags = {
+_powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": []
 }
 
-_powermake_flags_to_clang_flags = {
+_powermake_flags_to_clang_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": ["-fsanitize=address,fuzzer"]
 }
 
@@ -33,10 +35,10 @@ class SharedLinkerGNU(SharedLinker):
         super().__init__(path)
 
     @classmethod
-    def format_args(self, shared_libs: list, flags: list):
+    def format_args(self, shared_libs: T.List[str], flags: T.List[str]):
         return ["-l"+lib for lib in shared_libs] + translate_flags(flags, self.translation_dict)
 
-    def basic_link_command(self, outputfile: str, objectfiles: set, archives: list = [], args: list = []) -> list:
+    def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]
 
 

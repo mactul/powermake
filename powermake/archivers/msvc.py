@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing as T
+
 from .common import Archiver
 
 
@@ -22,5 +24,5 @@ class ArchiverMSVC(Archiver):
     def __init__(self, path: str = "lib"):
         super().__init__(path)
 
-    def basic_archive_command(self, outputfile: str, inputfiles: set, args: list = []) -> list:
+    def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/nologo", *args, "/out:"+outputfile, *inputfiles]
