@@ -416,17 +416,17 @@ class Config:
             mode = "release"
             old_mode = "debug"
 
-        if self.obj_build_directory is None:
+        if self.obj_build_directory == "":
             self.obj_build_directory = os.path.join("build/.objs/", self.target_operating_system, self.target_simplified_architecture, mode)
         else:
             self.obj_build_directory = replace_architecture(self.obj_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
 
-        if self.exe_build_directory is None:
+        if self.exe_build_directory == "":
             self.exe_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "bin")
         else:
             self.exe_build_directory = replace_architecture(self.exe_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
 
-        if self.lib_build_directory is None:
+        if self.lib_build_directory == "":
             self.lib_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "lib")
         else:
             self.lib_build_directory = replace_architecture(self.lib_build_directory.replace(old_mode, mode), self.target_simplified_architecture)

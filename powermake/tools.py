@@ -58,8 +58,8 @@ def load_tool_tuple_from_file(conf: dict, tool_name: str, object_getter: Callabl
 
 
 def load_tool_from_tuple(tool_tuple, tool_name):
-    tool: Tool
     if tool_tuple is not None:
+        tool: Tool
         if tool_tuple[0] is None:
             tool = tool_tuple[1]()
         else:
@@ -71,7 +71,9 @@ def load_tool_from_tuple(tool_tuple, tool_name):
             else:
                 tool_path = tool_tuple[0]
             raise ValueError("The %s %s could not be found on your machine" % (tool_name, tool_path))
-    return tool
+        
+        return tool
+    return None
 
 
 def find_tool(object_getter: Callable[[str], T.Union[Callable[[], Tool], None]], *tool_types: str):
