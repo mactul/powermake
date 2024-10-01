@@ -25,7 +25,6 @@ class Compiler(Tool, abc.ABC):
     def __init__(self, path: str):
         Tool.__init__(self, path)
 
-    @classmethod
     @abc.abstractmethod
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
         return []

@@ -15,7 +15,6 @@
 import subprocess
 import typing as T
 
-from ..tools import translate_flags
 from .common import Linker
 
 _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
@@ -33,14 +32,13 @@ class LinkerMSVC(Linker):
     def __init__(self, path: str = "link"):
         super().__init__(path)
 
-    @classmethod
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
-        return [(lib if lib.endswith(".lib") else lib + ".lib") for lib in shared_libs] + translate_flags(flags, self.translation_dict)
+        return [(lib if lib.endswith(".lib") else lib + ".lib") for lib in shared_libs] + self.translate_flags(flags)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
     
-    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+    def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, "/WX", arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
 
 

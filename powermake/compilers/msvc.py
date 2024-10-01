@@ -16,7 +16,7 @@ import subprocess
 import typing as T
 
 from .common import Compiler
-from ..tools import translate_flags
+from ..utils import get_empty_file
 
 
 _powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
@@ -72,15 +72,14 @@ class CompilerMSVC(Compiler):
     def __init__(self, path: str = "cl") -> None:
         super().__init__(path)
 
-    @classmethod
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
-        return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + translate_flags(flags, self.translation_dict)
+        return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + self.translate_flags(flags)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
-    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "/E", "/options:strict", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "/E", "/options:strict", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 class CompilerClang_CL(CompilerMSVC):
     type: T.ClassVar = "clang-cl"

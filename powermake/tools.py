@@ -20,6 +20,8 @@ import typing as T
 
 class Tool(abc.ABC):
     type: T.ClassVar = ""
+    translation_dict: T.ClassVar[T.Dict[str, T.List[str]]] = {}
+    verified_translation_dict: T.Dict[str, T.List[str]] = {}
 
     def __init__(self, path: str) -> None:
         self._name = path
@@ -36,8 +38,39 @@ class Tool(abc.ABC):
             self.path = path
 
     @abc.abstractmethod
-    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+    def check_if_arg_exists(self, arg: str) -> bool:
         return False
+    
+    def _translate_flag(self, flag: str, output_list: T.List[str], already_translated_flags: T.List[str]) -> None:
+        already_translated_flags.append(flag)
+
+        if flag in self.verified_translation_dict:
+            output_list.extend(self.verified_translation_dict[flag])
+            return
+
+        if flag not in self.translation_dict:
+            output_list.append(flag)
+            return
+
+        self.verified_translation_dict[flag] = []
+
+        for f in self.translation_dict[flag]:
+            if f not in already_translated_flags and f in self.translation_dict:
+                self._translate_flag(f, output_list, already_translated_flags)
+                self.verified_translation_dict[flag].extend(self.verified_translation_dict[f])
+            else:
+                if self.check_if_arg_exists(f):
+                    self.verified_translation_dict[flag].append(f)
+                    output_list.append(f)
+
+    def translate_flags(self, flags: T.List[str]) -> T.List[str]:
+        translated_flags: T.List[str] = []
+        already_translated_flags: T.List[str] = []
+        for flag in flags:
+            self._translate_flag(flag, translated_flags, already_translated_flags)
+
+        return translated_flags
+
 
 
 def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None]:
@@ -92,14 +125,3 @@ def find_tool(object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], Non
         if tool is not None and tool.is_available():
             return tool
     return None
-
-
-def translate_flags(flags: T.List[str], translation_dict: T.Dict[str, T.List[str]]) -> T.List[str]:
-    translated_flags = []
-    for flag in flags:
-        if flag in translation_dict:
-            translated_flags.extend(translation_dict[flag])
-        else:
-            translated_flags.append(flag)
-
-    return translated_flags

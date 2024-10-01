@@ -16,7 +16,6 @@ import subprocess
 import typing as T
 
 from .common import Compiler
-from ..tools import translate_flags
 
 
 _powermake_warning_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
@@ -66,9 +65,8 @@ class CompilerNASM(Compiler):
     def __init__(self, path: str = "nasm"):
         super().__init__(path)
 
-    @classmethod
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
-        return [f"-d{define}" for define in defines] + [f"-i{includedir}" for includedir in includedirs] + translate_flags(flags, self.translation_dict)
+        return [f"-d{define}" for define in defines] + [f"-i{includedir}" for includedir in includedirs] + self.translate_flags(flags)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-o", outputfile, inputfile, *args]

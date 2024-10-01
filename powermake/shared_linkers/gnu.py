@@ -15,7 +15,7 @@
 import subprocess
 import typing as T
 
-from ..tools import translate_flags
+from ..utils import get_empty_file
 from .common import SharedLinker
 
 _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
@@ -43,15 +43,14 @@ class SharedLinkerGNU(SharedLinker):
     def __init__(self, path: str = "cc"):
         super().__init__(path)
 
-    @classmethod
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
-        return ["-l" + lib for lib in shared_libs] + translate_flags(flags, self.translation_dict)
+        return ["-l" + lib for lib in shared_libs] + self.translate_flags(flags)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]
     
-    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "-E", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class SharedLinkerLD(SharedLinkerGNU):
@@ -61,7 +60,7 @@ class SharedLinkerLD(SharedLinkerGNU):
     def __init__(self, path: str = "ld"):
         super().__init__(path)
 
-    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+    def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
