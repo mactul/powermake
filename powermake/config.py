@@ -146,6 +146,7 @@ class Config:
         self.obj_build_directory: str = ""
         self.exe_build_directory: str = ""
         self.lib_build_directory: str = ""
+        self.cache_build_directory: str = ""
 
         self.defines: T.List[str] = []
         self.shared_libs: T.List[str] = []
@@ -430,6 +431,10 @@ class Config:
             self.lib_build_directory = os.path.join("build", self.target_operating_system, self.target_simplified_architecture, mode, "lib")
         else:
             self.lib_build_directory = replace_architecture(self.lib_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
+        
+        if self.cache_build_directory == "":
+            self.cache_build_directory = "build/.cache/"
+            self._empty_file = os.path.join(self.cache_build_directory, ".emptyfile")
 
     def export_json(self) -> T.Dict[str, T.Any]:
         output = {}

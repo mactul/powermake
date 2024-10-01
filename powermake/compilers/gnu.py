@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from .common import Compiler
@@ -50,12 +51,18 @@ class CompilerGNU(Compiler):
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-c", "-o", outputfile, inputfile, *args]
 
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-E", "-x", "c", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+
 
 class CompilerGNUPlusPLus(CompilerGNU):
     type: T.ClassVar = "gnu++"
 
     def __init__(self, path: str = "c++"):
         super().__init__(path)
+
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-E", "-x", "c++", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class CompilerGCC(CompilerGNU):
@@ -66,7 +73,7 @@ class CompilerGCC(CompilerGNU):
         super().__init__(path)
 
 
-class CompilerGPlusPlus(CompilerGNU):
+class CompilerGPlusPlus(CompilerGNUPlusPLus):
     type: T.ClassVar = "g++"
     translation_dict: T.ClassVar = _powermake_flags_to_gcc_flags
 
@@ -82,7 +89,7 @@ class CompilerClang(CompilerGNU):
         super().__init__(path)
 
 
-class CompilerClangPlusPlus(CompilerGNU):
+class CompilerClangPlusPlus(CompilerGNUPlusPLus):
     type: T.ClassVar = "clang++"
     translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 

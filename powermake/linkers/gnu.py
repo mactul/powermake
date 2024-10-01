@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from ..tools import translate_flags
@@ -51,6 +52,10 @@ class LinkerGNU(Linker):
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
 
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-E", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+
+
 
 class LinkerLD(LinkerGNU):
     type: T.ClassVar = "ld"
@@ -58,6 +63,10 @@ class LinkerLD(LinkerGNU):
 
     def __init__(self, path: str = "ld"):
         super().__init__(path)
+
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+
 
 
 class LinkerGCC(LinkerGNU):

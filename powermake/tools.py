@@ -35,6 +35,10 @@ class Tool(abc.ABC):
         else:
             self.path = path
 
+    @abc.abstractmethod
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return False
+
 
 def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None]:
     if tool_name not in conf:

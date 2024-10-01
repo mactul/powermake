@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from .common import Compiler
@@ -71,3 +72,6 @@ class CompilerNASM(Compiler):
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-o", outputfile, inputfile, *args]
+
+    def check_if_arg_exists(self, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-E", "-x", "assemble", "/dev/null"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0

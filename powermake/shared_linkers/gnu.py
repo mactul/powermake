@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from ..tools import translate_flags
@@ -25,6 +26,14 @@ _powermake_flags_to_clang_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": ["-fsanitize=address,fuzzer"]
 }
 
+_powermake_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
+    "-ffuzzer": [],
+    "-Weverything": [],
+    "-Wall": [],
+    "-Wextra": [],
+    "-m32": [],
+    "-m64": []
+}
 
 class SharedLinkerGNU(SharedLinker):
     type: T.ClassVar = "gnu"
@@ -40,6 +49,20 @@ class SharedLinkerGNU(SharedLinker):
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]
+    
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-E", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+
+
+class SharedLinkerLD(SharedLinkerGNU):
+    type: T.ClassVar = "ld"
+    translation_dict: T.ClassVar = _powermake_flags_to_ld_flags
+
+    def __init__(self, path: str = "ld"):
+        super().__init__(path)
+
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class SharedLinkerGCC(SharedLinkerGNU):

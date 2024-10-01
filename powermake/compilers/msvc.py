@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from .common import Compiler
@@ -78,6 +79,8 @@ class CompilerMSVC(Compiler):
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "/E", "/options:strict", empty_file], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 class CompilerClang_CL(CompilerMSVC):
     type: T.ClassVar = "clang-cl"

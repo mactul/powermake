@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from .common import Archiver
@@ -26,6 +27,9 @@ class ArchiverGNU(Archiver):
 
     def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-cr", outputfile, *inputfiles, *args]
+
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-h"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class ArchiverAR(ArchiverGNU):

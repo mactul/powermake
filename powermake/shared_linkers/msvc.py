@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 import typing as T
 
 from ..tools import translate_flags
@@ -38,6 +39,9 @@ class SharedLinkerMSVC(SharedLinker):
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/DLL", "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
+    
+    def check_if_arg_exists(self, empty_file: str, arg: str) -> bool:
+        return subprocess.run([self.path, "/WX", arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
 
 
 class SharedLinkerClang_CL(SharedLinkerMSVC):
