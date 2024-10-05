@@ -14,7 +14,7 @@
 
 __all__ = [
     "Compiler", "CompilerNASM", "CompilerMSVC", "CompilerClang_CL", "CompilerGNU",
-    "CompilerGNUPlusPLus", "CompilerGCC", "CompilerGPlusPlus", "CompilerClang", "CompilerClangPlusPlus"
+    "CompilerGNUPlusPlus", "CompilerGCC", "CompilerGPlusPlus", "CompilerClang", "CompilerClangPlusPlus"
 ]
 
 import typing as T
@@ -22,7 +22,7 @@ import typing as T
 from .common import Compiler
 from .asm import CompilerNASM
 from .msvc import CompilerMSVC, CompilerClang_CL
-from .gnu import CompilerGNU, CompilerGNUPlusPLus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
+from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
 
 
 _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
@@ -34,7 +34,7 @@ _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
 }
 
 _cpp_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
-    "gnu++": CompilerGNUPlusPLus,
+    "gnu++": CompilerGNUPlusPlus,
     "g++": CompilerGPlusPlus,
     "clang++": CompilerClangPlusPlus,
     "msvc": CompilerMSVC,

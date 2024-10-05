@@ -17,10 +17,54 @@ import typing as T
 
 from .common import SharedLinker
 
-_powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+
+_powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+    "-w": [],
+    "-Wall": [],
+    "-Wextra": [],
+    "-Weverything": [],
+    "-Wsecurity": [],
+    "-Werror": ["/WX"],
+    "-Wpedantic": [],
+    "-pedantic": [],
+    "-Wswitch": [],
+    "-Wswitch-enum": [],
+    "-fanalyzer": [],
+    "-ffuzzer": []
+}
+
+_powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+    "-O0": ["/Od"],
+    "-Og": ["/Od"],
+    "-O1": ["/O1"],
+    "-O2": ["/O2"],
+    "-O3": ["/Ox", "/fp:fast"],
+    "-Os": ["/O1", "/GL"],
+    "-Oz": ["/O1", "/Oi", "/GL"],
+    "-Ofast": ["/Ox", "/fp:fast"],
+    "-fomit-frame-pointer": ["/Oy"],
+}
+
+_powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-m32": [],
     "-m64": [],
-    "-ffuzzer": ["/fsanitize=address,fuzzer"]
+    "-mmmx": ["/arch:MMX"],
+    "-msse": ["/arch:SSE"],
+    "-msse2": ["/arch:SSE2"],
+    "-mssse3": ["/arch:SSSE3"],
+    "-mavx": ["/arch:AVX"],
+    "-mavx2": ["/arch:AVX2"]
+}
+
+_powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+    **_powermake_warning_flags_to_msvc_flags,
+    **_powermake_optimization_flags_to_msvc_flags,
+    **_powermake_machine_flags_to_msvc_flags,
+    "-g": ["/Z7"],
+    "-fdiagnostics-color": [],
+    "-fsecurity=1": [],
+    "-fsecurity=2": [],
+    "-fsecurity": []
 }
 
 

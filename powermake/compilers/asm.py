@@ -21,7 +21,9 @@ from .common import Compiler
 _powermake_warning_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-Wextra": ["-Wall"],
     "-Weverything": ["-Wall"],
+    "-Wsecurity": ["-Wall"],
     "-Wpedantic": [],
+    "-pedantic": [],
     "-Wswitch": [],
     "-Wswitch-enum": [],
     "-fanalyzer": ["-Wall"],
@@ -49,16 +51,21 @@ _powermake_machine_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-mavx2": []
 }
 
+# These flags doesn't inherit from tools._powermake_flags_to_gnu_flags because 
 _powermake_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     **_powermake_warning_flags_to_nasm_flags,
     **_powermake_optimization_flags_to_nasm_flags,
     **_powermake_machine_flags_to_nasm_flags,
-    "-fdiagnostics-color": []
+    "-fdiagnostics-color": [],
+    "-fsecurity=1": [],
+    "-fsecurity=2": [],
+    "-fsecurity": []
 }
 
 
 class CompilerNASM(Compiler):
     type: T.ClassVar = "nasm"
+    default_path: T.ClassVar = "nasm"
     obj_extension: T.ClassVar = ".o"
     translation_dict: T.ClassVar = _powermake_flags_to_nasm_flags
 

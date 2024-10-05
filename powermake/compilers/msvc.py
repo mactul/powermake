@@ -24,12 +24,14 @@ _powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-Wall": ["/W3"],
     "-Wextra": ["/W4"],
     "-Weverything": ["/Wall"],
+    "-Wsecurity": ["/Wall"],
     "-Werror": ["/WX"],
     "-Wpedantic": [],
+    "-pedantic": [],
     "-Wswitch": ["/we4062"],
     "-Wswitch-enum": ["/we4061"],
     "-fanalyzer": ["/analyze"],
-    "-ffuzzer": ["/fsanitize=address,fuzzer"]
+    "-ffuzzer": ["/fsanitize=address", "/fsanitize=fuzzer"]
 }
 
 _powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
@@ -60,12 +62,16 @@ _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     **_powermake_optimization_flags_to_msvc_flags,
     **_powermake_machine_flags_to_msvc_flags,
     "-g": ["/Z7"],
-    "-fdiagnostics-color": []
+    "-fdiagnostics-color": [],
+    "-fsecurity=1": [],
+    "-fsecurity=2": [],
+    "-fsecurity": []
 }
 
 
 class CompilerMSVC(Compiler):
     type: T.ClassVar = "msvc"
+    default_path: T.ClassVar = "cl"
     obj_extension: T.ClassVar = ".obj"
     translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
@@ -83,6 +89,7 @@ class CompilerMSVC(Compiler):
 
 class CompilerClang_CL(CompilerMSVC):
     type: T.ClassVar = "clang-cl"
+    default_path: T.ClassVar = "clang-cl"
 
     def __init__(self, path: str = "clang-cl") -> None:
         super().__init__(path)

@@ -186,7 +186,9 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
-        file = os.path.abspath(file)
+        if "../" in file:
+            # if the path of the file contains ../, the ide might not be able to understand warning messages.
+            file = os.path.abspath(file)
 
         if file.endswith(".c"):
             if config.c_compiler is None:

@@ -18,27 +18,10 @@ import typing as T
 from ..utils import get_empty_file
 from .common import SharedLinker
 
-_powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
-    "-ffuzzer": []
-}
-
-_powermake_flags_to_clang_flags: T.Dict[str, T.List[str]] = {
-    "-ffuzzer": ["-fsanitize=address,fuzzer"]
-}
-
-_powermake_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
-    "-ffuzzer": [],
-    "-Weverything": [],
-    "-Wall": [],
-    "-Wextra": [],
-    "-m32": [],
-    "-m64": []
-}
 
 class SharedLinkerGNU(SharedLinker):
     type: T.ClassVar = "gnu"
     shared_lib_extension: T.ClassVar = ".so"
-    translation_dict: T.ClassVar = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
@@ -55,7 +38,6 @@ class SharedLinkerGNU(SharedLinker):
 
 class SharedLinkerLD(SharedLinkerGNU):
     type: T.ClassVar = "ld"
-    translation_dict: T.ClassVar = _powermake_flags_to_ld_flags
 
     def __init__(self, path: str = "ld"):
         super().__init__(path)
@@ -80,7 +62,6 @@ class SharedLinkerGPlusPlus(SharedLinkerGNU):
 
 class SharedLinkerClang(SharedLinkerGNU):
     type: T.ClassVar = "clang"
-    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
@@ -88,7 +69,6 @@ class SharedLinkerClang(SharedLinkerGNU):
 
 class SharedLinkerClangPlusPlus(SharedLinkerGNU):
     type: T.ClassVar = "clang++"
-    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

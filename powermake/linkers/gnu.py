@@ -18,29 +18,11 @@ import typing as T
 from ..utils import get_empty_file
 from .common import Linker
 
-_powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
-    "-ffuzzer": [],
-    "-Weverything": ["-Wall", "-Wextra"],
-}
-
-_powermake_flags_to_clang_flags: T.Dict[str, T.List[str]] = {
-    "-ffuzzer": ["-fsanitize=address,fuzzer"]
-}
-
-_powermake_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
-    "-ffuzzer": [],
-    "-Weverything": [],
-    "-Wall": [],
-    "-Wextra": [],
-    "-m32": [],
-    "-m64": []
-}
 
 
 class LinkerGNU(Linker):
     type: T.ClassVar = "gnu"
     exe_extension: T.ClassVar = ""
-    translation_dict: T.ClassVar = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
@@ -58,7 +40,6 @@ class LinkerGNU(Linker):
 
 class LinkerLD(LinkerGNU):
     type: T.ClassVar = "ld"
-    translation_dict: T.ClassVar = _powermake_flags_to_ld_flags
 
     def __init__(self, path: str = "ld"):
         super().__init__(path)
@@ -84,7 +65,6 @@ class LinkerGPlusPlus(LinkerGNU):
 
 class LinkerClang(LinkerGNU):
     type: T.ClassVar = "clang"
-    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
@@ -92,7 +72,6 @@ class LinkerClang(LinkerGNU):
 
 class LinkerClangPlusPlus(LinkerGNU):
     type: T.ClassVar = "clang++"
-    translation_dict: T.ClassVar = _powermake_flags_to_clang_flags
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

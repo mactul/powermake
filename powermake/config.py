@@ -24,7 +24,7 @@ from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture
-from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPLus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
+from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
@@ -37,37 +37,51 @@ def get_global_config() -> str:
     return global_config
 
 
-def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None]) -> T.Tuple[str, str, str, str, str, str, str]:
+def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None]) -> T.Tuple[str, str, str, str, str, str, str]:
+    all_None = True
     if c_compiler is not None:
         c_compiler_type = c_compiler.type
+        all_None = False
     else:
         c_compiler_type = None
+
     if cpp_compiler is not None:
         cpp_compiler_type = cpp_compiler.type
+        all_None = False
     else:
         cpp_compiler_type = None
+
     if as_compiler is not None:
         as_compiler_type = as_compiler.type
+        all_None = False
     else:
         as_compiler_type = None
+
     if asm_compiler is not None:
         asm_compiler_type = asm_compiler.type
+        all_None = False
     else:
         asm_compiler_type = None
+
     if archiver is not None:
         archiver_type = archiver.type
+        all_None = False
     else:
         archiver_type = None
+
     if linker is not None:
         linker_type = linker.type
+        all_None = False
     else:
         linker_type = None
+
     if shared_linker is not None:
         shared_linker_type = shared_linker.type
+        all_None = False
     else:
         shared_linker_type = None
 
-    if c_compiler_type == "gnu" or cpp_compiler_type == "gnu++" or as_compiler_type == "gnu" or linker_type in ("gnu", "gnu++") or shared_linker_type in ("gnu", "gnu++") or archiver_type == "gnu":
+    if all_None and preference == "gnu" or c_compiler_type == "gnu" or cpp_compiler_type == "gnu++" or as_compiler_type == "gnu" or linker_type in ("gnu", "gnu++") or shared_linker_type in ("gnu", "gnu++") or archiver_type == "gnu":
         # GNU toolchain
         c_compiler_type = "gnu"
         cpp_compiler_type = "gnu++"
@@ -75,7 +89,7 @@ def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Co
         archiver_type = "gnu"
         linker_type = "gnu++"
         shared_linker_type = "gnu++"
-    elif c_compiler_type == "gcc" or cpp_compiler_type == "g++" or as_compiler_type == "gcc" or linker_type in ("gcc", "g++") or shared_linker_type in ("gcc", "g++") or archiver_type == "ar":
+    elif all_None and preference == "gcc" or c_compiler_type == "gcc" or cpp_compiler_type == "g++" or as_compiler_type == "gcc" or linker_type in ("gcc", "g++") or shared_linker_type in ("gcc", "g++") or archiver_type == "ar":
         # GCC toolchain
         c_compiler_type = "gcc"
         cpp_compiler_type = "g++"
@@ -83,7 +97,7 @@ def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Co
         archiver_type = "ar"
         linker_type = "g++"
         shared_linker_type = "g++"
-    elif c_compiler_type == "clang" or cpp_compiler_type == "clang++" or as_compiler_type == "clang" or linker_type in ("clang", "clang++") or shared_linker_type in ("clang", "clang++") or archiver_type == "llvm-ar":
+    elif all_None and preference == "clang" or c_compiler_type == "clang" or cpp_compiler_type == "clang++" or as_compiler_type == "clang" or linker_type in ("clang", "clang++") or shared_linker_type in ("clang", "clang++") or archiver_type == "llvm-ar":
         # clang toolchain
         c_compiler_type = "clang"
         cpp_compiler_type = "clang++"
@@ -91,7 +105,7 @@ def auto_toolchain(c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Co
         archiver_type = "llvm-ar"
         linker_type = "clang++"
         shared_linker_type = "clang++"
-    elif c_compiler_type == "msvc" or cpp_compiler_type == "msvc" or linker_type == "msvc" or shared_linker_type == "msvc" or archiver_type == "msvc":
+    elif all_None and preference == "msvc" or c_compiler_type == "msvc" or cpp_compiler_type == "msvc" or linker_type == "msvc" or shared_linker_type == "msvc" or archiver_type == "msvc":
         # MSVC toolchain
         c_compiler_type = "msvc"
         cpp_compiler_type = "msvc"
@@ -318,16 +332,6 @@ class Config:
 
         self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
 
-        cc_env = os.getenv("CC")
-        if cc_env is not None:
-            c_compiler_tuple = (cc_env, CompilerGNU)
-            print_debug_info("Using CC environment variable instead of the config", verbosity)
-
-        cxx_env = os.getenv("CXX")
-        if cxx_env is not None:
-            cpp_compiler_tuple = (cxx_env, CompilerGNUPlusPLus)
-            print_debug_info("Using CXX environment variable instead of the config", verbosity)
-
         self.c_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(c_compiler_tuple, "compiler"))
         self.cpp_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(cpp_compiler_tuple, "compiler"))
         self.as_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(as_compiler_tuple, "compiler"))
@@ -336,7 +340,22 @@ class Config:
         self.linker = T.cast(T.Union[Linker, None], load_tool_from_tuple(linker_tuple, "linker"))
         self.shared_linker = T.cast(T.Union[SharedLinker, None], load_tool_from_tuple(shared_linker_tuple, "shared_linker"))
 
-        toolchain = auto_toolchain(self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
+        preference = None
+        if "CCC_ANALYZER_ANALYSIS" in os.environ:
+            # This is the signature of scan-build
+            # if no toolchain is specified, the auto toolchain should prefer clang
+            preference = "clang"
+        else:
+            compiler_path = os.getenv("CC") or os.getenv("CXX")
+            if compiler_path is not None:
+                if "clang" in compiler_path:
+                    preference = "clang"
+                elif "gcc" in compiler_path:
+                    preference = "gcc"
+                elif "cl" in compiler_path:
+                    preference = "msvc"
+
+        toolchain = auto_toolchain(preference, self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
 
         if self.c_compiler is None:
             if self.target_is_linux():
@@ -373,6 +392,24 @@ class Config:
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang"))
             elif self.target_is_windows():
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+        
+        cc_env = os.getenv("CC")
+        if cc_env is not None:
+            if self.c_compiler is not None:
+                os.environ["CCC_CC"] = self.c_compiler.path
+                self.c_compiler.reload(cc_env)  # We change the path, but we keep the compiler object
+            else:
+                self.c_compiler = CompilerGNU(cc_env)
+            print_debug_info("Using CC environment variable instead of the config", verbosity)
+
+        cxx_env = os.getenv("CXX")
+        if cxx_env is not None:
+            if self.cpp_compiler is not None:
+                os.environ["CCC_CXX"] = self.cpp_compiler.path
+                self.cpp_compiler.reload(cxx_env)  # We change the path, but we keep the compiler object
+            else:
+                self.cpp_compiler = CompilerGNUPlusPlus(cxx_env)
+            print_debug_info("Using CXX environment variable instead of the config", verbosity)
 
         self.set_debug(self.debug, True)
 
@@ -459,7 +496,7 @@ class Config:
             self.remove_defines("NDEBUG")
             self.add_c_cpp_as_asm_flags("-g")
             if reset_optimization:
-                self.set_optimization("-O0")
+                self.set_optimization("-Og")
         else:
             self.add_defines("NDEBUG")
             self.remove_defines("DEBUG")

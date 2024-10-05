@@ -15,24 +15,15 @@
 import subprocess
 import typing as T
 
+from ..tools import _powermake_flags_to_gnu_flags
 from .common import Compiler
 from ..utils import get_empty_file
 
 
-_powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
-    "-Wsecurity": ["-Wall", "-Wextra", "-fanalyzer", "-Wformat", "-Wconversion", "-Wsign-conversion", "-Wtrampolines", "-Wbidi-chars=any,ucn"],
-    "-fsecurity=1": ["-Wsecurity", "-fstrict-flex-arrays=2", "-fcf-protection=full", "-mbranch-protection=standard", "-Wl,-z,nodlopen", "-Wl,-z,noexecstack", "-Wl,-z,relro", "-fPIE", "-pie", "-fPIC", "-shared", "-fno-delete-null-pointer-checks", "-fno-strict-overflow", "-fno-strict-aliasing", "-fexceptions", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"],
-    "-fsecurity=2": ["-fsecurity=1", "-D_FORTIFY_SOURCE=3", "-D_GLIBCXX_ASSERTIONS", "-fstack-clash-protection", "-fstack-protector-strong", "-Wl,-z,now", "-ftrivial-auto-var-init=zero"],
-    "-fsecurity": ["-fsecurity=2"],
-    "-Weverything": ["-Weverything", "-Wsecurity"],
-    "-ffuzzer": ["-fsanitize=address,fuzzer"],
-}
-
-
 class CompilerGNU(Compiler):
     type: T.ClassVar = "gnu"
+    default_path: T.ClassVar = "cc"
     obj_extension: T.ClassVar = ".o"
-    translation_dict = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "cc"):
         super().__init__(path)
@@ -47,11 +38,15 @@ class CompilerGNU(Compiler):
         return subprocess.run([self.path, arg, "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
-class CompilerGNUPlusPLus(CompilerGNU):
+class CompilerGNUPlusPlus(CompilerGNU):
     type: T.ClassVar = "gnu++"
+    default_path: T.ClassVar = "c++"
+    translation_dict = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "c++"):
         super().__init__(path)
+        not_supported = {'-Wjump-misses-init', '-Wmissing-prototypes', '-Wmissing-variable-declarations', '-Wnested-externs', '-Wstrict-prototypes', '-Wunsuffixed-float-constants'}
+        self.translation_dict["-Weverything"] = list(filter(lambda x: x not in not_supported, self.translation_dict["-Weverything"]))
 
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
@@ -59,13 +54,15 @@ class CompilerGNUPlusPLus(CompilerGNU):
 
 class CompilerGCC(CompilerGNU):
     type: T.ClassVar = "gcc"
+    default_path: T.ClassVar = "gcc"
 
     def __init__(self, path: str = "gcc"):
         super().__init__(path)
 
 
-class CompilerGPlusPlus(CompilerGNUPlusPLus):
+class CompilerGPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "g++"
+    default_path: T.ClassVar = "g++"
 
     def __init__(self, path: str = "g++"):
         super().__init__(path)
@@ -73,13 +70,21 @@ class CompilerGPlusPlus(CompilerGNUPlusPLus):
 
 class CompilerClang(CompilerGNU):
     type: T.ClassVar = "clang"
+    default_path: T.ClassVar = "clang"
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
+    
+    def check_if_arg_exists(self, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
-class CompilerClangPlusPlus(CompilerGNUPlusPLus):
+class CompilerClangPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "clang++"
+    default_path: T.ClassVar = "clang++"
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)
+    
+    def check_if_arg_exists(self, arg: str) -> bool:
+        return subprocess.run([self.path, arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
