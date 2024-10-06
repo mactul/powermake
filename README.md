@@ -147,10 +147,12 @@ pip install -U powermake
 
 This example compiles all `.c` and `.cpp` files that are recursively in the same folder as the python script and generate an executable named `program_test`
 
-**Warning !** PowerMake calculates all paths from his location, not the location where it is run.  
-For example, `python ./folder/makefile.py` will do the same as `cd ./folder && python ./makefile.py`
+> [!WARNING]  
+> PowerMake calculates all paths from its location, not the location where it is run.  
+> For example, `python ./folder/makefile.py` will do the same as `cd ./folder && python ./makefile.py`
 
-**Note:** In this documentation, we often assume that your makefile is named `makefile.py`, it makes things easier to explain. Of course, you can name your makefile the name you like the most.
+> [!NOTE]  
+> In this documentation, we often assume that your makefile is named `makefile.py`, it makes things easier to explain. Of course, you can name your makefile the name you like the most.
 
 ```py
 import powermake
@@ -172,7 +174,8 @@ powermake.run("program_test", build_callback=on_build)
 
 ## Documentation
 
-**Note:** This documentation is not completed, if you struggle to do something, do not hesitate to ask a question in the [discussions section](https://github.com/mactul/powermake/discussions/categories/q-a), it may be that the feature you search for is undocumented.
+> [!NOTE]  
+> This documentation is not complete, if you struggle to do something, do not hesitate to ask a question in the [discussions section](https://github.com/mactul/powermake/discussions/categories/q-a), it may be that the feature you search for is undocumented.
 
 ### Command line arguments
 
@@ -227,7 +230,8 @@ powermake.run("my_project", build_callback=on_build, clean_callback=on_clean)
 
 The `install_callback` takes 2 arguments: The [powermake.Config](#powermakeconfig) object and a string `location` that can be `None` if the user hasn't specified anything on the command line.
 
-**NOTE:** It's often a very good idea to use the `install_callback` as a "pre-install script" and then call `powermake.default_on_install`.
+> [!TIP]  
+> It's often a very good idea to use the `install_callback` as a "pre-install script" and then call `powermake.default_on_install`.
 
 Example:
 
@@ -362,7 +366,8 @@ If this is set, [powermake.compile_files](#powermakecompile_files) will generate
 
 A string representing the name of your operating system. For the moment it doesn't serve any purpose, but you can access it if needed.
 
-- **It's not recommended to set this in the json file, the autodetection should do a better job.**
+> [!TIP]  
+> It's not recommended to set this in the json file, the autodetection should do a better job.
 
 
 ##### target_operating_system
@@ -371,7 +376,8 @@ A string representing the name of the operating system for which the executable 
 It's used to determine the subfolder of the build folder and for the functions `target_is_linux`, `target_is_windows`, etc...
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
-- **Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated**
+- > [!WARNING]  
+  > Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated
 
 
 ##### host_architecture
@@ -380,7 +386,8 @@ A string representing the architecture of your system, which can be "amd64", "x6
 If you need an easier string to work with, use `config.host_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
 For the moment it doesn't serve any purpose, but you can access it if needed.
 
-- **It's not recommended to set this in the json file, the autodetection should do a better job.**
+> [!TIP]  
+> It's not recommended to set this in the json file, the autodetection should do a better job.
 
 
 ##### target_architecture
@@ -390,7 +397,8 @@ If you need an easier string to work with, use `config.target_simplified_archite
 It's used to determine the subfolder of the build folder and to set the compiler architecture. However, for the moment, gcc and clang only switch from 64 bits to 32 bits. If you are on x64 and you set the target_architecture to "arm32", you will in reality compile for x86. You have to give the path of a cross-compiler to achieve what you want.
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
-- **Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture**
+- > [!WARNING]  
+  > Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture
 
 
 ##### c_compiler
@@ -418,7 +426,8 @@ our compiler should be set like this:
       "path": "C:\\msys64\\ucrt64\\bin\\gcc.exe"
   }
   ```
-  *Note: for mingw on Windows, you should simply set  `C:\msys64\ucrt64\bin` in your PATH and powermake will be able to find it automatically*
+  > [!NOTE]  
+  > For mingw on Windows, you should simply set  `C:\msys64\ucrt64\bin` in your PATH and powermake will be able to find it automatically
 
 - The `"path"` field indicates where is the executable of the compiler. Note that PATH searching is always applied, so `"gcc"` work as well as `"/usr/bin/gcc"`
   For mingw on Linux, your compiler can be set like this:
@@ -503,21 +512,24 @@ Once loaded, the `config.shared_linker` is a virtual class that inherits from `p
 
 This is the directory in which all .o (or equivalent) will be stored.
 
-- **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/Linux, or x86/x64 doesn't have any conflict.**
+> [!TIP]  
+> It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/Linux, or x86/x64 doesn't have any conflict.
 
 
 ##### lib_build_directory
 
 This is the directory in which all .a, .so, .lib, .dll, etc... will be stored.
 
-- **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/Linux, or x86/x64 doesn't have any conflict.**
+> [!TIP]  
+> It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/Linux, or x86/x64 doesn't have any conflict.
 
 
 ##### exe_build_directory
 
 This is the directory in which the linked executable will be stored.
 
-- **It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/Linux, or x86/x64 doesn't have any conflict.**
+> [!TIP]  
+> It's not recommended to set this in the json file, the automatic path generation should do a better job, ensuring that debug/release, windows/Linux, or x86/x64 doesn't have any conflict.
 
 
 ##### defines
@@ -525,7 +537,8 @@ This is the directory in which the linked executable will be stored.
 This is a list of some defines that will be used during the compilation process.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these defines directly in the makefile with [config.add_defines](#add_defines), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these defines directly in the makefile with [config.add_defines](#add_defines), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### additional_includedirs
@@ -533,7 +546,8 @@ This is a list of some defines that will be used during the compilation process.
 This is a list of additional includedirs that will be used during the compilation process.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with [config.add_includedirs](#add_includedirs), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these includedirs directly in the makefile with [config.add_includedirs](#add_includedirs), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### shared_libs
@@ -541,7 +555,8 @@ This is a list of additional includedirs that will be used during the compilatio
 This is a list of shared libraries that will be used for the link.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these shared libs directly in the makefile with [config.add_shared_libs](#add_shared_libs), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these shared libs directly in the makefile with [config.add_shared_libs](#add_shared_libs), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### c_flags
@@ -552,7 +567,8 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the compiler.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_flags](#add_c_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_flags](#add_c_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### cpp_flags
@@ -563,7 +579,8 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the compiler.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_cpp_flags](#add_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_cpp_flags](#add_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### c_cpp_flags
@@ -576,7 +593,8 @@ If not, they are simply passed to the compiler.
 In the `powermake.Config` object, this list doesn't correspond to a real list, it's just a property. You can read the value of `config.c_cpp_flags`, it's just the concatenation of `c_flags` and `cpp_flags`, but you can't edit this property, you have to use [config.add_c_cpp_flags](#add_c_cpp_flags) and [config.remove_c_cpp_flags](#remove_c_cpp_flags)
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_cpp_flags](#add_c_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_c_cpp_flags](#add_c_cpp_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### as_flags
@@ -587,7 +605,8 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the compiler.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_as_flags](#add_as_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_as_flags](#add_as_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### asm_flags
@@ -598,7 +617,8 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the compiler.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_asm_flags](#add_asm_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_asm_flags](#add_asm_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### c_cpp_as_asm_flags
@@ -616,7 +636,8 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the archiver.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ar_flags](#add_ar_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ar_flags](#add_ar_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### ld_flags
@@ -627,7 +648,8 @@ If in the powermake known flags list, these flags are translated for the specifi
 If not, they are simply passed to the linker.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ld_flags](#add_ld_flags), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_ld_flags](#add_ld_flags), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 ##### shared_linker_flags
@@ -645,7 +667,8 @@ This list can directly contain strings, in this case, the file is exported at th
 This list can also contain 2 elements lists. The first element is the file to export and the second element is the subfolder of the `include` folder in which the file should be exported.
 
 - This list is merged from the local and global config
-- **It's not recommended to set this in the json file, it makes much more sense to add these headers directly in the makefile with [config.add_exported_headers](#add_exported_headers), if needed, in a conditional statement like `if config.target_is_windows():`**
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these headers directly in the makefile with [config.add_exported_headers](#add_exported_headers), if needed, in a conditional statement like `if config.target_is_windows():`
 
 
 
@@ -666,7 +689,8 @@ If `debug` is False, set everything to be in release mode. (does the opposite of
 
 If `reset_optimization` is set to True, then a `debug` to True will put the optimization to `-O0` and a `debug` to False will put the optimization to `-O3`
 
-- **If possible you should prefer using the command-line instead of this function.**
+> [!NOTE]  
+> If possible you should prefer using the command-line instead of this function.
 
 
 ##### set_optimization()
@@ -1028,7 +1052,8 @@ Returns a set of filepaths that matches at least one of the patterns.
 Authorized patterns are:
 - `*` to match a filename, for example `"foo/*.c"` will match `"foo/test.c"` but not `"foo/bar/test.c"`
 - `**/` to match recursive directories, for example, `"foo/**/test.c"` will match  `"foo/test.c"` and `"foo/bar/test.c"`.  
-  Warning: `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
+  > [!IMPORTANT]  
+  > `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
 
 This function is variadic.
 
@@ -1044,7 +1069,8 @@ Returns a new filepaths set, filtered.
 Authorized patterns are:
 - `*` to match a filename, for example `"foo/*.c"` will match `"foo/test.c"` but not `"foo/bar/test.c"`
 - `**/` to match recursive directories, for example, `"foo/**/test.c"` will match  `"foo/test.c"` and `"foo/bar/test.c"`.  
-  Warning: `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
+  > [!IMPORTANT]  
+  > `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
 
 This function is variadic.
 
@@ -1163,7 +1189,9 @@ powermake.Operation(outputfile: str, dependencies: set, config: Config, command:
 ```
 
 This is a simple object to execute a command only if needed.  
-It can be used to easily parallelize multiple commands. Note that you can use [powermake.compile_files](#powermakecompile_files) which does that for you, but only for C/C++/AS/ASM files.
+It can be used to easily parallelize multiple commands.
+> [!TIP]  
+> You can use [powermake.compile_files](#powermakecompile_files) which does that for you, but only for C/C++/AS/ASM files.
 
 The command should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
 This list is then directly passed to `subprocess.run`
@@ -1184,7 +1212,8 @@ If left to None, no mutex is used.
 
 ### Having more control than what powermake.run offers
 
-**Warning** This section is advanced.
+> [!NOTE]  
+> This section is advanced.
 
 #### powermake.ArgumentParser
 ```py
@@ -1192,7 +1221,8 @@ powermake.ArgumentParser(prog: str = None, description: str = None, **kwargs)
 ```
 
 This object is a superset of [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html), you can read the documentation of argparse, it works exactly the same.
-**Use this object and never argparse.ArgumentParser directly** or you will break some powermake features. Obviously the usual command line options will be broken but you will also break other features like the [powermake.run_another_powermake](#powermakerun_another_powermake) function. This object ensure that none of this is broken.
+> [!CAUTION]  
+> **Use this object and never argparse.ArgumentParser directly** or you will break some powermake features. Obviously the usual command line options will be broken but you will also break other features like the [powermake.run_another_powermake](#powermakerun_another_powermake) function. This object ensure that none of this is broken.
 
 ##### add_argument()
 
@@ -1242,7 +1272,8 @@ run_callbacks(config: Config, *, build_callback: callable, clean_callback: calla
 This function only make sense after a call of [powermake.generate_config](#powermakegenerate_config).  
 It takes a newly generated config and run each callback according to the command line.
 
-**/!\\ WARNING /!\\ If neither this function nor powermake.run is used, the powermake.run_another_powermake function will be partially broken**
+> [!CAUTION]  
+> If neither this function nor powermake.run is used, the powermake.run_another_powermake function will be partially broken
 
 Example:
 ```py

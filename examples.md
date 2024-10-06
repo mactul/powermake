@@ -10,10 +10,12 @@
 
 ## General Notes
 
-**Warning !** PowerMake calculate all paths from his own location, not the location where it is run.  
-For example, `python ./folder/makefile.py` will do the same as `cd ./folder && python ./makefile.py`
+> [!WARNING]  
+> PowerMake calculates all paths from its location, not the location where it is run.  
+> For example, `python ./folder/makefile.py` will do the same as `cd ./folder && python ./makefile.py`
 
-**Note:** In this documentation, we often assume that your makefile is named `makefile.py`, it makes thing easier to explain. Of course, you can name your makefile the name you like the most.
+> [!NOTE]  
+> In this documentation, we often assume that your makefile is named `makefile.py`, it makes things easier to explain. Of course, you can name your makefile the name you like the most.
 
 ## Simple C/C++ program without dependencies
 
