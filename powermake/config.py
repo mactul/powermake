@@ -117,6 +117,31 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
     return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
 
 
+def get_toolchain_tuple(path: T.Union[str, None, bool]):
+    if not path:
+        return None
+    if path.endswith("gcc"):
+        return ("gcc", path[:-3])
+    if path.endswith("clang"):
+        return ("clang", path[:-5])
+    if path.endswith("clang++"):
+        return ("clang", path[:-7])
+    if path.endswith("g++"):
+        return ("gcc", path[:-3])
+    if path.endswith("ar"):
+        return ("gnu", path[:-2])
+    if path.endswith("ld"):
+        return ("gnu", path[:-2])
+    if path.endswith("cc"):
+        return ("gnu", path[:-2])
+    if path.endswith("cpp"):
+        return ("gnu", path[-3])
+    if path.endswith("c++"):
+        return ("gnu", path[-3])
+    
+    return None
+
+
 def replace_architecture(string: str, new_arch: str) -> str:
     new_arch = "/" + new_arch + "/"
     for arch in ("/x86/", "/x64/", "/arm32/", "/arm64/"):
@@ -350,10 +375,16 @@ class Config:
             if compiler_path is not None:
                 if "clang" in compiler_path:
                     preference = "clang"
-                elif "gcc" in compiler_path:
+                elif "gcc" in compiler_path or "g++" in compiler_path:
                     preference = "gcc"
                 elif "cl" in compiler_path:
                     preference = "msvc"
+        
+        c_compiler_autodetected = self.c_compiler is None
+        cpp_compiler_autodetected = self.cpp_compiler is None
+        as_compiler_autodetected = self.as_compiler is None
+        ld_autodetected = self.linker is None
+        shared_ld_autodetected = self.shared_linker is None
 
         toolchain = auto_toolchain(preference, self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
 
@@ -395,6 +426,7 @@ class Config:
         
         cc_env = os.getenv("CC")
         if cc_env is not None:
+            c_compiler_autodetected = False
             if self.c_compiler is not None:
                 os.environ["CCC_CC"] = self.c_compiler.path
                 self.c_compiler.reload(cc_env)  # We change the path, but we keep the compiler object
@@ -404,12 +436,69 @@ class Config:
 
         cxx_env = os.getenv("CXX")
         if cxx_env is not None:
+            cpp_compiler_autodetected = False
             if self.cpp_compiler is not None:
                 os.environ["CCC_CXX"] = self.cpp_compiler.path
                 self.cpp_compiler.reload(cxx_env)  # We change the path, but we keep the compiler object
             else:
                 self.cpp_compiler = CompilerGNUPlusPlus(cxx_env)
             print_debug_info("Using CXX environment variable instead of the config", verbosity)
+        
+
+        toolchain_tuple = get_toolchain_tuple(
+            not c_compiler_autodetected and self.c_compiler is not None and self.c_compiler.path
+            or not cpp_compiler_autodetected and self.cpp_compiler is not None and self.cpp_compiler.path
+            or not as_compiler_autodetected and self.as_compiler is not None and self.as_compiler.path
+            or not ld_autodetected and self.linker is not None and self.linker.path
+            or not shared_ld_autodetected and self.shared_linker is not None and self.shared_linker.path
+        )
+        if toolchain_tuple is not None:
+            t, toolchain_prefix = toolchain_tuple
+            if c_compiler_autodetected:
+                if t == "gcc":
+                    tool = GenericCompiler("gcc")(toolchain_prefix + "gcc")
+                elif t == "clang":
+                    tool = GenericCompiler("clang")(toolchain_prefix + "clang")
+                else:
+                    tool = GenericCompiler("gnu")(toolchain_prefix + "cc")
+                if tool.is_available():
+                    self.c_compiler = tool
+            if cpp_compiler_autodetected:
+                if t == "gcc":
+                    tool = GenericCompiler("g++")(toolchain_prefix + "g++")
+                elif t == "clang":
+                    tool = GenericCompiler("clang++")(toolchain_prefix + "clang++")
+                else:
+                    tool = GenericCompiler("gnu++")(toolchain_prefix + "c++")
+                if tool.is_available():
+                    self.cpp_compiler = tool
+            if as_compiler_autodetected:
+                if t == "gcc":
+                    tool = GenericCompiler("gcc")(toolchain_prefix + "gcc")
+                elif t == "clang":
+                    tool = GenericCompiler("clang")(toolchain_prefix + "clang")
+                else:
+                    tool = GenericCompiler("gnu")(toolchain_prefix + "cc")
+                if tool.is_available():
+                    self.as_compiler = tool
+            if ld_autodetected:
+                if t == "gcc":
+                    tool = GenericLinker("g++")(toolchain_prefix + "g++")
+                elif t == "clang":
+                    tool = GenericLinker("clang++")(toolchain_prefix + "clang++")
+                else:
+                    tool = GenericLinker("gnu++")(toolchain_prefix + "c++")
+                if tool.is_available():
+                    self.linker = tool
+            if shared_ld_autodetected:
+                if t == "gcc":
+                    tool = GenericSharedLinker("g++")(toolchain_prefix + "g++")
+                elif t == "clang":
+                    tool = GenericSharedLinker("clang++")(toolchain_prefix + "clang++")
+                else:
+                    tool = GenericSharedLinker("gnu++")(toolchain_prefix + "c++")
+                if tool.is_available():
+                    self.shared_linker = tool
 
         self.set_debug(self.debug, True)
 
