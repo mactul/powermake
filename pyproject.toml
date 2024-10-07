@@ -20,6 +20,9 @@ dependencies = [
     "colorama"
 ]
 
+[project.scripts]
+powermake = "powermake.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/mactul/powermake"
 Issues = "https://github.com/mactul/powermake/issues"

@@ -199,7 +199,7 @@ You can also replace the `-b` argument with `-r` (using `-br` does the same as `
 
 There are many more options you can add such as `-d` (`--debug`), `-q` (`--quiet`), `-v` (`--verbose`), etc...
 
-All these options can be listed by running `python makefile.py -h` (or `python makefile.py --help`)
+All these options can be listed by running `python makefile.py -h` or if you haven't created a makefile yet, by directly calling the module `python -m powermake -h` or just `powermake -h` if the pip installation is in your path.
 
 > [!IMPORTANT]  
 > While `python makefile.py install` and `python makefile.py --install` takes the `install_location` as an optional argument, this argument has been disabled with the `-i` option, because writing `-bic` would have triggered the install callback with the location `c`
@@ -352,7 +352,7 @@ But one thing you have to know is that the construction of this object involves 
 - step 3: It completes the local config with the global config, by default, stored in your home, at `~/.powermake/powermake_config.json` (If you create an env variable named `POWERMAKE_CONFIG`, you can override this location.).
 - step 4: For all fields that are left empty, powermake will try to create a default value from your platform information.
   
-In theory, after the end of these 3 steps, all members of the `powermake.Config` object should be set.  
+In theory, after the end of these 4 steps, all members of the `powermake.Config` object should be set.  
 In rare cases, if powermake was enabled to detect a default compiler, the `c_compiler`, `cpp_compiler`, `archiver`, and `linker` members can be None.  
 In this situation, it's your responsibility to give them a value before the call to the `powermake.compile_files` function.
 
