@@ -27,6 +27,7 @@ jobs:
     - name: Update version in pyproject.toml
       run: >-
         sed -i "s/{{VERSION_PLACEHOLDER}}/$(echo $GITHUB_REF | cut -d / -f 3)/g" pyproject.toml
+        sed -i "s/NO_VERSION_SPECIFIED/$(echo $GITHUB_REF | cut -d / -f 3)/g" powermake/__version__.py
     - name: Build a binary wheel
       run: >-
         python -m build

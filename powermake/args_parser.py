@@ -20,6 +20,7 @@ import typing as T
 
 from .config import Config
 from .utils import makedirs
+from .__version__ import __version__
 from .interactive_config import InteractiveConfig
 from .display import print_info, print_debug_info, init_colors
 
@@ -133,6 +134,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("-o", "--compile-commands-dir", metavar="DIRECTORY", help="Run the compilation and generate a compile_commands.json file in the directory specified.", default=None)
         self.add_argument("--get-lib-build-folder", help="(Internal option) - Return the lib build folder path according to the config.", action="store_true")
         self.add_argument("--retransmit-colors", help="(Internal option) - Let all ANSI color codes intact, even if not in a terminal.", action="store_true")
+        self.add_argument("--version", help="display PowerMake version", action="store_true")
 
 
 def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, None] = None) -> Config:
@@ -153,6 +155,10 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         if parser is not None:
             parser.print_usage(file=sys.stderr)
         exit(1)
+    
+    if args_parsed.version:
+        print(f"Powermake version {__version__}")
+        exit(0)
 
     if args_parsed.quiet:
         verbosity = 0
