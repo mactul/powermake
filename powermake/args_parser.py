@@ -111,9 +111,9 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self, prog: T.Union[str, None] = None, description: T.Union[str, None] = None, **kwargs: T.Any):
         if prog is None:
-            prog = "powermake"
+            prog = "python YOUR_MAKEFILE.py"
         if description is None:
-            description = "Makefile Utility"
+            description = f"PowerMake {__version__}"
         super().__init__(prog=prog, description=description, **kwargs)
 
         self.add_argument("action", choices=["build", "clean", "install", "config"], nargs='?')
