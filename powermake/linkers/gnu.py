@@ -24,7 +24,7 @@ class LinkerGNU(Linker):
     type: T.ClassVar = "gnu"
     exe_extension: T.ClassVar = ""
 
-    def __init__(self, path: str = "cc"):
+    def __init__(self, path: str = "c++"):
         super().__init__(path)
 
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:

@@ -26,7 +26,7 @@ from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture
 from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
-from .linkers import Linker, GenericLinker, get_all_linker_types
+from .linkers import Linker, LinkerGNU, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 
 
@@ -443,6 +443,15 @@ class Config:
             else:
                 self.cpp_compiler = CompilerGNUPlusPlus(cxx_env)
             print_debug_info("Using CXX environment variable instead of the config", verbosity)
+        
+        ld_env = os.getenv("LD")
+        if ld_env is not None:
+            ld_autodetected = False
+            if self.linker is not None:
+                self.linker.reload(ld_env)  # We change the path, but we keep the compiler object
+            else:
+                self.linker = LinkerGNU(ld_env)
+            print_debug_info("Using LD environment variable instead of the config", verbosity)
         
 
         toolchain_tuple = get_toolchain_tuple(

@@ -23,7 +23,7 @@ class SharedLinkerGNU(SharedLinker):
     type: T.ClassVar = "gnu"
     shared_lib_extension: T.ClassVar = ".so"
 
-    def __init__(self, path: str = "cc"):
+    def __init__(self, path: str = "c++"):
         super().__init__(path)
 
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
