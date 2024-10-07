@@ -11,6 +11,7 @@
     - [See more examples](#see-more-examples)
   - [Documentation](#documentation)
     - [Command line arguments](#command-line-arguments)
+  - [Toolchain detection](#toolchain-detection)
     - [powermake.run](#powermakerun)
     - [powermake.Config](#powermakeconfig)
       - [Members](#members)
@@ -187,7 +188,10 @@ You can also write `python makefile.py build`, `python makefile.py clean`, or `p
 There is also the `python makefile.py config` command, which doesn't trigger a callback but enters into an interactive mode for editing a configuration file.
 
 Alternatively, you can also use the option `-b` or `--build`, `-c` or `--clean`, `-i` or `--install`, and `-f` or `--config`.  
-This alternative has a great advantage: you can combine multiple tasks. For example, running `python makefile.py -bci` will first trigger the clean callback, then the build callback, and finally the install callback. (The order will always be config -> clean -> build -> install).
+This alternative has a great advantage: you can combine multiple tasks. For example, running `python makefile.py -bci` will first trigger the clean callback, then the build callback, and finally the install callback.
+
+> [!IMPORTANT]  
+> The order will always be config -> clean -> build -> install.
 
 You can also replace the `-b` argument with `-r` (using `-br` does the same as `-r`) and this will force the makefile to recompile everything, without trying to figure out which file needs to be recompiled.
 
@@ -195,7 +199,28 @@ There are many more options you can add such as `-d` (`--debug`), `-q` (`--quiet
 
 All these options can be listed by running `python makefile.py -h` (or `python makefile.py --help`)
 
-/!\\ Specificity: While `python makefile.py install` and `python makefile.py --install` takes the `install_location` as an optional argument, this argument has been disabled with the `-i` option, because writing `-bic` would have triggered the install callback with the location `c`
+> [!IMPORTANT]  
+> While `python makefile.py install` and `python makefile.py --install` takes the `install_location` as an optional argument, this argument has been disabled with the `-i` option, because writing `-bic` would have triggered the install callback with the location `c`
+
+
+## Toolchain detection
+
+PowerMake infers the various toolchain programs to be used using everything it knows.  
+Most of the time, just setting up the C compiler configuration (or the C++ compiler or the linker, etc...) will be sufficient for PowerMake to determinate the whole toolchain.
+
+> [!NOTE]  
+> Only the unspecified fields are inferred, the field explicitly assigned in the json configuration are left unchanged. The only exception is when CC, CXX or LD env variables are specified (see below)
+
+The environment variables CC, CXX and LD can be used to overwrite the C compiler, C++ compiler and linker tools path.  
+For example, the command below will compile using the afl-\* toolchain. The C++ compiler and the linker are inferred from the C compiler (but only if they are not specified in the json configuration).
+```sh
+CC=afl-gcc python makefile.py -rvd
+```
+
+This is especially useful to quickly compile with a different toolchain. For example if you want to exceptionally compile with mingw:
+```sh
+CC=x86_64-w64-mingw32-gcc python makefile.py -rvd
+```
 
 
 ### powermake.run

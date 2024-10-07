@@ -344,8 +344,10 @@ class Config:
 
         if self.nb_jobs == 0:
             self.nb_jobs = os.cpu_count() or 8
-
+        
+        target_os_autodetected = False
         if self.target_operating_system == "":
+            target_os_autodetected = True
             self.target_operating_system = platform.system()
         if self.host_operating_system == "":
             self.host_operating_system = platform.system()
@@ -508,6 +510,9 @@ class Config:
                     tool = GenericSharedLinker("gnu++")(toolchain_prefix + "c++")
                 if tool.is_available():
                     self.shared_linker = tool
+        
+        if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
+            self.target_operating_system = "Windows"
 
         self.set_debug(self.debug, True)
 
