@@ -21,7 +21,7 @@ import platform
 import typing as T
 
 from .display import print_debug_info
-from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
+from .tools import Tool, load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture
 from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
@@ -117,7 +117,7 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
     return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
 
 
-def get_toolchain_tuple(path: T.Union[str, None, bool]):
+def get_toolchain_tuple(path: T.Union[str, None, T.Literal[False]]) -> T.Union[T.Tuple[str, str], None]:
     if not path:
         return None
     if path.endswith("gcc"):
@@ -467,49 +467,49 @@ class Config:
             t, toolchain_prefix = toolchain_tuple
             if c_compiler_autodetected:
                 if t == "gcc":
-                    tool = GenericCompiler("gcc")(toolchain_prefix + "gcc")
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(toolchain_prefix + "gcc")
                 elif t == "clang":
-                    tool = GenericCompiler("clang")(toolchain_prefix + "clang")
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(toolchain_prefix + "clang")
                 else:
-                    tool = GenericCompiler("gnu")(toolchain_prefix + "cc")
-                if tool.is_available():
-                    self.c_compiler = tool
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(toolchain_prefix + "cc")
+                if compiler.is_available():
+                    self.c_compiler = compiler
             if cpp_compiler_autodetected:
                 if t == "gcc":
-                    tool = GenericCompiler("g++")(toolchain_prefix + "g++")
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("g++"))(toolchain_prefix + "g++")
                 elif t == "clang":
-                    tool = GenericCompiler("clang++")(toolchain_prefix + "clang++")
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang++"))(toolchain_prefix + "clang++")
                 else:
-                    tool = GenericCompiler("gnu++")(toolchain_prefix + "c++")
-                if tool.is_available():
-                    self.cpp_compiler = tool
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu++"))(toolchain_prefix + "c++")
+                if compiler.is_available():
+                    self.cpp_compiler = compiler
             if as_compiler_autodetected:
                 if t == "gcc":
-                    tool = GenericCompiler("gcc")(toolchain_prefix + "gcc")
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(toolchain_prefix + "gcc")
                 elif t == "clang":
-                    tool = GenericCompiler("clang")(toolchain_prefix + "clang")
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(toolchain_prefix + "clang")
                 else:
-                    tool = GenericCompiler("gnu")(toolchain_prefix + "cc")
-                if tool.is_available():
-                    self.as_compiler = tool
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(toolchain_prefix + "cc")
+                if compiler.is_available():
+                    self.as_compiler = compiler
             if ld_autodetected:
                 if t == "gcc":
-                    tool = GenericLinker("g++")(toolchain_prefix + "g++")
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("g++"))(toolchain_prefix + "g++")
                 elif t == "clang":
-                    tool = GenericLinker("clang++")(toolchain_prefix + "clang++")
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("clang++"))(toolchain_prefix + "clang++")
                 else:
-                    tool = GenericLinker("gnu++")(toolchain_prefix + "c++")
-                if tool.is_available():
-                    self.linker = tool
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("gnu++"))(toolchain_prefix + "c++")
+                if ld.is_available():
+                    self.linker = ld
             if shared_ld_autodetected:
                 if t == "gcc":
-                    tool = GenericSharedLinker("g++")(toolchain_prefix + "g++")
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("g++"))(toolchain_prefix + "g++")
                 elif t == "clang":
-                    tool = GenericSharedLinker("clang++")(toolchain_prefix + "clang++")
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("clang++"))(toolchain_prefix + "clang++")
                 else:
-                    tool = GenericSharedLinker("gnu++")(toolchain_prefix + "c++")
-                if tool.is_available():
-                    self.shared_linker = tool
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("gnu++"))(toolchain_prefix + "c++")
+                if shared_ld.is_available():
+                    self.shared_linker = shared_ld
         
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
             self.target_operating_system = "Windows"
