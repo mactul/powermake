@@ -15,7 +15,7 @@
 from .__version__ import __version__
 from .args_parser import generate_config
 
-def main():
+def main() -> None:
     generate_config(target_name="NULL")
     print(f"PowerMake version {__version__}")
 
