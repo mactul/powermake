@@ -36,6 +36,7 @@ _powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
 _powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-O0": ["/Od"],
     "-Og": ["/Od"],
+    "-O": ["/O1"],
     "-O1": ["/O1"],
     "-O2": ["/O2"],
     "-O3": ["/Ox", "/fp:fast"],
@@ -48,10 +49,12 @@ _powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
 _powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-m32": [],
     "-m64": [],
+    "-march=native": [],
+    "-mtune=native": [],
     "-mmmx": ["/arch:MMX"],
     "-msse": ["/arch:SSE"],
     "-msse2": ["/arch:SSE2"],
-    "-mssse3": ["/arch:SSSE3"],
+    "-msse3": ["/arch:SSE3"],
     "-mavx": ["/arch:AVX"],
     "-mavx2": ["/arch:AVX2"]
 }

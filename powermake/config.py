@@ -639,12 +639,12 @@ class Config:
                     self.remove_asm_flags("-felf" + remove)
 
     def set_optimization(self, opt_flag: str) -> None:
-        self.remove_c_cpp_as_asm_flags("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
+        self.remove_c_cpp_as_asm_flags("-O0", "-Og", "-O", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer")
         self.add_c_cpp_as_asm_flags(opt_flag)
 
     def get_optimization_level(self) -> T.Union[str, None]:
         for flag in reversed(self.c_cpp_flags):
-            if flag in ("-O0", "-Og", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer"):
+            if flag in ("-O0", "-Og", "-O", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer"):
                 return flag
         return None
 

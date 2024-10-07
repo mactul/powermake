@@ -11,7 +11,8 @@
     - [See more examples](#see-more-examples)
   - [Documentation](#documentation)
     - [Command line arguments](#command-line-arguments)
-  - [Toolchain detection](#toolchain-detection)
+    - [Toolchain detection](#toolchain-detection)
+    - [PowerMake flags translation](#powermake-flags-translation)
     - [powermake.run](#powermakerun)
     - [powermake.Config](#powermakeconfig)
       - [Members](#members)
@@ -47,6 +48,7 @@
       - [Methods](#methods)
         - [set\_debug()](#set_debug)
         - [set\_optimization()](#set_optimization)
+        - [set\_target\_architecture()](#set_target_architecture)
         - [target\_is\_windows()](#target_is_windows)
         - [target\_is\_linux()](#target_is_linux)
         - [target\_is\_mingw()](#target_is_mingw)
@@ -203,13 +205,13 @@ All these options can be listed by running `python makefile.py -h` (or `python m
 > While `python makefile.py install` and `python makefile.py --install` takes the `install_location` as an optional argument, this argument has been disabled with the `-i` option, because writing `-bic` would have triggered the install callback with the location `c`
 
 
-## Toolchain detection
+### Toolchain detection
 
 PowerMake infers the various toolchain programs to be used using everything it knows.  
 Most of the time, just setting up the C compiler configuration (or the C++ compiler or the linker, etc...) will be sufficient for PowerMake to determinate the whole toolchain.
 
 > [!NOTE]  
-> Only the unspecified fields are inferred, the field explicitly assigned in the json configuration are left unchanged. The only exception is when CC, CXX or LD env variables are specified (see below)
+> Only the unspecified fields are inferred, the field explicitly assigned in the json configuration (see [powermake.Config](#powermakeconfig)) are left unchanged. The only exception is when CC, CXX or LD env variables are specified (see below)
 
 The environment variables CC, CXX and LD can be used to overwrite the C compiler, C++ compiler and linker tools path.  
 For example, the command below will compile using the afl-\* toolchain. The C++ compiler and the linker are inferred from the C compiler (but only if they are not specified in the json configuration).
@@ -217,10 +219,63 @@ For example, the command below will compile using the afl-\* toolchain. The C++ 
 CC=afl-gcc python makefile.py -rvd
 ```
 
-This is especially useful to quickly compile with a different toolchain. For example if you want to exceptionally compile with mingw:
+This is especially useful to quickly compile with a different toolchain. For example if you want to exceptionally compile an executable for Windows using Linux:
 ```sh
 CC=x86_64-w64-mingw32-gcc python makefile.py -rvd
 ```
+
+### PowerMake flags translation
+
+When this is possible, PowerMake tries to translate C/C++/AS/ASM/LD flags.
+
+Most flags are unknown to PowerMake, in this case they are simply transmitted to the compiler and it's your job to ensure the compatibility with the different targets through the use of if/else blocks.
+
+However, the most common flags are automatically translated by PowerMake.  
+Their is also some flags that PowerMake defines that doesn't exist in any compiler, these are set of useful flags for a situation.
+
+Here is the list of flags translated by PowerMake:  
+> [!NOTE]  
+> Only compiler flags are listed, they are also translated for the linker but most of the time this ends up being just the removal of the flag.
+
+
+| PowerMake Flag |  Description                   |
+| :------------: | :----------------------------: |
+| -w             | Inhibit all warning messages.  |
+| -Werror        | Make all warnings into errors. |
+| -Wall          | Activate warnings about all constructs that are unlikely to be intended. |
+| -Wextra        | Enable flags that are likely to catch bugs even though they may warn on perfectly valid code. |
+| -Wpedantic     | Warn when the code isn't ISO (typically when C/C++ extension are used). |
+| -pedantic      | Same a -Wpedantic |
+| -Wswitch       | Warn when a switch on an enum lacks a case (enabled by -Wall) |
+| -Wswitch-enum  | Like -Wswitch but warns even if their is a default case |
+| -fanalyzer     | When supported by the compiler, run the code into a static analyzer to detect some bugs. |
+| -Weverything   | Enable as most warning as possible, even the noisy and irrelevant ones. |
+| -Wsecurity     | Enable all warnings that have a little chance to catch a security issue. |
+| -O0            | Disable all optimizations. |
+| -Og            | Enable optimizations that don't interfere with the debugger. This is better than -O0 for debugging because some warnings and analysis require some optimization. |
+| -O1            | Enable optimization but try to mitigate compile time. |
+| -O             | Same as -O1. |
+| -O2            | Performs nearly all supported optimizations. |
+| -O3            | Optimize aggressively for speed. |
+| -Ofast         | Enable all -O3 optimizations + some some optimization that can brake the program. |
+| -Os            | Optimize for size. |
+| -Oz            | Optimize aggressively for size rather than speed. |
+| -fomit-frame-pointer | Omit the frame pointer in functions that don’t need one. |
+| -m32           | If supported, switch to x86 architecture (you should prefer using [config.set_target_architecture](#set_target_architecture)). |
+| -m64           | If supported, switch to x64 architecture (you should prefer using [config.set_target_architecture](#set_target_architecture)). |
+| -march=native  | Generate a program optimized for CPUs that have the same capabilities of the host. |
+| -mtune=native  | Optimize a program for the specific CPU of the host, even if this program will run slower or not at all on any other machine. |
+| -mmx           | Enable mmx vectorization. |
+| -msse          | Enable sse vectorization. |
+| -msse2         | Enable sse2 vectorization. |
+| -msse3         | Enable sse3 vectorization. |
+| -mavx          | Enable avx vectorization. |
+| -mavx2         | Enable avx2 vectorization. |
+| -g             | Compile with debug symbols. |
+| -fsecurity=1   | Enable all flags that can mitigate security issues with negligible impact on performance. Warnings included. |
+| -fsecurity=2   | Enable all flags that can mitigate security issues. |
+| -fsecurity     | same as -fsecurity=2. |
+| -ffuzzer       | Enable the address sanitizer and the fuzzer. |
 
 
 ### powermake.run
@@ -257,31 +312,30 @@ The `install_callback` takes 2 arguments: The [powermake.Config](#powermakeconfi
 
 > [!TIP]  
 > It's often a very good idea to use the `install_callback` as a "pre-install script" and then call `powermake.default_on_install`.
-
-Example:
-
-```py
-import powermake
-
-
-def on_build(config: powermake.Config):
-    print("The build callback was called !")
-    print(f"Compiling the lib {config.target_name}...")
-
-def on_install(config: powermake.Config, location: str):
-    if location is None:
-        # No location is explicitly provided so we change the default for our convenience.
-        location = "/usr/local/"
-    
-    # This ensures that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
-    # The .so or .a that corresponds will be copied into /usr/local/lib/my_lib.so
-    config.add_exported_headers("my_lib.h", subfolder="my_lib")
-
-    powermake.default_on_install(config, location)
-
-
-powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
-```
+> 
+> Example:
+> ```py
+> import powermake
+> 
+> 
+> def on_build(config: powermake.Config):
+>     print("The build callback was called !")
+>     print(f"Compiling the lib {config.target_name}...")
+> 
+> def on_install(config: powermake.Config, location: str):
+>     if location is None:
+>         # No location is explicitly provided so we change the default for our convenience.
+>         location = "/usr/local/"
+>     
+>     # This ensures that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
+>     # The .so or .a that corresponds will be copied into /usr/local/lib/my_lib.so
+>     config.add_exported_headers("my_lib.h", subfolder="my_lib")
+> 
+>     powermake.default_on_install(config, location)
+> 
+> 
+> powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
+> ```
 
 The `args_parsed` argument should be left to None in most cases, to understand his purpose, see [powermake.ArgumentsParser.parse_args](#parse_args)
 
@@ -725,6 +779,14 @@ config.set_optimization(opt_flag: str)
 
 Remove all optimization flags set and add the `opt_flag`
 
+
+##### set_target_architecture()
+```py
+config.set_target_architecture(architecture: str) -> None:
+```
+
+Reset the target architecture to the one specified.  
+This will reload compilers to produce code for the good architecture.
 
 ##### target_is_windows()
 ```py
