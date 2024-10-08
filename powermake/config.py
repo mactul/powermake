@@ -21,7 +21,7 @@ import platform
 import typing as T
 
 from .display import print_debug_info
-from .tools import Tool, load_tool_tuple_from_file, load_tool_from_tuple, find_tool
+from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture
 from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
@@ -117,8 +117,8 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
     return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
 
 
-def get_toolchain_tuple(path: T.Union[str, None, T.Literal[False]]) -> T.Union[T.Tuple[str, str], None]:
-    if not path:
+def get_toolchain_tuple(path: T.Union[str, None, bool]) -> T.Union[T.Tuple[str, str], None]:
+    if not path or path is True:
         return None
     if path.endswith("gcc"):
         return ("gcc", path[:-3])
@@ -696,6 +696,11 @@ class Config:
         for c_flag in c_flags:
             if c_flag in self.c_flags:
                 self.c_flags.remove(c_flag)
+            if self.c_compiler is None:
+                continue
+            for k in self.c_compiler.translation_dict:
+                if c_flag in self.c_compiler.translation_dict[k]:
+                    self.c_compiler.translation_dict[k].remove(c_flag)
 
     def add_cpp_flags(self, *cpp_flags: str) -> None:
         for cpp_flag in cpp_flags:
@@ -706,6 +711,11 @@ class Config:
         for cpp_flag in cpp_flags:
             if cpp_flag in self.cpp_flags:
                 self.cpp_flags.remove(cpp_flag)
+            if self.cpp_compiler is None:
+                continue
+            for k in self.cpp_compiler.translation_dict:
+                if cpp_flag in self.cpp_compiler.translation_dict[k]:
+                    self.cpp_compiler.translation_dict[k].remove(cpp_flag)
 
     def add_c_cpp_flags(self, *c_cpp_flags: str) -> None:
         self.add_c_flags(*c_cpp_flags)
@@ -736,6 +746,11 @@ class Config:
         for as_flag in as_flags:
             if as_flag in self.as_flags:
                 self.as_flags.remove(as_flag)
+            if self.as_compiler is None:
+                continue
+            for k in self.as_compiler.translation_dict:
+                if as_flag in self.as_compiler.translation_dict[k]:
+                    self.as_compiler.translation_dict[k].remove(as_flag)
 
     def add_asm_flags(self, *asm_flags: str) -> None:
         for asm_flag in asm_flags:
@@ -746,6 +761,11 @@ class Config:
         for asm_flag in asm_flags:
             if asm_flag in self.asm_flags:
                 self.asm_flags.remove(asm_flag)
+            if self.asm_compiler is None:
+                continue
+            for k in self.asm_compiler.translation_dict:
+                if asm_flag in self.asm_compiler.translation_dict[k]:
+                    self.asm_compiler.translation_dict[k].remove(asm_flag)
 
     def add_ar_flags(self, *ar_flags: str) -> None:
         for ar_flag in ar_flags:
@@ -756,6 +776,11 @@ class Config:
         for ar_flag in ar_flags:
             if ar_flag in self.ar_flags:
                 self.ar_flags.remove(ar_flag)
+            if self.archiver is None:
+                continue
+            for k in self.archiver.translation_dict:
+                if ar_flag in self.archiver.translation_dict[k]:
+                    self.archiver.translation_dict[k].remove(ar_flag)
 
     def add_ld_flags(self, *ld_flags: str) -> None:
         for ld_flag in ld_flags:
@@ -766,6 +791,11 @@ class Config:
         for ld_flag in ld_flags:
             if ld_flag in self.ld_flags:
                 self.ld_flags.remove(ld_flag)
+            if self.linker is None:
+                continue
+            for k in self.linker.translation_dict:
+                if ld_flag in self.linker.translation_dict[k]:
+                    self.linker.translation_dict[k].remove(ld_flag)
 
     def add_shared_linker_flags(self, *shared_linker_flags: str) -> None:
         for shared_linker_flag in shared_linker_flags:
@@ -776,6 +806,11 @@ class Config:
         for shared_linker_flag in shared_linker_flags:
             if shared_linker_flag in self.shared_linker_flags:
                 self.shared_linker_flags.remove(shared_linker_flag)
+            if self.shared_linker is None:
+                continue
+            for k in self.shared_linker.translation_dict:
+                if shared_linker_flag in self.shared_linker.translation_dict[k]:
+                    self.shared_linker.translation_dict[k].remove(shared_linker_flag)
 
     def add_exported_headers(self, *exported_headers: str, subfolder: T.Union[str, None] = None) -> None:
         for exported_header in exported_headers:

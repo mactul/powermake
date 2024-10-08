@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .__version__ import __version__
-from .args_parser import generate_config
+from .args_parser import generate_config, get_version_str
 
 def main() -> None:
-    generate_config(target_name="NULL")
-    print(f"PowerMake version {__version__}")
+    generate_config(target_name="NULL")  # just to read the command line
+
+    print(get_version_str())
 
 if __name__ == "__main__":
     main()

@@ -107,6 +107,8 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
 
     print_info(f"{nb_files_installed} files successfully copied", config.verbosity)
 
+def get_version_str() -> str:
+    return f"PowerMake {__version__}\nCopyright (C) 2024 Macéo Tuloup\nLicense Apache-2.0: <http://www.apache.org/licenses/LICENSE-2.0>\nThis is a free software; see the sources for copying conditions: <https://github.com/mactul/powermake>\nThere is NO WARRANTY, to the extent permitted by law."
 
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self, prog: T.Union[str, None] = None, description: T.Union[str, None] = None, **kwargs: T.Any):
@@ -157,7 +159,7 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         exit(1)
     
     if args_parsed.version:
-        print(f"Powermake version {__version__}")
+        print(get_version_str())
         exit(0)
 
     if args_parsed.quiet:
