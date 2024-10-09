@@ -29,17 +29,13 @@ from .config import Config
 from .utils import makedirs
 from .__version__ import __version__
 from .display import print_info, print_debug_info
-from .operation import Operation, needs_update
+from .operation import Operation, needs_update, run_command
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
 
 if hasattr(__makefile__, '__file__'):
     os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
 
-
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, **kwargs: T.Any) -> int:
-    print_debug_info(command, config.verbosity)
-    return subprocess.run(command, shell=shell, **kwargs).returncode
 
 
 def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T.Any:

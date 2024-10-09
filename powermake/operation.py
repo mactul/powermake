@@ -22,6 +22,22 @@ from .config import Config
 from .display import print_info, print_debug_info
 
 
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, print_lock: T.Union[Lock, None] = None, **kwargs: T.Any) -> int:
+    if config.verbosity > 0:
+        if print_lock is not None:
+            print_lock.acquire()
+        
+        if target is not None:
+            print_info(f"Generating {os.path.basename(target)}", config.verbosity)
+
+        print_debug_info(command, config.verbosity)
+
+        if print_lock is not None:
+            print_lock.release()
+
+    return subprocess.run(command, shell=shell, **kwargs).returncode
+
+
 def resolve_path(current_folder: str, additional_includedirs: T.List[str], filepath: str) -> T.Union[str, None]:
     path = os.path.join(current_folder, filepath)
     if os.path.exists(path):
@@ -163,17 +179,7 @@ class Operation:
         """
         if force or needs_update(self.outputfile, self.dependencies, self.config.additional_includedirs):
 
-            if self.config.verbosity > 0:
-                if print_lock is not None:
-                    print_lock.acquire()
-
-                print_info(f"Generating {os.path.basename(self.outputfile)}", self.config.verbosity)
-                print_debug_info(self.command, self.config.verbosity)
-
-                if print_lock is not None:
-                    print_lock.release()
-
-            if subprocess.run(self.command).returncode == 0:
+            if run_command(self.config, self.command, target=self.outputfile, print_lock=print_lock) == 0:
                 return self.outputfile
             else:
                 raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")
