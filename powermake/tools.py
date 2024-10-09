@@ -58,11 +58,12 @@ class Tool(abc.ABC):
         already_translated_flags.append(flag)
 
         if flag in self.verified_translation_dict:
-            output_list.extend(self.verified_translation_dict[flag])
+            output_list.extend([f for f in self.verified_translation_dict[flag] if f not in output_list])
             return
 
         if flag not in self.translation_dict:
             # This flag is not in any translation table, we left it untouched.
+            # We don't check if flag is in output_list, that should have been done before and if it's not the case, it's probably that the user enforced that
             output_list.append(flag)
             return
 
@@ -77,7 +78,8 @@ class Tool(abc.ABC):
                 if self.check_if_arg_exists(f):
                     # the flag f is valid and is not a combination of flags
                     self.verified_translation_dict[flag].append(f)
-                    output_list.append(f)
+                    if f not in output_list:
+                        output_list.append(f)
 
     def translate_flags(self, flags: T.List[str]) -> T.List[str]:
         translated_flags: T.List[str] = []

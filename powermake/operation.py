@@ -16,6 +16,7 @@
 import os
 import subprocess
 import typing as T
+import __main__ as __makefile__
 from threading import Lock
 
 from .config import Config
@@ -139,6 +140,10 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
         output_date = os.path.getmtime(outputfile)
     except OSError:
         return True
+    
+    if hasattr(__makefile__, '__file__') and os.path.getmtime(__makefile__.__file__) >= output_date:
+        return True
+    
     headers_already_found: T.List[str] = []
     for dep in dependencies:
         if not is_file_uptodate_recursive(output_date, dep, additional_includedirs, headers_already_found):
