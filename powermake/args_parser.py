@@ -177,9 +177,6 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
 
     config = Config(target_name, args_parsed=args_parsed, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir)
 
-    if args_parsed.retransmit_colors:
-        config.add_c_cpp_as_asm_flags("-fdiagnostics-color")
-
     return config
 
 

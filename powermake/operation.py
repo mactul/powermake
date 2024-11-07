@@ -23,20 +23,30 @@ from .config import Config
 from .display import print_info, print_debug_info
 
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, print_lock: T.Union[Lock, None] = None, **kwargs: T.Any) -> int:
-    if config.verbosity > 0:
-        if print_lock is not None:
-            print_lock.acquire()
-        
-        if target is not None:
-            print_info(f"Generating {os.path.basename(target)}", config.verbosity)
+_print_lock = Lock()
 
-        print_debug_info(command, config.verbosity)
 
-        if print_lock is not None:
-            print_lock.release()
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, **kwargs: T.Any) -> int:
 
-    return subprocess.run(command, shell=shell, **kwargs).returncode
+    returncode = 0
+    try:
+        output = subprocess.check_output(command, shell=shell, encoding="utf-8", stderr=subprocess.STDOUT, **kwargs)
+    except subprocess.CalledProcessError as e:
+        output = e.output
+        returncode = e.returncode
+
+    _print_lock.acquire()
+
+    if target is not None:
+        print_info(f"Generating {os.path.basename(target)}", config.verbosity)
+
+    print_debug_info(command, config.verbosity)
+
+    print(output, end="")
+
+    _print_lock.release()
+
+    return returncode
 
 
 def resolve_path(current_folder: str, additional_includedirs: T.List[str], filepath: str) -> T.Union[str, None]:
@@ -184,7 +194,7 @@ class Operation:
         """
         if force or needs_update(self.outputfile, self.dependencies, self.config.additional_includedirs):
 
-            if run_command(self.config, self.command, target=self.outputfile, print_lock=print_lock) == 0:
+            if run_command(self.config, self.command, target=self.outputfile) == 0:
                 return self.outputfile
             else:
                 raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")

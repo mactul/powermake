@@ -515,6 +515,7 @@ class Config:
             self.target_operating_system = "Windows"
 
         self.set_debug(self.debug, True)
+        self.add_c_cpp_as_asm_flags("-fdiagnostics-color")
 
     @property
     def c_cpp_flags(self) -> T.List[str]:
