@@ -103,7 +103,7 @@ def _load_vcvarsall(vcvarsall_path: str, version: str, architecture: str) -> T.D
 
     file.close()
 
-    lines = subprocess.check_output([genvcvars_filepath], encoding="utf-8").split("\n")
+    lines = subprocess.check_output([genvcvars_filepath], encoding="ascii").split("\n")
 
     tempdir.cleanup()
 

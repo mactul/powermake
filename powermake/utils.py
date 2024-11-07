@@ -16,7 +16,7 @@ def get_empty_file() -> str:
         return "/dev/null"
     if _empty_file is None or not os.path.exists(_empty_file):
         _tempdir = tempfile.TemporaryDirectory("powermake_utils")
-        _empty_file = os.path.join(_tempdir.name, "/emptyfile")
+        _empty_file = os.path.join(_tempdir.name, "emptyfile")
         file = open(_empty_file, "w")
         file.close()
     

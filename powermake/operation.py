@@ -14,6 +14,7 @@
 
 
 import os
+import sys
 import subprocess
 import typing as T
 import __main__ as __makefile__
@@ -27,12 +28,12 @@ _print_lock = Lock()
 _commands_counter = 0
 
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, encoding="utf-8", **kwargs: T.Any) -> int:
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, **kwargs: T.Any) -> int:
     global _commands_counter
     
     returncode = 0
     try:
-        output = subprocess.check_output(command, shell=shell, encoding=encoding, stderr=subprocess.STDOUT, **kwargs)
+        output = subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT, **kwargs)
     except subprocess.CalledProcessError as e:
         output = e.output
         returncode = e.returncode
@@ -45,7 +46,7 @@ def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool 
 
     print_debug_info(command, config.verbosity)
 
-    print(output, end="")
+    sys.stdout.buffer.write(output)
 
     _print_lock.release()
 
