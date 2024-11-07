@@ -165,6 +165,7 @@ class Config:
         self.nb_jobs = nb_jobs
         self.single_file = single_file
         self.compile_commands_dir = compile_commands_dir
+        self.nb_total_operations = 0
 
         self.c_compiler: T.Union[Compiler, None] = None
         self.cpp_compiler: T.Union[Compiler, None] = None

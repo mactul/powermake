@@ -21,9 +21,14 @@ def init_colors() -> None:
     colorama.init()
 
 
-def print_info(string: T.Any, verbosity: int) -> None:
+def print_info(string: T.Any, verbosity: int, counter: int = 0, total: int = 0) -> None:
     if verbosity >= 1:
-        print(colorama.Fore.LIGHTMAGENTA_EX + str(string) + colorama.Style.RESET_ALL)
+        if counter == 0:
+            print(colorama.Fore.LIGHTMAGENTA_EX + str(string) + colorama.Style.RESET_ALL)
+        elif total != 0:
+            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{counter}/{total}] {round(100*counter/total)}% " + str(string) + colorama.Style.RESET_ALL)
+        else:
+            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{counter}/-] " + str(string) + colorama.Style.RESET_ALL)
 
 
 def print_debug_info(string: T.Any, verbosity: int) -> None:

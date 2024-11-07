@@ -24,21 +24,24 @@ from .display import print_info, print_debug_info
 
 
 _print_lock = Lock()
+_commands_counter = 0
 
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, **kwargs: T.Any) -> int:
-
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, encoding="utf-8", **kwargs: T.Any) -> int:
+    global _commands_counter
+    
     returncode = 0
     try:
-        output = subprocess.check_output(command, shell=shell, encoding="utf-8", stderr=subprocess.STDOUT, **kwargs)
+        output = subprocess.check_output(command, shell=shell, encoding=encoding, stderr=subprocess.STDOUT, **kwargs)
     except subprocess.CalledProcessError as e:
         output = e.output
         returncode = e.returncode
 
     _print_lock.acquire()
 
-    if target is not None:
-        print_info(f"Generating {os.path.basename(target)}", config.verbosity)
+    _commands_counter += 1
+
+    print_info(f"Generating {os.path.basename(target)}" if target is not None else "", config.verbosity, _commands_counter, config.nb_total_operations)
 
     print_debug_info(command, config.verbosity)
 
@@ -179,6 +182,8 @@ class Operation:
         self.config = config
 
     def execute(self, force: bool = False) -> str:
+        global _commands_counter
+
         """Verify if the outputfile is up to date with his dependencies and if not, execute the command.
 
         Args:
@@ -196,6 +201,10 @@ class Operation:
                 return self.outputfile
             else:
                 raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")
+        else:
+            _print_lock.acquire()
+            _commands_counter += 1
+            _print_lock.release()
         return self.outputfile
 
     def get_json_command(self) -> T.Dict[str, T.Any]:
