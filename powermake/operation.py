@@ -178,13 +178,11 @@ class Operation:
         self.command = command
         self.config = config
 
-    def execute(self, force: bool = False, print_lock: T.Union[Lock, None] = None) -> str:
+    def execute(self, force: bool = False) -> str:
         """Verify if the outputfile is up to date with his dependencies and if not, execute the command.
 
         Args:
             force (bool, optional): If True, this function will always execute the command without verifying if this is needed.
-            print_lock (Lock, optional): A mutex to ensure that no print mixes together when parallelizing Operations.  
-                If None, no mutex is used, the compilation will be fine but the output might be a little bit buggy.
 
         Raises:
             RuntimeError: If the command fails.

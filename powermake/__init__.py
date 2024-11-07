@@ -22,7 +22,6 @@ import subprocess
 import importlib.util
 import __main__ as __makefile__
 import typing as T
-from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
@@ -35,7 +34,6 @@ from .args_parser import run, default_on_clean, default_on_install, ArgumentPars
 
 if hasattr(__makefile__, '__file__'):
     os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
-
 
 
 def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T.Any:
@@ -225,9 +223,8 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         op.execute(force)
         exit(0)
 
-    print_lock = Lock()
     with ThreadPoolExecutor(max_workers=config.nb_jobs) as executor:
-        output = executor.map(lambda op: op.execute(force, print_lock), operations)
+        output = executor.map(lambda op: op.execute(force), operations)
         if isinstance(files, set):
             generated_objects = set(output)
         else:

@@ -1285,16 +1285,12 @@ This list is then directly passed to `subprocess.run`
 
 #### execute()
 ```py
-operation.execute(self, force: bool = False, print_lock: threading.Lock = None) -> str
+operation.execute(self, force: bool = False) -> str
 ```
 
 Run the `command` if `outputfile` is not up to date.
 
 If `force` is True, the command is run in any case.
-
-`print_lock` is a mutex that ensures that debug prints are not mixed.  
-If you are parallelizing operations, you should set this mutex to avoid weird debug message behavior.  
-If left to None, no mutex is used.
 
 
 ### Having more control than what powermake.run offers
