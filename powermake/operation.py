@@ -28,7 +28,7 @@ _print_lock = Lock()
 _commands_counter = 0
 
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, **kwargs: T.Any) -> int:
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, **kwargs: T.Any) -> int:
     global _commands_counter
     
     returncode = 0
@@ -37,6 +37,9 @@ def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool 
     except subprocess.CalledProcessError as e:
         output = e.output
         returncode = e.returncode
+    
+    if output_filter is not None:
+        output = output_filter(output)
 
     _print_lock.acquire()
 
@@ -46,7 +49,9 @@ def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool 
 
     print_debug_info(command, config.verbosity)
 
-    sys.stdout.buffer.write(output)
+    sys.stdout.flush()
+    stdout_fd = sys.stdout.fileno()
+    os.write(stdout_fd, output)
 
     _print_lock.release()
 
