@@ -27,6 +27,15 @@ from .display import print_info, print_debug_info
 _print_lock = Lock()
 _commands_counter = 0
 
+def print_bytes(b: bytes) -> None:
+    sys.stdout.flush()
+    stdout_fd = sys.stdout.fileno()
+    
+    written = 0
+    while written < len(b):
+        written += os.write(stdout_fd, b[written:])
+    sys.stdout.flush()
+
 
 def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, **kwargs: T.Any) -> int:
     global _commands_counter
@@ -49,9 +58,7 @@ def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool 
 
     print_debug_info(command, config.verbosity)
 
-    sys.stdout.flush()
-    stdout_fd = sys.stdout.fileno()
-    os.write(stdout_fd, output)
+    print_bytes(output)
 
     _print_lock.release()
 
