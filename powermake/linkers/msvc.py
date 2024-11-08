@@ -72,7 +72,6 @@ _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
 
 class LinkerMSVC(Linker):
     type: T.ClassVar = "msvc"
-    exe_extension: T.ClassVar = ".exe"
     translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "link"):

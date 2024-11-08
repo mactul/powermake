@@ -22,7 +22,6 @@ from .common import Linker
 
 class LinkerGNU(Linker):
     type: T.ClassVar = "gnu"
-    exe_extension: T.ClassVar = ""
 
     def __init__(self, path: str = "c++"):
         super().__init__(path)

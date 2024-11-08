@@ -288,7 +288,10 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     if config.linker is None:
         raise RuntimeError("No linker has been specified and the default config didn't find any")
-    output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + config.linker.exe_extension)
+    extension = ""
+    if config.target_is_windows():
+        extension = ".exe"
+    output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
