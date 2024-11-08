@@ -30,7 +30,7 @@ _commands_counter = 0
 def print_bytes(b: bytes) -> None:
     sys.stdout.flush()
     stdout_fd = sys.stdout.fileno()
-    
+
     written = 0
     while written < len(b):
         written += os.write(stdout_fd, b[written:])
@@ -39,14 +39,14 @@ def print_bytes(b: bytes) -> None:
 
 def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, **kwargs: T.Any) -> int:
     global _commands_counter
-    
+
     returncode = 0
     try:
         output = subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT, **kwargs)
     except subprocess.CalledProcessError as e:
         output = e.output
         returncode = e.returncode
-    
+
     if output_filter is not None:
         output = output_filter(output)
 
@@ -166,10 +166,10 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
         output_date = os.path.getmtime(outputfile)
     except OSError:
         return True
-    
+
     if hasattr(__makefile__, '__file__') and os.path.getmtime(__makefile__.__file__) >= output_date:
         return True
-    
+
     headers_already_found: T.List[str] = []
     for dep in dependencies:
         if not is_file_uptodate_recursive(output_date, dep, additional_includedirs, headers_already_found):

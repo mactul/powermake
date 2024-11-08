@@ -53,7 +53,7 @@ class Tool(abc.ABC):
     @abc.abstractmethod
     def check_if_arg_exists(self, arg: str) -> bool:
         return False
-    
+
     def _translate_flag(self, flag: str, output_list: T.List[str], already_translated_flags: T.List[str]) -> None:
         already_translated_flags.append(flag)
 

@@ -74,7 +74,7 @@ class CompilerClang(CompilerGNU):
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
-    
+
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
@@ -85,6 +85,6 @@ class CompilerClangPlusPlus(CompilerGNUPlusPlus):
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)
-    
+
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0

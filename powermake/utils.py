@@ -19,6 +19,5 @@ def get_empty_file() -> str:
         _empty_file = os.path.join(_tempdir.name, "emptyfile")
         file = open(_empty_file, "w")
         file.close()
-    
+
     return _empty_file
-    

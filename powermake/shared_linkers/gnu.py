@@ -31,7 +31,7 @@ class SharedLinkerGNU(SharedLinker):
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]
-    
+
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 

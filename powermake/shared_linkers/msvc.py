@@ -84,7 +84,7 @@ class SharedLinkerMSVC(SharedLinker):
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/DLL", "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
-    
+
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, "/WX", arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
 

@@ -138,7 +138,7 @@ def get_toolchain_tuple(path: T.Union[str, None, bool]) -> T.Union[T.Tuple[str, 
         return ("gnu", path[-3])
     if path.endswith("c++"):
         return ("gnu", path[-3])
-    
+
     return None
 
 
@@ -345,7 +345,7 @@ class Config:
 
         if self.nb_jobs == 0:
             self.nb_jobs = os.cpu_count() or 8
-        
+
         target_os_autodetected = False
         if self.target_operating_system == "":
             target_os_autodetected = True
@@ -382,7 +382,7 @@ class Config:
                     preference = "gcc"
                 elif "cl" in compiler_path:
                     preference = "msvc"
-        
+
         c_compiler_autodetected = self.c_compiler is None
         cpp_compiler_autodetected = self.cpp_compiler is None
         as_compiler_autodetected = self.as_compiler is None
@@ -426,7 +426,7 @@ class Config:
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang"))
             elif self.target_is_windows():
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
-        
+
         cc_env = os.getenv("CC")
         if cc_env is not None:
             c_compiler_autodetected = False
@@ -446,7 +446,7 @@ class Config:
             else:
                 self.cpp_compiler = CompilerGNUPlusPlus(cxx_env)
             print_debug_info("Using CXX environment variable instead of the config", verbosity)
-        
+
         ld_env = os.getenv("LD")
         if ld_env is not None:
             ld_autodetected = False
@@ -455,7 +455,6 @@ class Config:
             else:
                 self.linker = LinkerGNU(ld_env)
             print_debug_info("Using LD environment variable instead of the config", verbosity)
-        
 
         toolchain_tuple = get_toolchain_tuple(
             not c_compiler_autodetected and self.c_compiler is not None and self.c_compiler.path
@@ -511,7 +510,7 @@ class Config:
                     shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("gnu++"))(toolchain_prefix + "c++")
                 if shared_ld.is_available():
                     self.shared_linker = shared_ld
-        
+
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
             self.target_operating_system = "Windows"
 
@@ -616,7 +615,7 @@ class Config:
             self.reset_build_directories()
         else:
             self.reload_env()
-        
+
         if self.target_simplified_architecture in ("x86", "x64"):
             if self.target_simplified_architecture == "x86":
                 add = "32"
@@ -624,7 +623,7 @@ class Config:
             else:
                 add = "64"
                 remove = "32"
-            
+
             if self.target_is_windows():
                 self.add_asm_flags("-fwin" + add)
                 self.remove_asm_flags("-fwin" + remove)

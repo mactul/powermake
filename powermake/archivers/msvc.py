@@ -27,6 +27,6 @@ class ArchiverMSVC(Archiver):
 
     def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/nologo", *args, "/out:" + outputfile, *inputfiles]
-    
+
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "/WX"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0

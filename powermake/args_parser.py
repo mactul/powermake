@@ -157,7 +157,7 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         if parser is not None:
             parser.print_usage(file=sys.stderr)
         exit(1)
-    
+
     if args_parsed.version:
         print(get_version_str())
         exit(0)
