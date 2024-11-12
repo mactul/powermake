@@ -701,9 +701,7 @@ class Config:
                 self.c_flags.remove(c_flag)
             if self.c_compiler is None:
                 continue
-            for k in self.c_compiler.translation_dict:
-                if c_flag in self.c_compiler.translation_dict[k]:
-                    self.c_compiler.translation_dict[k].remove(c_flag)
+            self.c_compiler.remove_flag(c_flag)
 
     def add_cpp_flags(self, *cpp_flags: str) -> None:
         for cpp_flag in cpp_flags:
@@ -716,9 +714,7 @@ class Config:
                 self.cpp_flags.remove(cpp_flag)
             if self.cpp_compiler is None:
                 continue
-            for k in self.cpp_compiler.translation_dict:
-                if cpp_flag in self.cpp_compiler.translation_dict[k]:
-                    self.cpp_compiler.translation_dict[k].remove(cpp_flag)
+            self.cpp_compiler.remove_flag(cpp_flag)
 
     def add_c_cpp_flags(self, *c_cpp_flags: str) -> None:
         self.add_c_flags(*c_cpp_flags)
@@ -751,9 +747,7 @@ class Config:
                 self.as_flags.remove(as_flag)
             if self.as_compiler is None:
                 continue
-            for k in self.as_compiler.translation_dict:
-                if as_flag in self.as_compiler.translation_dict[k]:
-                    self.as_compiler.translation_dict[k].remove(as_flag)
+            self.as_compiler.remove_flag(as_flag)
 
     def add_asm_flags(self, *asm_flags: str) -> None:
         for asm_flag in asm_flags:
@@ -766,9 +760,7 @@ class Config:
                 self.asm_flags.remove(asm_flag)
             if self.asm_compiler is None:
                 continue
-            for k in self.asm_compiler.translation_dict:
-                if asm_flag in self.asm_compiler.translation_dict[k]:
-                    self.asm_compiler.translation_dict[k].remove(asm_flag)
+            self.asm_compiler.remove_flag(asm_flag)
 
     def add_ar_flags(self, *ar_flags: str) -> None:
         for ar_flag in ar_flags:
@@ -781,9 +773,7 @@ class Config:
                 self.ar_flags.remove(ar_flag)
             if self.archiver is None:
                 continue
-            for k in self.archiver.translation_dict:
-                if ar_flag in self.archiver.translation_dict[k]:
-                    self.archiver.translation_dict[k].remove(ar_flag)
+            self.archiver.remove_flag(ar_flag)
 
     def add_ld_flags(self, *ld_flags: str) -> None:
         for ld_flag in ld_flags:
@@ -796,9 +786,7 @@ class Config:
                 self.ld_flags.remove(ld_flag)
             if self.linker is None:
                 continue
-            for k in self.linker.translation_dict:
-                if ld_flag in self.linker.translation_dict[k]:
-                    self.linker.translation_dict[k].remove(ld_flag)
+            self.linker.remove_flag(ld_flag)
 
     def add_shared_linker_flags(self, *shared_linker_flags: str) -> None:
         for shared_linker_flag in shared_linker_flags:
@@ -811,9 +799,7 @@ class Config:
                 self.shared_linker_flags.remove(shared_linker_flag)
             if self.shared_linker is None:
                 continue
-            for k in self.shared_linker.translation_dict:
-                if shared_linker_flag in self.shared_linker.translation_dict[k]:
-                    self.shared_linker.translation_dict[k].remove(shared_linker_flag)
+            self.shared_linker.remove_flag(shared_linker_flag)
 
     def add_exported_headers(self, *exported_headers: str, subfolder: T.Union[str, None] = None) -> None:
         for exported_header in exported_headers:

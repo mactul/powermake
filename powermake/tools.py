@@ -89,6 +89,14 @@ class Tool(abc.ABC):
 
         return translated_flags
 
+    def remove_flag(self, flag: str) -> None:
+        for k in self.translation_dict:
+            if flag in self.translation_dict[k]:
+                self.translation_dict[k].remove(flag)
+        for k in self.verified_translation_dict:
+            if flag in self.verified_translation_dict[k]:
+                self.verified_translation_dict[k].remove(flag)
+
 
 
 def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None]:
