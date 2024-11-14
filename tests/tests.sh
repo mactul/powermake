@@ -8,6 +8,10 @@ function failure
 
 cd "$(dirname "$0")"
 
+export PYTHONPATH=$PYTHONPATH:$(pwd)/../
+
+python3 ./multiplatform/makefile.py --version
+
 echo "Checking typing"
 mypy ../powermake --check-untyped-defs --python-version=3.8 --strict || failure
 

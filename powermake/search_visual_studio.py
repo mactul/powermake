@@ -17,6 +17,7 @@ import os
 import json
 import ctypes
 import string
+import shutil
 import platform
 import tempfile
 import subprocess
@@ -156,15 +157,23 @@ def is_msvc_loaded_correctly(env: T.Dict[str, str]) -> bool:
     return True
 
 
-def load_envs_from_file(filepath: str, architecture: str = "x86") -> T.Dict[str, T.Any]:
+def load_envs_from_file(filepath: str) -> T.Dict[str, T.Any]:
     try:
         with open(filepath, "r") as file:
-            return dict(json.load(file))
+            envs = dict(json.load(file))
+        if "control" in envs:
+            filepath = shutil.which(envs["control"][0])
+            if filepath is None or os.path.getmtime(filepath) > envs["control"][1]:
+                return {}
+            return envs
+        else:
+            return {}
     except OSError:
         return {}
 
 
-def store_envs_to_file(filepath: str, envs: T.Dict[str, T.Any]) -> None:
+def store_envs_to_file(filepath: str, envs: T.Dict[str, T.Any], control_filepath: str) -> None:
+    envs["control"] = [control_filepath, os.path.getmtime(filepath)]
     makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(envs, file, indent=4)
@@ -172,6 +181,7 @@ def store_envs_to_file(filepath: str, envs: T.Dict[str, T.Any]) -> None:
 
 def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Union[T.Dict[str, str], None]:
     envs = load_envs_from_file(storage_path)
+
     if architecture in envs and is_msvc_loaded_correctly(envs[architecture]):
         return dict(envs[architecture])
 
@@ -185,7 +195,17 @@ def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Uni
     env = _load_vcvarsall(envs["vcvarsall_path"], envs["vcversion"], architecture)
     if env is not None:
         envs[architecture] = env
+        if "path" in env:
+            path = env["path"]
+        else:
+            path = None
+    else:
+        path = None
 
-    store_envs_to_file(storage_path, envs)
+    control_filepath = shutil.which("cl.exe", path=path)
+    if control_filepath is None:
+        control_filepath = envs["vcvarsall_path"]
+
+    store_envs_to_file(storage_path, envs, control_filepath)
 
     return env
