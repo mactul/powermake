@@ -173,7 +173,7 @@ def load_envs_from_file(filepath: str) -> T.Dict[str, T.Any]:
 
 
 def store_envs_to_file(filepath: str, envs: T.Dict[str, T.Any], control_filepath: str) -> None:
-    envs["control"] = [control_filepath, os.path.getmtime(filepath)]
+    envs["control"] = [control_filepath, os.path.getmtime(control_filepath)]
     makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(envs, file, indent=4)
