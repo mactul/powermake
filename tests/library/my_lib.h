@@ -6,7 +6,9 @@ extern "C" {
 #endif
 
 extern int add_numbers(int x, int y);
+#ifndef DISABLE_GNU_AS
 extern int multiply(int x, int y);
+#endif
 extern int _subtract(int x, int y);
 
 #ifdef __cplusplus

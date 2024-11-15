@@ -8,10 +8,12 @@ int main()
         return 1;
     }
 
+    #ifndef DISABLE_GNU_AS
     if(multiply(6, 7) != 42)
     {
         return 1;
     }
+    #endif
 
     if(_subtract(12, 7) != 5)
     {
