@@ -20,6 +20,7 @@ import argparse
 import platform
 import typing as T
 
+from .cache import get_cache_dir
 from .display import print_debug_info
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
@@ -538,7 +539,7 @@ class Config:
             self.host_simplified_architecture = self.host_architecture
 
         if self.target_is_windows():
-            env = load_msvc_environment(os.path.join(self.global_config_dir, "msvc_envs.json"), architecture=self.target_simplified_architecture)
+            env = load_msvc_environment(os.path.join(get_cache_dir(), "msvc_envs.json"), architecture=self.target_simplified_architecture)
             if env is not None:
                 for var in env:
                     os.environ[var] = env[var]

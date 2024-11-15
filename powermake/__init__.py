@@ -25,7 +25,7 @@ import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
-from .utils import makedirs
+from .utils import makedirs, join_absolute_paths
 from .__version__ import __version__
 from .display import print_info, print_debug_info
 from .operation import Operation, needs_update, run_command
@@ -178,7 +178,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         else:
             raise RuntimeError("No C/C++ compiler has been specified and the default config didn't find any")
 
-        output_file = os.path.normpath(config.obj_build_directory + "/" + file.replace("..", "__") + obj_extension)
+        output_file = join_absolute_paths(config.obj_build_directory, file + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
         if "../" in file:
@@ -257,7 +257,7 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
 
     if config.archiver is None:
         raise RuntimeError("No archiver has been specified and the default config didn't find any")
-    output_file = os.path.normpath(config.lib_build_directory + "/" + archive_name + config.archiver.static_lib_extension)
+    output_file = os.path.join(config.lib_build_directory, archive_name + config.archiver.static_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
     return Operation(output_file, object_files, config, command).execute(force=force)
@@ -291,7 +291,7 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
     extension = ""
     if config.target_is_windows():
         extension = ".exe"
-    output_file = os.path.normpath(config.exe_build_directory + "/" + executable_name + extension)
+    output_file = os.path.join(config.exe_build_directory, executable_name + extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
@@ -323,7 +323,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
 
     if config.shared_linker is None:
         raise RuntimeError("No shared linker has been specified and the default config didn't find any")
-    output_file = os.path.normpath(config.lib_build_directory + "/" + lib_name + config.shared_linker.shared_lib_extension)
+    output_file = os.path.join(config.lib_build_directory, lib_name + config.shared_linker.shared_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
     command = config.shared_linker.basic_link_command(output_file, object_files, archives, args)

@@ -13,9 +13,13 @@
 # limitations under the License.
 
 
+import os
 import abc
 import shutil
 import typing as T
+
+from .utils import join_absolute_paths
+from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
 
 _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
@@ -36,6 +40,7 @@ class Tool(abc.ABC):
     def __init__(self, path: str) -> None:
         self._name = path
         self.verified_translation_dict: T.Dict[str, T.List[str]] = {}
+        self.cache: T.Dict[str, T.Any] = {}
         self.reload()
 
     def is_available(self) -> bool:
@@ -50,42 +55,66 @@ class Tool(abc.ABC):
         else:
             self.path = path
 
+        self.cache_file = join_absolute_paths(os.path.join(get_cache_dir(), "compiler_flags", self.type), self.path + ".json")
+        self.cache = load_cache_from_file(self.cache_file)
+        if "supported_flags" not in self.cache:
+            self.cache["supported_flags"] = []
+        if "unsupported_flags" not in self.cache:
+            self.cache["unsupported_flags"] = []
+
     @abc.abstractmethod
     def check_if_arg_exists(self, arg: str) -> bool:
         return False
 
-    def _translate_flag(self, flag: str, output_list: T.List[str], already_translated_flags: T.List[str]) -> None:
+    def _translate_flag(self, flag: str, output_list: T.List[str], already_translated_flags: T.List[str]) -> bool:
         already_translated_flags.append(flag)
 
         if flag in self.verified_translation_dict:
             output_list.extend([f for f in self.verified_translation_dict[flag] if f not in output_list])
-            return
+            return False
 
         if flag not in self.translation_dict:
             # This flag is not in any translation table, we left it untouched.
             # We don't check if flag is in output_list, that should have been done before and if it's not the case, it's probably that the user enforced that
             output_list.append(flag)
-            return
+            return False
 
         self.verified_translation_dict[flag] = []
 
+        cache_modified = False
         for f in self.translation_dict[flag]:
             if f not in already_translated_flags and f in self.translation_dict:
                 self._translate_flag(f, output_list, already_translated_flags)
                 # after this call, self.verified_translation_dict will contain an entry for the key f, containing all flags flattened.
                 self.verified_translation_dict[flag].extend(self.verified_translation_dict[f])
             else:
-                if self.check_if_arg_exists(f):
-                    # the flag f is valid and is not a combination of flags
+                if f in self.cache["unsupported_flags"]:
+                    continue
+                if f not in self.cache["supported_flags"]:
+                    if self.check_if_arg_exists(f):
+                        self.cache["supported_flags"].append(f)
+                        cache_modified = True
+                    else:
+                        self.cache["unsupported_flags"].append(f)
+                        cache_modified = True
+                        continue
+                # the flag f is valid and is not a combination of flags
+                if f not in self.verified_translation_dict[flag]:
                     self.verified_translation_dict[flag].append(f)
-                    if f not in output_list:
-                        output_list.append(f)
+                if f not in output_list:
+                    output_list.append(f)
+
+        return cache_modified
 
     def translate_flags(self, flags: T.List[str]) -> T.List[str]:
         translated_flags: T.List[str] = []
         already_translated_flags: T.List[str] = []
+        cache_modified = False
         for flag in flags:
-            self._translate_flag(flag, translated_flags, already_translated_flags)
+            cache_modified = cache_modified or self._translate_flag(flag, translated_flags, already_translated_flags)
+
+        if cache_modified:
+            store_cache_to_file(self.cache_file, self.cache, self.path)
 
         return translated_flags
 

@@ -20,6 +20,7 @@ import typing as T
 
 from .config import Config
 from .utils import makedirs
+from .cache import get_cache_dir
 from .__version__ import __version__
 from .interactive_config import InteractiveConfig
 from .display import print_info, print_debug_info, init_colors
@@ -120,6 +121,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
         self.add_argument("action", choices=["build", "clean", "install", "config"], nargs='?')
         self.add_argument("install_location", nargs='?', help="Only if the action is set to install, indicate in which folder the installation should be")
+        self.add_argument("--version", help="display PowerMake version", action="store_true")
         self.add_argument("-d", "--debug", help="Trigger the build function with config.debug set to True.", action="store_true")
         self.add_argument("-b", "--build", help="Trigger the build function. This is the default but it can be used in combination with --clean or --install", action="store_true")
         self.add_argument("-r", "--rebuild", help="Trigger the build function with config.rebuild set to True.", action="store_true")
@@ -134,9 +136,9 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
         self.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
         self.add_argument("-o", "--compile-commands-dir", metavar="DIRECTORY", help="Run the compilation and generate a compile_commands.json file in the directory specified.", default=None)
+        self.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal. This option is especially useful in the configuration of an IDE.", action="store_true")
+        self.add_argument("--delete-cache", help="delete the cache, use this if PowerMake act weirdly", action="store_true")
         self.add_argument("--get-lib-build-folder", help="(Internal option) - Return the lib build folder path according to the config.", action="store_true")
-        self.add_argument("--retransmit-colors", help="(Internal option) - Let all ANSI color codes intact, even if not in a terminal.", action="store_true")
-        self.add_argument("--version", help="display PowerMake version", action="store_true")
 
 
 def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, None] = None) -> Config:
@@ -160,6 +162,12 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
 
     if args_parsed.version:
         print(get_version_str())
+        exit(0)
+
+    if args_parsed.delete_cache:
+        print("deleting cache")
+        shutil.rmtree(get_cache_dir(), ignore_errors=True)
+        print("done")
         exit(0)
 
     if args_parsed.quiet:

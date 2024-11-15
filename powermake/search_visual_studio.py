@@ -14,7 +14,6 @@
 
 
 import os
-import json
 import ctypes
 import string
 import shutil
@@ -23,7 +22,7 @@ import tempfile
 import subprocess
 import typing as T
 
-from .utils import makedirs
+from .cache import load_cache_from_file, store_cache_to_file
 
 
 def get_drives() -> T.List[str]:
@@ -157,30 +156,8 @@ def is_msvc_loaded_correctly(env: T.Dict[str, str]) -> bool:
     return True
 
 
-def load_envs_from_file(filepath: str) -> T.Dict[str, T.Any]:
-    try:
-        with open(filepath, "r") as file:
-            envs = dict(json.load(file))
-        if "control" in envs:
-            filepath = shutil.which(envs["control"][0])
-            if filepath is None or os.path.getmtime(filepath) > envs["control"][1]:
-                return {}
-            return envs
-        else:
-            return {}
-    except OSError:
-        return {}
-
-
-def store_envs_to_file(filepath: str, envs: T.Dict[str, T.Any], control_filepath: str) -> None:
-    envs["control"] = [control_filepath, os.path.getmtime(control_filepath)]
-    makedirs(os.path.dirname(filepath), exist_ok=True)
-    with open(filepath, "w") as file:
-        json.dump(envs, file, indent=4)
-
-
 def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Union[T.Dict[str, str], None]:
-    envs = load_envs_from_file(storage_path)
+    envs = load_cache_from_file(storage_path)
 
     if architecture in envs and is_msvc_loaded_correctly(envs[architecture]):
         return dict(envs[architecture])
@@ -206,6 +183,6 @@ def load_msvc_environment(storage_path: str, architecture: str = "x86") -> T.Uni
     if control_filepath is None:
         control_filepath = envs["vcvarsall_path"]
 
-    store_envs_to_file(storage_path, envs, control_filepath)
+    store_cache_to_file(storage_path, envs, control_filepath)
 
     return env

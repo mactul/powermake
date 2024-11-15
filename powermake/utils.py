@@ -7,6 +7,10 @@ def makedirs(path: str, exist_ok: bool = True) -> None:
         os.makedirs(path, exist_ok=exist_ok)
 
 
+def join_absolute_paths(path1: str, path2: str) -> str:
+    return os.path.normpath(path1 + "/" + os.path.splitdrive(path2)[1].replace("..", "__"))
+
+
 _tempdir = None
 _empty_file = None
 def get_empty_file() -> str:
