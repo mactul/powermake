@@ -22,7 +22,6 @@ from ..utils import get_empty_file
 
 class CompilerGNU(Compiler):
     type: T.ClassVar = "gnu"
-    default_path: T.ClassVar = "cc"
     obj_extension: T.ClassVar = ".o"
 
     def __init__(self, path: str = "cc"):
@@ -40,7 +39,6 @@ class CompilerGNU(Compiler):
 
 class CompilerGNUPlusPlus(CompilerGNU):
     type: T.ClassVar = "gnu++"
-    default_path: T.ClassVar = "c++"
     translation_dict = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "c++"):
@@ -54,7 +52,6 @@ class CompilerGNUPlusPlus(CompilerGNU):
 
 class CompilerGCC(CompilerGNU):
     type: T.ClassVar = "gcc"
-    default_path: T.ClassVar = "gcc"
 
     def __init__(self, path: str = "gcc"):
         super().__init__(path)
@@ -62,7 +59,6 @@ class CompilerGCC(CompilerGNU):
 
 class CompilerGPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "g++"
-    default_path: T.ClassVar = "g++"
 
     def __init__(self, path: str = "g++"):
         super().__init__(path)
@@ -70,7 +66,6 @@ class CompilerGPlusPlus(CompilerGNUPlusPlus):
 
 class CompilerMinGW(CompilerGNU):
     type: T.ClassVar = "mingw"
-    default_path: T.ClassVar = "x86_64-w64-mingw32-gcc"
 
     def __init__(self, path: str = "x86_64-w64-mingw32-gcc"):
         super().__init__(path)
@@ -78,7 +73,6 @@ class CompilerMinGW(CompilerGNU):
 
 class CompilerMinGWPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "mingw++"
-    default_path: T.ClassVar = "x86_64-w64-mingw32-g++"
 
     def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
         super().__init__(path)
@@ -86,7 +80,6 @@ class CompilerMinGWPlusPlus(CompilerGNUPlusPlus):
 
 class CompilerClang(CompilerGNU):
     type: T.ClassVar = "clang"
-    default_path: T.ClassVar = "clang"
 
     def __init__(self, path: str = "clang"):
         super().__init__(path)
@@ -97,7 +90,6 @@ class CompilerClang(CompilerGNU):
 
 class CompilerClangPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "clang++"
-    default_path: T.ClassVar = "clang++"
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)

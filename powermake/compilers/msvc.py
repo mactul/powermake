@@ -74,7 +74,6 @@ _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
 
 class CompilerMSVC(Compiler):
     type: T.ClassVar = "msvc"
-    default_path: T.ClassVar = "cl"
     obj_extension: T.ClassVar = ".obj"
     translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
@@ -92,7 +91,6 @@ class CompilerMSVC(Compiler):
 
 class CompilerClang_CL(CompilerMSVC):
     type: T.ClassVar = "clang-cl"
-    default_path: T.ClassVar = "clang-cl"
 
     def __init__(self, path: str = "clang-cl") -> None:
         super().__init__(path)

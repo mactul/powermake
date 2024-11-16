@@ -541,6 +541,8 @@ class Config:
         self.set_debug(self.debug, True)
         self.add_c_cpp_as_asm_flags("-fdiagnostics-color")
 
+        self.reload_tools()
+
     @property
     def c_cpp_flags(self) -> T.List[str]:
         return self.c_flags + self.cpp_flags
@@ -568,10 +570,16 @@ class Config:
                     os.environ[var] = env[var]
 
     def reload_tools(self) -> None:
+        self.reload_env()
         for tool in (self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker):
             if tool is not None:
-                tool.reload()
-        self.reload_env()
+                tool_name = os.path.basename(tool.path)
+                if self.target_simplified_architecture == "x86" and tool_name.startswith("x86_64-w64-mingw32-"):
+                    tool.reload(os.path.join(os.path.dirname(tool.path), "i686-w64-mingw32-" + tool_name[len("x86_64-w64-mingw32-"):]))
+                elif self.target_simplified_architecture == "x64" and tool_name.startswith("i686-w64-mingw32-"):
+                    tool.reload(os.path.join(os.path.dirname(tool.path), "x86_64-w64-mingw32-" + tool_name[len("i686-w64-mingw32-"):]))
+                else:
+                    tool.reload()
 
     def reset_build_directories(self) -> None:
         if self.debug:

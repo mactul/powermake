@@ -65,7 +65,6 @@ _powermake_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
 
 class CompilerNASM(Compiler):
     type: T.ClassVar = "nasm"
-    default_path: T.ClassVar = "nasm"
     obj_extension: T.ClassVar = ".o"
     translation_dict: T.ClassVar = _powermake_flags_to_nasm_flags
 

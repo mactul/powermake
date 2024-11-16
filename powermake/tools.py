@@ -34,7 +34,6 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
 
 class Tool(abc.ABC):
     type: T.ClassVar = ""
-    default_path: T.ClassVar = ""
     translation_dict: T.ClassVar[T.Dict[str, T.List[str]]] = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str) -> None:
