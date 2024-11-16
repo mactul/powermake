@@ -106,6 +106,14 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
         archiver_type = "llvm-ar"
         linker_type = "clang++"
         shared_linker_type = "clang++"
+    elif all_None and preference == "mingw" or c_compiler_type == "mingw" or cpp_compiler_type == "mingw++" or as_compiler_type == "mingw" or linker_type in ("mingw", "mingw++") or shared_linker_type in ("mingw", "mingw++") or archiver_type == "mingw":
+        # MinGW toolchain
+        c_compiler_type = "mingw"
+        cpp_compiler_type = "mingw++"
+        as_compiler_type = "mingw"
+        archiver_type = "mingw"
+        linker_type = "mingw++"
+        shared_linker_type = "mingw++"
     elif all_None and preference == "msvc" or c_compiler_type == "msvc" or cpp_compiler_type == "msvc" or linker_type == "msvc" or shared_linker_type == "msvc" or archiver_type == "msvc":
         # MSVC toolchain
         c_compiler_type = "msvc"
@@ -379,6 +387,8 @@ class Config:
             if compiler_path is not None:
                 if "clang" in compiler_path:
                     preference = "clang"
+                elif "mingw" in compiler_path:
+                    preference = "mingw"
                 elif "gcc" in compiler_path or "g++" in compiler_path:
                     preference = "gcc"
                 elif "cl" in compiler_path:
@@ -393,40 +403,43 @@ class Config:
         toolchain = auto_toolchain(preference, self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
 
         if self.c_compiler is None:
-            if self.target_is_linux():
+            if self.target_is_windows():
+                self.c_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[0], "mingw", "msvc", "gcc", "clang-cl", "clang"))
+            else:
                 self.c_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[0], "gcc", "clang"))
-            elif self.target_is_windows():
-                self.c_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[0], "msvc", "gcc", "clang-cl", "clang"))
 
         if self.cpp_compiler is None:
-            if self.target_is_linux():
+            if self.target_is_windows():
+                self.cpp_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[1], "mingw++", "msvc", "g++", "clang-cl", "clang"))
+            else:
                 self.cpp_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[1], "g++", "clang++"))
-            elif self.target_is_windows():
-                self.cpp_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[1], "msvc", "g++", "clang-cl", "clang"))
 
         if self.as_compiler is None:
-            self.as_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[2], "gcc", "clang"))
+            if self.target_is_windows():
+                self.as_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[2], "mingw", "gcc", "clang"))
+            else:
+                self.as_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[2], "gcc", "clang"))
 
         if self.asm_compiler is None:
             self.asm_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[3], "nasm"))
 
         if self.archiver is None:
-            if self.target_is_linux():
+            if self.target_is_windows():
+                self.archiver = T.cast(T.Union[Archiver, None], find_tool(GenericArchiver, toolchain[4], "mingw", "msvc", "ar", "llvm-ar"))
+            else:
                 self.archiver = T.cast(T.Union[Archiver, None], find_tool(GenericArchiver, toolchain[4], "ar", "llvm-ar"))
-            elif self.target_is_windows():
-                self.archiver = T.cast(T.Union[Archiver, None], find_tool(GenericArchiver, toolchain[4], "msvc", "ar", "llvm-ar"))
 
         if self.linker is None:
-            if self.target_is_linux():
+            if self.target_is_windows():
+                self.linker = T.cast(T.Union[Linker, None], find_tool(GenericLinker, toolchain[5], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            else:
                 self.linker = T.cast(T.Union[Linker, None], find_tool(GenericLinker, toolchain[5], "g++", "clang++", "gcc", "clang"))
-            elif self.target_is_windows():
-                self.linker = T.cast(T.Union[Linker, None], find_tool(GenericLinker, toolchain[5], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
 
         if self.shared_linker is None:
-            if self.target_is_linux():
+            if self.target_is_windows():
+                self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            else:
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang"))
-            elif self.target_is_windows():
-                self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
 
         cc_env = os.getenv("CC")
         if cc_env is not None:
@@ -469,6 +482,8 @@ class Config:
             if c_compiler_autodetected:
                 if t == "gcc":
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(toolchain_prefix + "gcc")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw"))(toolchain_prefix + "gcc")
                 elif t == "clang":
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(toolchain_prefix + "clang")
                 else:
@@ -478,6 +493,8 @@ class Config:
             if cpp_compiler_autodetected:
                 if t == "gcc":
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("g++"))(toolchain_prefix + "g++")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(toolchain_prefix + "g++")
                 elif t == "clang":
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang++"))(toolchain_prefix + "clang++")
                 else:
@@ -487,6 +504,8 @@ class Config:
             if as_compiler_autodetected:
                 if t == "gcc":
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(toolchain_prefix + "gcc")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw"))(toolchain_prefix + "gcc")
                 elif t == "clang":
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(toolchain_prefix + "clang")
                 else:
@@ -496,6 +515,8 @@ class Config:
             if ld_autodetected:
                 if t == "gcc":
                     ld = T.cast(T.Callable[[str], Linker], GenericLinker("g++"))(toolchain_prefix + "g++")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(toolchain_prefix + "g++")
                 elif t == "clang":
                     ld = T.cast(T.Callable[[str], Linker], GenericLinker("clang++"))(toolchain_prefix + "clang++")
                 else:
@@ -505,6 +526,8 @@ class Config:
             if shared_ld_autodetected:
                 if t == "gcc":
                     shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("g++"))(toolchain_prefix + "g++")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(toolchain_prefix + "g++")
                 elif t == "clang":
                     shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("clang++"))(toolchain_prefix + "clang++")
                 else:
@@ -652,11 +675,23 @@ class Config:
                 return flag
         return None
 
+    def host_is_windows(self) -> bool:
+        return self.host_operating_system.lower().startswith("win")
+
+    def host_is_linux(self) -> bool:
+        return self.host_operating_system.lower().startswith("linux")
+
+    def host_is_macos(self) -> bool:
+        return self.host_operating_system.lower().startswith("darwin")
+
     def target_is_windows(self) -> bool:
         return self.target_operating_system.lower().startswith("win")
 
     def target_is_linux(self) -> bool:
         return self.target_operating_system.lower().startswith("linux")
+
+    def target_is_macos(self) -> bool:
+        return self.target_operating_system.lower().startswith("darwin")
 
     def target_is_mingw(self) -> bool:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)

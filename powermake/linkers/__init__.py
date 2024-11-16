@@ -19,7 +19,7 @@ __all__ = [
 import typing as T
 
 from .common import Linker
-from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus
+from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus, LinkerMinGW, LinkerMinGWPlusPlus
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 
@@ -31,7 +31,9 @@ _linker_types: T.Dict[str, T.Callable[[], Linker]] = {
     "clang": LinkerClang,
     "clang++": LinkerClangPlusPlus,
     "msvc": LinkerMSVC,
-    "clang-cl": LinkerClang_CL
+    "clang-cl": LinkerClang_CL,
+    "mingw": LinkerMinGW,
+    "mingw++": LinkerMinGWPlusPlus
 }
 
 

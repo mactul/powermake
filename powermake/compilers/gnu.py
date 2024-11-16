@@ -68,6 +68,22 @@ class CompilerGPlusPlus(CompilerGNUPlusPlus):
         super().__init__(path)
 
 
+class CompilerMinGW(CompilerGNU):
+    type: T.ClassVar = "mingw"
+    default_path: T.ClassVar = "x86_64-w64-mingw32-gcc"
+
+    def __init__(self, path: str = "x86_64-w64-mingw32-gcc"):
+        super().__init__(path)
+
+
+class CompilerMinGWPlusPlus(CompilerGNUPlusPlus):
+    type: T.ClassVar = "mingw++"
+    default_path: T.ClassVar = "x86_64-w64-mingw32-g++"
+
+    def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
+        super().__init__(path)
+
+
 class CompilerClang(CompilerGNU):
     type: T.ClassVar = "clang"
     default_path: T.ClassVar = "clang"

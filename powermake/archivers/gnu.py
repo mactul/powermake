@@ -44,3 +44,10 @@ class ArchiverLLVM_AR(ArchiverGNU):
 
     def __init__(self, path: str = "llvm-ar"):
         super().__init__(path)
+
+
+class ArchiverMinGW(ArchiverGNU):
+    type: T.ClassVar = "mingw"
+
+    def __init__(self, path: str = "x86_64-w64-mingw32-ar"):
+        super().__init__(path)

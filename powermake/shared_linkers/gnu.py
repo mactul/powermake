@@ -72,3 +72,16 @@ class SharedLinkerClangPlusPlus(SharedLinkerGNU):
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)
+
+
+class SharedLinkerMinGW(SharedLinkerGNU):
+    type: T.ClassVar = "mingw"
+
+    def __init__(self, path: str = "x86_64-w64-mingw32-gcc"):
+        super().__init__(path)
+
+class SharedLinkerMinGWPlusPlus(SharedLinkerGNU):
+    type: T.ClassVar = "mingw++"
+
+    def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
+        super().__init__(path)

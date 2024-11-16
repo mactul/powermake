@@ -19,7 +19,7 @@ __all__ = [
 import typing as T
 
 from .common import SharedLinker
-from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLinkerGPlusPlus, SharedLinkerClangPlusPlus
+from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLinkerGPlusPlus, SharedLinkerClangPlusPlus, SharedLinkerLD, SharedLinkerMinGW, SharedLinkerMinGWPlusPlus
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
 
 
@@ -30,7 +30,10 @@ _shared_linker_types: T.Dict[str, T.Callable[[], SharedLinker]] = {
     "clang": SharedLinkerClang,
     "clang++": SharedLinkerClangPlusPlus,
     "msvc": SharedLinkerMSVC,
-    "clang-cl": SharedLinkerClang_CL
+    "clang-cl": SharedLinkerClang_CL,
+    "ld": SharedLinkerLD,
+    "mingw": SharedLinkerMinGW,
+    "mingw++": SharedLinkerMinGWPlusPlus
 }
 
 

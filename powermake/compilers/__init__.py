@@ -22,7 +22,7 @@ import typing as T
 from .common import Compiler
 from .asm import CompilerNASM
 from .msvc import CompilerMSVC, CompilerClang_CL
-from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus
+from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus, CompilerMinGW, CompilerMinGWPlusPlus
 
 
 _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
@@ -30,7 +30,8 @@ _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gcc": CompilerGCC,
     "clang": CompilerClang,
     "msvc": CompilerMSVC,
-    "clang-cl": CompilerClang_CL
+    "clang-cl": CompilerClang_CL,
+    "mingw": CompilerMinGW
 }
 
 _cpp_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
@@ -38,14 +39,16 @@ _cpp_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "g++": CompilerGPlusPlus,
     "clang++": CompilerClangPlusPlus,
     "msvc": CompilerMSVC,
-    "clang-cl": CompilerClang_CL
+    "clang-cl": CompilerClang_CL,
+    "mingw++": CompilerMinGWPlusPlus
 }
 
 
 _as_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gnu": CompilerGNU,
     "gcc": CompilerGCC,
-    "clang": CompilerClang
+    "clang": CompilerClang,
+    "mingw": CompilerMinGW
 }
 
 _asm_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
