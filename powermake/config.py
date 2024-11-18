@@ -458,7 +458,7 @@ class Config:
             else:
                 self.c_compiler = CompilerGNU(cc_env)
             if not self.c_compiler.is_available():
-                raise ValueError(f"The compiler {cc_env} could not be found on your machine")
+                raise ValueError(error_text(f"The compiler {cc_env} could not be found on your machine"))
 
         cxx_env = os.getenv("CXX")
         if cxx_env is not None:
@@ -470,7 +470,7 @@ class Config:
             else:
                 self.cpp_compiler = CompilerGNUPlusPlus(cxx_env)
             if not self.cpp_compiler.is_available():
-                raise ValueError(f"The compiler {cxx_env} could not be found on your machine")
+                raise ValueError(error_text(f"The compiler {cxx_env} could not be found on your machine"))
 
         ld_env = os.getenv("LD")
         if ld_env is not None:
@@ -481,7 +481,7 @@ class Config:
             else:
                 self.linker = LinkerGNU(ld_env)
             if not self.linker.is_available():
-                raise ValueError(f"The linker {ld_env} could not be found on your machine")
+                raise ValueError(error_text(f"The linker {ld_env} could not be found on your machine"))
 
         toolchain_tuple = get_toolchain_tuple(
             self.c_compiler_path_specified and self.c_compiler is not None and self.c_compiler.path
@@ -639,7 +639,7 @@ class Config:
                     tool.reload()
 
                 if not tool.is_available():
-                    raise RuntimeError(f"PowerMake has changed its environment and is unable to find {tool._name}")
+                    raise RuntimeError(error_text(f"PowerMake has changed its environment and is unable to find {tool._name}"))
 
         if self.c_compiler is not None and not self.c_compiler.is_available():
             self.c_compiler = None
@@ -657,7 +657,7 @@ class Config:
         if self.asm_compiler is not None:
             self.asm_compiler.reload()
             if not self.asm_compiler.is_available():
-                raise RuntimeError(f"PowerMake has changed its environment and is unable to find {self.asm_compiler._name}")
+                raise RuntimeError(error_text(f"PowerMake has changed its environment and is unable to find {self.asm_compiler._name}"))
 
     def reset_build_directories(self) -> None:
         if self.debug:

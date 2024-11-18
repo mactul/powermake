@@ -21,7 +21,7 @@ import __main__ as __makefile__
 from threading import Lock
 
 from .config import Config
-from .display import print_info, print_debug_info
+from .display import print_info, print_debug_info, error_text
 
 
 _print_lock = Lock()
@@ -213,7 +213,7 @@ class Operation:
             if run_command(self.config, self.command, target=self.outputfile) == 0:
                 return self.outputfile
             else:
-                raise RuntimeError(f"Unable to generate {os.path.basename(self.outputfile)}")
+                raise RuntimeError(error_text(f"Unable to generate {os.path.basename(self.outputfile)}"))
         else:
             _print_lock.acquire()
             _commands_counter += 1
