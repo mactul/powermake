@@ -209,13 +209,13 @@ class Config:
 
         self.exported_headers: T.List[T.Tuple[str, T.Union[str, None]]] = []
 
-        c_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
-        cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
-        as_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
-        asm_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None] = None
-        archiver_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver]], None] = None
-        linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker]], None] = None
-        shared_linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker]], None] = None
+        c_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
+        cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
+        as_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
+        asm_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
+        archiver_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver], bool], None] = None
+        linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker], bool], None] = None
+        shared_linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker], bool], None] = None
 
         if global_config is None:
             global_config = get_global_config()
@@ -229,25 +229,25 @@ class Config:
                 with open(path, "r") as file:
                     conf: T.Dict[str, T.Any] = json.load(file)
                     if c_compiler_tuple is None:
-                        c_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types))
+                        c_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None], load_tool_tuple_from_file(conf, "c_compiler", GenericCompiler, get_all_c_compiler_types))
 
                     if cpp_compiler_tuple is None:
-                        cpp_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types))
+                        cpp_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None], load_tool_tuple_from_file(conf, "cpp_compiler", GenericCompiler, get_all_cpp_compiler_types))
 
                     if as_compiler_tuple is None:
-                        as_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types))
+                        as_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None], load_tool_tuple_from_file(conf, "as_compiler", GenericCompiler, get_all_as_compiler_types))
 
                     if asm_compiler_tuple is None:
-                        asm_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler]], None], load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types))
+                        asm_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None], load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types))
 
                     if archiver_tuple is None:
-                        archiver_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver]], None], load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types))
+                        archiver_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver], bool], None], load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types))
 
                     if linker_tuple is None:
-                        linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker]], None], load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types))
+                        linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker], bool], None], load_tool_tuple_from_file(conf, "linker", GenericLinker, get_all_linker_types))
 
                     if shared_linker_tuple is None:
-                        shared_linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker]], None], load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types))
+                        shared_linker_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker], bool], None], load_tool_tuple_from_file(conf, "shared_linker", GenericSharedLinker, get_all_shared_linker_types))
 
                     if self.target_operating_system == "" and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]
@@ -369,6 +369,19 @@ class Config:
 
         self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
 
+        c_compiler_path_specified = c_compiler_tuple is not None and c_compiler_tuple[0] is not None
+        c_compiler_type_specified = c_compiler_tuple is not None and c_compiler_tuple[2]
+        cpp_compiler_path_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[0] is not None
+        cpp_compiler_type_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[2]
+        as_compiler_path_specified = as_compiler_tuple is not None and as_compiler_tuple[0] is not None
+        as_compiler_type_specified = as_compiler_tuple is not None and as_compiler_tuple[2]
+        archiver_path_specified = archiver_tuple is not None and archiver_tuple[0] is not None
+        archiver_type_specified = archiver_tuple is not None and archiver_tuple[2]
+        linker_path_specified = linker_tuple is not None and linker_tuple[0] is not None
+        linker_type_specified = linker_tuple is not None and linker_tuple[2]
+        shared_linker_path_specified = shared_linker_tuple is not None and shared_linker_tuple[0] is not None
+        shared_linker_type_specified = shared_linker_tuple is not None and shared_linker_tuple[2]
+
         self.c_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(c_compiler_tuple, "compiler"))
         self.cpp_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(cpp_compiler_tuple, "compiler"))
         self.as_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(as_compiler_tuple, "compiler"))
@@ -393,12 +406,6 @@ class Config:
                     preference = "gcc"
                 elif "cl" in compiler_path:
                     preference = "msvc"
-
-        c_compiler_autodetected = self.c_compiler is None
-        cpp_compiler_autodetected = self.cpp_compiler is None
-        as_compiler_autodetected = self.as_compiler is None
-        ld_autodetected = self.linker is None
-        shared_ld_autodetected = self.shared_linker is None
 
         toolchain = auto_toolchain(preference, self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
 
@@ -443,97 +450,139 @@ class Config:
 
         cc_env = os.getenv("CC")
         if cc_env is not None:
-            c_compiler_autodetected = False
+            print_debug_info("Using CC environment variable instead of the config", verbosity)
+            c_compiler_path_specified = True
             if self.c_compiler is not None:
                 os.environ["CCC_CC"] = self.c_compiler.path
                 self.c_compiler.reload(cc_env)  # We change the path, but we keep the compiler object
             else:
                 self.c_compiler = CompilerGNU(cc_env)
-            print_debug_info("Using CC environment variable instead of the config", verbosity)
+            if not self.c_compiler.is_available():
+                raise ValueError(f"The compiler {cc_env} could not be found on your machine")
 
         cxx_env = os.getenv("CXX")
         if cxx_env is not None:
-            cpp_compiler_autodetected = False
+            print_debug_info("Using CXX environment variable instead of the config", verbosity)
+            cpp_compiler_path_specified = True
             if self.cpp_compiler is not None:
                 os.environ["CCC_CXX"] = self.cpp_compiler.path
                 self.cpp_compiler.reload(cxx_env)  # We change the path, but we keep the compiler object
             else:
                 self.cpp_compiler = CompilerGNUPlusPlus(cxx_env)
-            print_debug_info("Using CXX environment variable instead of the config", verbosity)
+            if not self.cpp_compiler.is_available():
+                raise ValueError(f"The compiler {cxx_env} could not be found on your machine")
 
         ld_env = os.getenv("LD")
         if ld_env is not None:
-            ld_autodetected = False
+            print_debug_info("Using LD environment variable instead of the config", verbosity)
+            linker_path_specified = True
             if self.linker is not None:
                 self.linker.reload(ld_env)  # We change the path, but we keep the compiler object
             else:
                 self.linker = LinkerGNU(ld_env)
-            print_debug_info("Using LD environment variable instead of the config", verbosity)
+            if not self.linker.is_available():
+                raise ValueError(f"The linker {ld_env} could not be found on your machine")
 
         toolchain_tuple = get_toolchain_tuple(
-            not c_compiler_autodetected and self.c_compiler is not None and self.c_compiler.path
-            or not cpp_compiler_autodetected and self.cpp_compiler is not None and self.cpp_compiler.path
-            or not as_compiler_autodetected and self.as_compiler is not None and self.as_compiler.path
-            or not ld_autodetected and self.linker is not None and self.linker.path
-            or not shared_ld_autodetected and self.shared_linker is not None and self.shared_linker.path
+            c_compiler_path_specified and self.c_compiler is not None and self.c_compiler.path
+            or cpp_compiler_path_specified and self.cpp_compiler is not None and self.cpp_compiler.path
+            or as_compiler_path_specified and self.as_compiler is not None and self.as_compiler.path
+            or linker_path_specified and self.linker is not None and self.linker.path
+            or shared_linker_path_specified and self.shared_linker is not None and self.shared_linker.path
+            or archiver_path_specified and self.archiver is not None and self.archiver.path
         )
         if toolchain_tuple is not None:
             t, toolchain_prefix = toolchain_tuple
-            if c_compiler_autodetected:
-                if t == "gcc":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(toolchain_prefix + "gcc")
-                elif t == "mingw":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw"))(toolchain_prefix + "gcc")
-                elif t == "clang":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(toolchain_prefix + "clang")
+            if not c_compiler_type_specified:
+                if c_compiler_path_specified and self.c_compiler is not None:
+                    path = self.c_compiler.path
                 else:
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(toolchain_prefix + "cc")
+                    path = None
+                if t == "gcc":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(path or toolchain_prefix + "gcc")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw"))(path or toolchain_prefix + "gcc")
+                elif t == "clang":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(path or toolchain_prefix + "clang")
+                else:
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(path or toolchain_prefix + "cc")
                 if compiler.is_available():
                     self.c_compiler = compiler
-            if cpp_compiler_autodetected:
-                if t == "gcc":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("g++"))(toolchain_prefix + "g++")
-                elif t == "mingw":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(toolchain_prefix + "g++")
-                elif t == "clang":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang++"))(toolchain_prefix + "clang++")
+            if not cpp_compiler_type_specified:
+                if cpp_compiler_path_specified and self.cpp_compiler is not None:
+                    path = self.cpp_compiler.path
                 else:
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu++"))(toolchain_prefix + "c++")
+                    path = None
+                if t == "gcc":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("g++"))(path or toolchain_prefix + "g++")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(path or toolchain_prefix + "g++")
+                elif t == "clang":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang++"))(path or toolchain_prefix + "clang++")
+                else:
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu++"))(path or toolchain_prefix + "c++")
                 if compiler.is_available():
                     self.cpp_compiler = compiler
-            if as_compiler_autodetected:
-                if t == "gcc":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(toolchain_prefix + "gcc")
-                elif t == "mingw":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw"))(toolchain_prefix + "gcc")
-                elif t == "clang":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(toolchain_prefix + "clang")
+            if not as_compiler_type_specified:
+                if as_compiler_path_specified and self.as_compiler is not None:
+                    path = self.as_compiler.path
                 else:
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(toolchain_prefix + "cc")
+                    path = None
+                if t == "gcc":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gcc"))(path or toolchain_prefix + "gcc")
+                elif t == "mingw":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw"))(path or toolchain_prefix + "gcc")
+                elif t == "clang":
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("clang"))(path or toolchain_prefix + "clang")
+                else:
+                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(path or toolchain_prefix + "cc")
                 if compiler.is_available():
                     self.as_compiler = compiler
-            if ld_autodetected:
-                if t == "gcc":
-                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("g++"))(toolchain_prefix + "g++")
-                elif t == "mingw":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(toolchain_prefix + "g++")
-                elif t == "clang":
-                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("clang++"))(toolchain_prefix + "clang++")
+            if not linker_type_specified:
+                if linker_path_specified and self.linker is not None:
+                    path = self.linker.path
                 else:
-                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("gnu++"))(toolchain_prefix + "c++")
+                    path = None
+                if t == "gcc":
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("g++"))(path or toolchain_prefix + "g++")
+                elif t == "mingw":
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("mingw++"))(path or toolchain_prefix + "g++")
+                elif t == "clang":
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("clang++"))(path or toolchain_prefix + "clang++")
+                else:
+                    ld = T.cast(T.Callable[[str], Linker], GenericLinker("gnu++"))(path or toolchain_prefix + "c++")
                 if ld.is_available():
                     self.linker = ld
-            if shared_ld_autodetected:
-                if t == "gcc":
-                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("g++"))(toolchain_prefix + "g++")
-                elif t == "mingw":
-                    compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("mingw++"))(toolchain_prefix + "g++")
-                elif t == "clang":
-                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("clang++"))(toolchain_prefix + "clang++")
+            if not shared_linker_type_specified:
+                if shared_linker_path_specified and self.shared_linker is not None:
+                    path = self.shared_linker.path
                 else:
-                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("gnu++"))(toolchain_prefix + "c++")
+                    path = None
+                if t == "gcc":
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("g++"))(path or toolchain_prefix + "g++")
+                elif t == "mingw":
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("mingw++"))(path or toolchain_prefix + "g++")
+                elif t == "clang":
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("clang++"))(path or toolchain_prefix + "clang++")
+                else:
+                    shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("gnu++"))(path or toolchain_prefix + "c++")
                 if shared_ld.is_available():
                     self.shared_linker = shared_ld
+            if not archiver_type_specified:
+                if archiver_path_specified and self.archiver is not None:
+                    path = self.archiver.path
+                else:
+                    path = None
+                if t == "gcc":
+                    archiver = T.cast(T.Callable[[str], Archiver], GenericArchiver("ar"))(path or toolchain_prefix + "ar")
+                elif t == "mingw":
+                    archiver = T.cast(T.Callable[[str], Archiver], GenericArchiver("mingw"))(path or toolchain_prefix + "ar")
+                elif t == "clang":
+                    archiver = T.cast(T.Callable[[str], Archiver], GenericArchiver("llvm-ar"))(path or toolchain_prefix + "ar")
+                else:
+                    archiver = T.cast(T.Callable[[str], Archiver], GenericArchiver("gnu"))(path or toolchain_prefix + "ar")
+                if archiver.is_available():
+                    self.archiver = archiver
 
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
             self.target_operating_system = "Windows"

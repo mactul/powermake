@@ -127,15 +127,17 @@ class Tool(abc.ABC):
 
 
 
-def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None]:
+def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool], bool], None]:
     if tool_name not in conf:
         return None
 
     if "path" in conf[tool_name] or "type" in conf[tool_name]:
         if "type" in conf[tool_name]:
             tool_type = conf[tool_name]["type"].lower()
+            type_specified = True
         else:
             tool_type = "gnu"
+            type_specified = False
 
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:
@@ -146,12 +148,12 @@ def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_g
         else:
             tool_path = None
 
-        return (tool_path, ObjectConstructor)
+        return (tool_path, ObjectConstructor, type_specified)
 
     return None
 
 
-def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool]], None], tool_name: str) -> T.Union[Tool, None]:
+def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool], bool], None], tool_name: str) -> T.Union[Tool, None]:
     if tool_tuple is not None:
         tool: Tool
         if tool_tuple[0] is None:
