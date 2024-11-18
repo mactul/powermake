@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import shutil
+import typing as T
+
 
 def simplify_architecture(architecture: str) -> str:
     arch = architecture.lower()
@@ -28,3 +31,89 @@ def simplify_architecture(architecture: str) -> str:
         return "arm64"
 
     return ""
+
+def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, None], str]:
+    if toolchain_name.startswith("x86_64-"):
+        return ("x64", toolchain_name[len("x86_64-"):])
+    if toolchain_name.startswith("amd64-"):
+        return ("x64", toolchain_name[len("amd64-"):])
+    if toolchain_name.startswith("i686-"):
+        return ("x86", toolchain_name[len("i686-"):])
+    if toolchain_name.startswith("i386-"):
+        return ("x86", toolchain_name[len("i386-"):])
+    if toolchain_name.startswith("aarch64-"):
+        return ("arm64", toolchain_name[len("aarch64-"):])
+    if toolchain_name.startswith("arm-"):
+        return ("arm32", toolchain_name[len("arm-"):])
+    return (None, toolchain_name)
+
+
+def get_toolchain_tool(path: str) -> T.Union[str, None]:
+    for tool in ("gcc", "clang", "clang++", "g++", "ar", "ld", "cc", "cpp", "cpp"):
+        if path.endswith(tool):
+            return tool
+
+    return None
+
+def search_new_toolchain(toolchain_name: str, host_architecture: str, required_architecture: str) -> T.Union[str, None]:
+    arch, toolchain_suffix = split_toolchain_architecture(toolchain_name)
+    if arch == required_architecture:
+        return toolchain_name
+
+    if arch is None:
+        if host_architecture in ("x64", "x86") and required_architecture in ("x64", "x86"):
+            return toolchain_name
+
+    if required_architecture == "x64":
+        if shutil.which("x86_64-" + toolchain_suffix) is not None:
+            return "x86_64-" + toolchain_suffix
+        if shutil.which("amd64-" + toolchain_suffix) is not None:
+            return "x86_64-" + toolchain_suffix
+
+        tool = get_toolchain_tool(toolchain_suffix)
+        if tool is None:
+            return None
+        if shutil.which("x86_64-linux-gnu-" + tool) is not None:
+            return "x86_64-linux-gnu-" + tool
+
+        return None
+
+    if required_architecture == "x86":
+        if shutil.which("i686-" + toolchain_suffix) is not None:
+            return "i686-" + toolchain_suffix
+        if shutil.which("i386-" + toolchain_suffix) is not None:
+            return "i386-" + toolchain_suffix
+
+        tool = get_toolchain_tool(toolchain_suffix)
+        if tool is None:
+            return None
+        if shutil.which("i686-linux-gnu-" + tool) is not None:
+            return "i686-linux-gnu-" + tool
+
+        return None
+
+    if required_architecture == "arm64":
+        if shutil.which("aarch64-" + toolchain_suffix) is not None:
+            return "aarch64-" + toolchain_suffix
+
+        tool = get_toolchain_tool(toolchain_suffix)
+        if tool is None:
+            return None
+        if shutil.which("aarch64-linux-gnu-" + tool) is not None:
+            return "aarch64-linux-gnu-" + tool
+
+        return None
+
+    if required_architecture == "arm32":
+        if shutil.which("arm-" + toolchain_suffix) is not None:
+            return "arm-" + toolchain_suffix
+
+        tool = get_toolchain_tool(toolchain_suffix)
+        if tool is None:
+            return None
+        if shutil.which("arm-linux-gnueabi-" + tool) is not None:
+            return "arm-linux-gnueabi-" + tool
+
+        return None
+
+    return None

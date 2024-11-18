@@ -21,10 +21,10 @@ import platform
 import typing as T
 
 from .cache import get_cache_dir
-from .display import print_debug_info
+from .display import print_debug_info, error_text
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
-from .architecture import simplify_architecture
+from .architecture import simplify_architecture, search_new_toolchain
 from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, LinkerGNU, GenericLinker, get_all_linker_types
@@ -144,9 +144,9 @@ def get_toolchain_tuple(path: T.Union[str, None, bool]) -> T.Union[T.Tuple[str, 
     if path.endswith("cc"):
         return ("gnu", path[:-2])
     if path.endswith("cpp"):
-        return ("gnu", path[-3])
+        return ("gnu", path[:-3])
     if path.endswith("c++"):
-        return ("gnu", path[-3])
+        return ("gnu", path[:-3])
 
     return None
 
@@ -367,20 +367,20 @@ class Config:
         if self.host_architecture == "":
             self.host_architecture = platform.machine()
 
-        self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
+        self.c_compiler_path_specified = c_compiler_tuple is not None and c_compiler_tuple[0] is not None
+        self.c_compiler_type_specified = c_compiler_tuple is not None and c_compiler_tuple[2]
+        self.cpp_compiler_path_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[0] is not None
+        self.cpp_compiler_type_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[2]
+        self.as_compiler_path_specified = as_compiler_tuple is not None and as_compiler_tuple[0] is not None
+        self.as_compiler_type_specified = as_compiler_tuple is not None and as_compiler_tuple[2]
+        self.archiver_path_specified = archiver_tuple is not None and archiver_tuple[0] is not None
+        self.archiver_type_specified = archiver_tuple is not None and archiver_tuple[2]
+        self.linker_path_specified = linker_tuple is not None and linker_tuple[0] is not None
+        self.linker_type_specified = linker_tuple is not None and linker_tuple[2]
+        self.shared_linker_path_specified = shared_linker_tuple is not None and shared_linker_tuple[0] is not None
+        self.shared_linker_type_specified = shared_linker_tuple is not None and shared_linker_tuple[2]
 
-        c_compiler_path_specified = c_compiler_tuple is not None and c_compiler_tuple[0] is not None
-        c_compiler_type_specified = c_compiler_tuple is not None and c_compiler_tuple[2]
-        cpp_compiler_path_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[0] is not None
-        cpp_compiler_type_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[2]
-        as_compiler_path_specified = as_compiler_tuple is not None and as_compiler_tuple[0] is not None
-        as_compiler_type_specified = as_compiler_tuple is not None and as_compiler_tuple[2]
-        archiver_path_specified = archiver_tuple is not None and archiver_tuple[0] is not None
-        archiver_type_specified = archiver_tuple is not None and archiver_tuple[2]
-        linker_path_specified = linker_tuple is not None and linker_tuple[0] is not None
-        linker_type_specified = linker_tuple is not None and linker_tuple[2]
-        shared_linker_path_specified = shared_linker_tuple is not None and shared_linker_tuple[0] is not None
-        shared_linker_type_specified = shared_linker_tuple is not None and shared_linker_tuple[2]
+        self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
 
         self.c_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(c_compiler_tuple, "compiler"))
         self.cpp_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(cpp_compiler_tuple, "compiler"))
@@ -451,7 +451,7 @@ class Config:
         cc_env = os.getenv("CC")
         if cc_env is not None:
             print_debug_info("Using CC environment variable instead of the config", verbosity)
-            c_compiler_path_specified = True
+            self.c_compiler_path_specified = True
             if self.c_compiler is not None:
                 os.environ["CCC_CC"] = self.c_compiler.path
                 self.c_compiler.reload(cc_env)  # We change the path, but we keep the compiler object
@@ -463,7 +463,7 @@ class Config:
         cxx_env = os.getenv("CXX")
         if cxx_env is not None:
             print_debug_info("Using CXX environment variable instead of the config", verbosity)
-            cpp_compiler_path_specified = True
+            self.cpp_compiler_path_specified = True
             if self.cpp_compiler is not None:
                 os.environ["CCC_CXX"] = self.cpp_compiler.path
                 self.cpp_compiler.reload(cxx_env)  # We change the path, but we keep the compiler object
@@ -475,7 +475,7 @@ class Config:
         ld_env = os.getenv("LD")
         if ld_env is not None:
             print_debug_info("Using LD environment variable instead of the config", verbosity)
-            linker_path_specified = True
+            self.linker_path_specified = True
             if self.linker is not None:
                 self.linker.reload(ld_env)  # We change the path, but we keep the compiler object
             else:
@@ -484,17 +484,17 @@ class Config:
                 raise ValueError(f"The linker {ld_env} could not be found on your machine")
 
         toolchain_tuple = get_toolchain_tuple(
-            c_compiler_path_specified and self.c_compiler is not None and self.c_compiler.path
-            or cpp_compiler_path_specified and self.cpp_compiler is not None and self.cpp_compiler.path
-            or as_compiler_path_specified and self.as_compiler is not None and self.as_compiler.path
-            or linker_path_specified and self.linker is not None and self.linker.path
-            or shared_linker_path_specified and self.shared_linker is not None and self.shared_linker.path
-            or archiver_path_specified and self.archiver is not None and self.archiver.path
+            self.c_compiler_path_specified and self.c_compiler is not None and self.c_compiler.path
+            or self.cpp_compiler_path_specified and self.cpp_compiler is not None and self.cpp_compiler.path
+            or self.as_compiler_path_specified and self.as_compiler is not None and self.as_compiler.path
+            or self.linker_path_specified and self.linker is not None and self.linker.path
+            or self.shared_linker_path_specified and self.shared_linker is not None and self.shared_linker.path
+            or self.archiver_path_specified and self.archiver is not None and self.archiver.path
         )
         if toolchain_tuple is not None:
             t, toolchain_prefix = toolchain_tuple
-            if not c_compiler_type_specified:
-                if c_compiler_path_specified and self.c_compiler is not None:
+            if not self.c_compiler_type_specified:
+                if self.c_compiler_path_specified and self.c_compiler is not None:
                     path = self.c_compiler.path
                 else:
                     path = None
@@ -507,9 +507,10 @@ class Config:
                 else:
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(path or toolchain_prefix + "cc")
                 if compiler.is_available():
+                    self.c_compiler_path_specified = True
                     self.c_compiler = compiler
-            if not cpp_compiler_type_specified:
-                if cpp_compiler_path_specified and self.cpp_compiler is not None:
+            if not self.cpp_compiler_type_specified:
+                if self.cpp_compiler_path_specified and self.cpp_compiler is not None:
                     path = self.cpp_compiler.path
                 else:
                     path = None
@@ -522,9 +523,10 @@ class Config:
                 else:
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu++"))(path or toolchain_prefix + "c++")
                 if compiler.is_available():
+                    self.cpp_compiler_path_specified = True
                     self.cpp_compiler = compiler
-            if not as_compiler_type_specified:
-                if as_compiler_path_specified and self.as_compiler is not None:
+            if not self.as_compiler_type_specified:
+                if self.as_compiler_path_specified and self.as_compiler is not None:
                     path = self.as_compiler.path
                 else:
                     path = None
@@ -537,9 +539,10 @@ class Config:
                 else:
                     compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("gnu"))(path or toolchain_prefix + "cc")
                 if compiler.is_available():
+                    self.as_compiler_path_specified = True
                     self.as_compiler = compiler
-            if not linker_type_specified:
-                if linker_path_specified and self.linker is not None:
+            if not self.linker_type_specified:
+                if self.linker_path_specified and self.linker is not None:
                     path = self.linker.path
                 else:
                     path = None
@@ -552,9 +555,10 @@ class Config:
                 else:
                     ld = T.cast(T.Callable[[str], Linker], GenericLinker("gnu++"))(path or toolchain_prefix + "c++")
                 if ld.is_available():
+                    self.linker_path_specified = True
                     self.linker = ld
-            if not shared_linker_type_specified:
-                if shared_linker_path_specified and self.shared_linker is not None:
+            if not self.shared_linker_type_specified:
+                if self.shared_linker_path_specified and self.shared_linker is not None:
                     path = self.shared_linker.path
                 else:
                     path = None
@@ -567,9 +571,10 @@ class Config:
                 else:
                     shared_ld = T.cast(T.Callable[[str], SharedLinker], GenericSharedLinker("gnu++"))(path or toolchain_prefix + "c++")
                 if shared_ld.is_available():
+                    self.shared_linker_type_specified = True
                     self.shared_linker = shared_ld
-            if not archiver_type_specified:
-                if archiver_path_specified and self.archiver is not None:
+            if not self.archiver_type_specified:
+                if self.archiver_path_specified and self.archiver is not None:
                     path = self.archiver.path
                 else:
                     path = None
@@ -582,6 +587,7 @@ class Config:
                 else:
                     archiver = T.cast(T.Callable[[str], Archiver], GenericArchiver("gnu"))(path or toolchain_prefix + "ar")
                 if archiver.is_available():
+                    self.archiver_path_specified = True
                     self.archiver = archiver
 
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
@@ -602,7 +608,7 @@ class Config:
 
     def reload_env(self) -> None:
         if self.target_architecture == "" or self.host_architecture == "":
-            raise RuntimeError("Unable to load environment because architecture is undetermined")
+            raise RuntimeError(error_text("Unable to load environment because architecture is undetermined"))
 
         self.target_simplified_architecture = simplify_architecture(self.target_architecture)
         self.host_simplified_architecture = simplify_architecture(self.host_architecture)
@@ -620,15 +626,38 @@ class Config:
 
     def reload_tools(self) -> None:
         self.reload_env()
-        for tool in (self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker):
+        for tool, specified in ((self.c_compiler, self.c_compiler_path_specified), (self.cpp_compiler, self.cpp_compiler_path_specified), (self.as_compiler, self.as_compiler_path_specified), (self.archiver, self.archiver_path_specified), (self.linker, self.linker_path_specified), (self.shared_linker, self.shared_linker_path_specified)):
             if tool is not None:
-                tool_name = os.path.basename(tool.path)
-                if self.target_simplified_architecture == "x86" and tool_name.startswith("x86_64-w64-mingw32-"):
-                    tool.reload(os.path.join(os.path.dirname(tool.path), "i686-w64-mingw32-" + tool_name[len("x86_64-w64-mingw32-"):]))
-                elif self.target_simplified_architecture == "x64" and tool_name.startswith("i686-w64-mingw32-"):
-                    tool.reload(os.path.join(os.path.dirname(tool.path), "x86_64-w64-mingw32-" + tool_name[len("i686-w64-mingw32-"):]))
+                if not specified:
+                    tool_name = os.path.basename(tool.path)
+                    path = search_new_toolchain(tool_name, self.host_simplified_architecture, self.target_simplified_architecture)
+                    if path is None:
+                        tool.path = ""
+                        continue
+                    tool.reload(path)
                 else:
                     tool.reload()
+
+                if not tool.is_available():
+                    raise RuntimeError(f"PowerMake has changed its environment and is unable to find {tool._name}")
+
+        if self.c_compiler is not None and not self.c_compiler.is_available():
+            self.c_compiler = None
+        if self.cpp_compiler is not None and not self.cpp_compiler.is_available():
+            self.cpp_compiler = None
+        if self.as_compiler is not None and not self.as_compiler.is_available():
+            self.as_compiler = None
+        if self.archiver is not None and not self.archiver.is_available():
+            self.archiver = None
+        if self.linker is not None and not self.linker.is_available():
+            self.linker = None
+        if self.shared_linker is not None and not self.shared_linker.is_available():
+            self.shared_linker = None
+
+        if self.asm_compiler is not None:
+            self.asm_compiler.reload()
+            if not self.asm_compiler.is_available():
+                raise RuntimeError(f"PowerMake has changed its environment and is unable to find {self.asm_compiler._name}")
 
     def reset_build_directories(self) -> None:
         if self.debug:

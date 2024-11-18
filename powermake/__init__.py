@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .config import Config
 from .utils import makedirs, join_absolute_paths
 from .__version__ import __version__
-from .display import print_info, print_debug_info
+from .display import print_info, print_debug_info, error_text
 from .operation import Operation, needs_update, run_command
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
@@ -176,7 +176,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         elif config.cpp_compiler is not None:
             obj_extension = config.cpp_compiler.obj_extension
         else:
-            raise RuntimeError("No C/C++ compiler has been specified and the default config didn't find any")
+            raise RuntimeError(error_text("No C/C++ compiler has been specified and the default config didn't find any"))
 
         output_file = join_absolute_paths(config.obj_build_directory, file + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -187,22 +187,22 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
         if file.endswith(".c"):
             if config.c_compiler is None:
-                raise RuntimeError("No C compiler has been specified and the default config didn't find any")
+                raise RuntimeError(error_text("No C compiler has been specified and the default config didn't find any"))
             command = config.c_compiler.basic_compile_command(output_file, file, c_args)
         elif file.endswith((".cpp", ".cc", ".C")):
             if config.cpp_compiler is None:
-                raise RuntimeError("No C++ compiler has been specified and the default config didn't find any")
+                raise RuntimeError(error_text("No C++ compiler has been specified and the default config didn't find any"))
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
         elif file.endswith((".s", ".S")):
             if config.as_compiler is None:
-                raise RuntimeError("No AS compiler has been specified and the default config didn't find any")
+                raise RuntimeError(error_text("No AS compiler has been specified and the default config didn't find any"))
             command = config.as_compiler.basic_compile_command(output_file, file, as_args)
         elif file.endswith(".asm"):
             if config.asm_compiler is None:
-                raise RuntimeError("No ASM compiler has been specified and the default config didn't find any")
+                raise RuntimeError(error_text("No ASM compiler has been specified and the default config didn't find any"))
             command = config.asm_compiler.basic_compile_command(output_file, file, asm_args)
         else:
-            raise ValueError("The file extension %s can't be compiled", (os.path.splitext(file)[1], ))
+            raise ValueError(error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
         op = Operation(output_file, {file}, config, command)
         if isinstance(files, set):
             T.cast(T.Set[Operation], operations).add(op)
@@ -256,7 +256,7 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         archive_name = "lib" + config.target_name
 
     if config.archiver is None:
-        raise RuntimeError("No archiver has been specified and the default config didn't find any")
+        raise RuntimeError(error_text("No archiver has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, archive_name + config.archiver.static_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
@@ -287,7 +287,7 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
         executable_name = config.target_name
 
     if config.linker is None:
-        raise RuntimeError("No linker has been specified and the default config didn't find any")
+        raise RuntimeError(error_text("No linker has been specified and the default config didn't find any"))
     extension = ""
     if config.target_is_windows():
         extension = ".exe"
@@ -322,7 +322,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         lib_name = "lib" + config.target_name
 
     if config.shared_linker is None:
-        raise RuntimeError("No shared linker has been specified and the default config didn't find any")
+        raise RuntimeError(error_text("No shared linker has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, lib_name + config.shared_linker.shared_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)

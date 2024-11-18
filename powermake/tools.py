@@ -18,6 +18,7 @@ import abc
 import shutil
 import typing as T
 
+from .display import error_text
 from .utils import join_absolute_paths
 from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
@@ -141,7 +142,7 @@ def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_g
 
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:
-            raise ValueError("Unsupported %s type: %s\n\nShould be one of them: %s" % (tool_name, tool_type, " ".join(tool_list_getter())))
+            raise ValueError(error_text("Unsupported %s type: %s\n\nShould be one of them: %s" % (tool_name, tool_type, " ".join(tool_list_getter()))))
 
         if "path" in conf[tool_name]:
             tool_path = conf[tool_name]["path"]
@@ -166,7 +167,7 @@ def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], T.Calla
                 tool_path = tool.type
             else:
                 tool_path = tool_tuple[0]
-            raise ValueError("The %s %s could not be found on your machine" % (tool_name, tool_path))
+            raise ValueError(error_text("The %s %s could not be found on your machine" % (tool_name, tool_path)))
 
         return tool
     return None

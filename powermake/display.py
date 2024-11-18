@@ -34,3 +34,7 @@ def print_info(string: T.Any, verbosity: int, counter: int = 0, total: int = 0) 
 def print_debug_info(string: T.Any, verbosity: int) -> None:
     if verbosity >= 2:
         print(colorama.Fore.LIGHTBLACK_EX + str(string) + colorama.Style.RESET_ALL)
+
+
+def error_text(string: str) -> str:
+    return colorama.Style.BRIGHT + colorama.Fore.RED + string + colorama.Style.RESET_ALL
