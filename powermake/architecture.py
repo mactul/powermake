@@ -63,6 +63,8 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
     if arch is None:
         if host_architecture in ("x64", "x86") and required_architecture in ("x64", "x86"):
             return toolchain_name
+        if host_architecture == required_architecture:
+            return toolchain_name
 
     if required_architecture == "x64":
         if shutil.which("x86_64-" + toolchain_suffix) is not None:
