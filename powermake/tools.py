@@ -30,6 +30,8 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
     "-fsecurity": ["-fsecurity=2"],
     "-Weverything": ["-Weverything", "-Wsecurity", "-pedantic", "-Wsuggest-attribute=pure", "-Wsuggest-attribute=const", "-Wsuggest-attribute=noreturn", "-Wsuggest-attribute=malloc", "-Wsuggest-attribute=returns_nonnull", "-Wsuggest-attribute=format", "-Wmissing-format-attribute", "-Wsuggest-attribute=cold", "-Waggregate-return", "-Wduplicated-branches", "-Wduplicated-cond", "-Wflex-array-member-not-at-end", "-Wfloat-equal", "-Wformat-nonliteral", "-Wformat-signedness", "-Wformat-y2k", "-Winit-self", "-Winvalid-utf8", "-Wjump-misses-init", "-Wlogical-op", "-Wmissing-declarations", "-Wmissing-include-dirs", "-Wmissing-prototypes", "-Wmissing-variable-declarations", "-Wmultichar", "-Wnested-externs", "-Wnull-dereference", "-Wopenacc-parallelism", "-Wredundant-decls", "-Wshadow", "-Wstack-protector", "-Wstrict-flex-arrays=3", "-Wstrict-prototypes", "-Wsuggest-final-methods", "-Wsuggest-final-types", "-Wswitch-default", "-Wundef", "-Wunsuffixed-float-constants", "-Wunused-macros", "-Wuseless-cast", "-Wvector-operation-performance", "-Wwrite-strings"],
     "-ffuzzer": ["-fsanitize=address,fuzzer"],
+    "-m32": ["-m32"],
+    "-m64": ["-m64"]
 }
 
 
