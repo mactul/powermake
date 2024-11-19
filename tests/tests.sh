@@ -12,13 +12,22 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)/../
 
 python3 ./multiplatform/makefile.py --version
 
-echo "Checking typing"
-mypy ../powermake --check-untyped-defs --python-version=3.8 --strict || failure
+if [[ $# -ne 1 && $1 != "weak" ]]
+then
+    echo "Checking typing"
+    mypy ../powermake --check-untyped-defs --python-version=3.8 --strict || failure
+fi
 
-echo "checking multiplatform makefile with default/clang and MinGW toolchains"
+echo "checking multiplatform makefile with default, clang and MinGW toolchains"
 python3 ./multiplatform/makefile.py -rv || failure
 CC=clang python3 ./multiplatform/makefile.py -rv || failure
+
+if [[ $# -ne 1 && $1 != "weak" ]]
+then
 CC=x86_64-w64-mingw32-gcc python3 ./multiplatform/makefile.py -rv || failure
+else
+CC=x86_64-w64-mingw32-gcc python3 ./multiplatform/makefile.py -rv --no-prog-test || failure
+fi
 
 echo "testing lib compilation and link accross powermake makefiles, in release and in debug"
 python3 ./lib_depend/makefile.py -rv || failure

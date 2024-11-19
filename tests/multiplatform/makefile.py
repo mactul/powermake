@@ -1,6 +1,7 @@
 import powermake
 import subprocess
 
+prog_test = True
 
 def on_build(config: powermake.Config):
     config.add_c_cpp_as_asm_flags("-Weverything")
@@ -15,9 +16,19 @@ def on_build(config: powermake.Config):
 
     exe = powermake.link_files(config, objects)
 
-    output = subprocess.check_output([exe], encoding="ascii")
-    if output != "Hello\nWorld\n":
-        print("Execution does not generate a good value")
-        exit(1)
+    if prog_test:
+        print("testing generated program")
+        output = subprocess.check_output([exe], encoding="ascii")
+        if output != "Hello\nWorld\n":
+            print("Execution does not generate a good value")
+            exit(1)
 
-powermake.run("test", build_callback=on_build)
+parser = powermake.ArgumentParser()
+parser.add_argument("--no-prog-test", action="store_true")
+
+args_parsed = parser.parse_args()
+
+if args_parsed.no_prog_test:
+    prog_test = False
+
+powermake.run("test", build_callback=on_build, args_parsed=args_parsed)
