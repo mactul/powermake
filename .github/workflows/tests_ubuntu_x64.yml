@@ -25,6 +25,15 @@ jobs:
     - name: install mingw
       run: >-
         sudo apt-get install mingw-w64
+    - name: what the actual fuck ?
+      run: >-  # This will be removed by the installation of aarch64-linux-gnu-gcc, but some dependencies will be kept. I should search what exact dependencies I need, but at this point the debian/ubuntu packaging makes me crazy...
+        sudo apt-get install g++-multilib
+    - name: install aarch64-linux-gnu-gcc
+      run: >-
+        sudo apt-get install g++-aarch64-linux-gnu
+    - name: install gcc libs for i386
+      run: >-
+        sudo dpkg --add-architecture i386 && sudo apt update && sudo apt-get install linux-libc-dev:i386
     - name: install nasm
       run: >-
         sudo apt-get install nasm

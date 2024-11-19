@@ -1,0 +1,6 @@
+{
+    "target_architecture": "x86",
+    "c_compiler": {
+        "type": "clang"
+    }
+}
