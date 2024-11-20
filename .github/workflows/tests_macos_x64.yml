@@ -1,0 +1,25 @@
+name: Run tests on macos x64
+
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Install toolchains and run tests on macos x64
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python 3
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+    - name: Install colorama
+      run: >-
+        python -m pip install colorama
+    - name: install nasm
+      run: >-
+        brew install nasm
+    - name: run tests
+      run: >-
+        ./tests/nocross_tests.sh

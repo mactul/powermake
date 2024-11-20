@@ -386,9 +386,10 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     print_debug_info(command, config.verbosity)
 
     try:
-        output = subprocess.check_output(command, encoding="utf-8").splitlines()
-    except OSError:
-        raise RuntimeError(error_text(f"Failed to run powermake {path}"))
+        output = subprocess.check_output(command, encoding="utf-8", stderr=subprocess.STDOUT).splitlines()
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise RuntimeError(error_text(f"Failed to run powermake {path}")) from None
 
     if verbosity != 0:
         for line in output[:-1]:

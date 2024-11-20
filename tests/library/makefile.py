@@ -9,6 +9,8 @@ def on_build(config: powermake.Config):
         else:
             files = {"my_lib.c", "subtract_windows.asm"}
             config.add_defines("DISABLE_GNU_AS")
+    elif config.target_is_macos():
+        files = {"my_lib.c", "multiply_macos.s", "subtract_macos.asm"}
     else:
         files = {"my_lib.c", "multiply_linux.s", "subtract_linux.asm"}
 
