@@ -1,5 +1,11 @@
 # PowerMake
 
+<img alt="ubuntu x64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20ubuntu%20x64/badge.svg">
+<img alt="windows x64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20windows%20x64/badge.svg">
+
+<img alt="macos x64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20macos%20x64/badge.svg">
+<img alt="macos arm64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20macos%20arm64/badge.svg">
+
 - [PowerMake](#powermake)
   - [What is PowerMake?](#what-is-powermake)
   - [For which project is PowerMake suitable?](#for-which-project-is-powermake-suitable)
