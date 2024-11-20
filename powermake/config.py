@@ -738,10 +738,13 @@ class Config:
 
             if self.target_is_windows():
                 self.add_asm_flags("-fwin" + add)
-                self.remove_asm_flags("-fwin" + remove, "-felf32", "-felf64")
+                self.remove_asm_flags("-fwin" + remove, "-felf32", "-felf64", "-fmacho32", "-fmacho64")
+            elif self.target_is_macos():
+                self.add_asm_flags("-fmacho" + add)
+                self.remove_asm_flags("-fmacho" + remove, "-felf32", "-felf64", "-fwin32", "-fwin64")
             else:
                 self.add_asm_flags("-felf" + add)
-                self.remove_asm_flags("-felf" + remove, "-fwin32", "-fwin64")
+                self.remove_asm_flags("-felf" + remove, "-fwin32", "-fwin64", "-fmacho32", "-fmacho64")
 
             if self.target_simplified_architecture != self.host_simplified_architecture:
                 self.add_c_cpp_flags("-m" + add)
