@@ -593,10 +593,12 @@ class Config:
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
             self.target_operating_system = "Windows"
 
+
         self.set_debug(self.debug, True)
         self.add_c_cpp_as_asm_flags("-fdiagnostics-color")
 
         self.reload_tools()
+        self.set_target_architecture(self.target_architecture, False)
 
     @property
     def c_cpp_flags(self) -> T.List[str]:
@@ -736,10 +738,10 @@ class Config:
 
             if self.target_is_windows():
                 self.add_asm_flags("-fwin" + add)
-                self.remove_asm_flags("-fwin" + remove)
+                self.remove_asm_flags("-fwin" + remove, "-felf32", "-felf64")
             else:
                 self.add_asm_flags("-felf" + add)
-                self.remove_asm_flags("-felf" + remove)
+                self.remove_asm_flags("-felf" + remove, "-fwin32", "-fwin64")
 
             if self.target_simplified_architecture != self.host_simplified_architecture:
                 self.add_c_cpp_flags("-m" + add)

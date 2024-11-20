@@ -49,5 +49,5 @@ class ArchiverLLVM_AR(ArchiverGNU):
 class ArchiverMinGW(ArchiverGNU):
     type: T.ClassVar = "mingw"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-ar"):
+    def __init__(self, path: str = "x86_64-w64-mingw32-gcc-ar"):
         super().__init__(path)

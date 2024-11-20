@@ -43,4 +43,4 @@ python3 ./multiplatform/makefile.py -rv -l ./windows_config2.json --assert-cc="i
 
 echo "testing lib compilation and link accross powermake makefiles, in release and in debug"
 python3 ./lib_depend/makefile.py -rv || failure
-python3 ./lib_depend/makefile.py -rvd || failure
+CC=x86_64-w64-mingw32-gcc python3 ./lib_depend/makefile.py -rvd || failure

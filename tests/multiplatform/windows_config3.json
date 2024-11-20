@@ -1,0 +1,7 @@
+{
+    "target_operating_system": "Windows",
+    "target_architecture": "x86",
+    "c_compiler": {
+        "type": "msvc"
+    }
+}

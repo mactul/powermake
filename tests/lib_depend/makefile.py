@@ -4,6 +4,9 @@ def on_build(config: powermake.Config):
     config.add_c_cpp_as_asm_flags("-Wsecurity")
     config.add_includedirs("../library/")
 
+    if config.target_is_mingw():
+        config.add_ld_flags("-static")
+
     if config.target_is_windows() and not config.target_is_mingw():
         config.add_defines("DISABLE_GNU_AS")
 
@@ -14,6 +17,7 @@ def on_build(config: powermake.Config):
     exe = powermake.link_files(config, objects, archives=archives)
 
     if powermake.run_command(config, [exe]) != 0:
+        print("generated program doesn't work")
         exit(1)
 
 powermake.run("test", build_callback=on_build)

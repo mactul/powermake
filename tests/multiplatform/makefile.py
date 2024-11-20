@@ -7,7 +7,9 @@ assert_cc = None
 
 def on_build(config: powermake.Config):
     config.add_c_cpp_as_asm_flags("-Weverything")
-    config.add_ld_flags("-static")
+
+    if config.target_is_mingw():
+        config.add_ld_flags("-static")
 
     if config.target_is_windows():
         config.add_defines("POWERMAKE_WIN32")

@@ -1,0 +1,26 @@
+name: Run tests on windows x64
+
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Install toolchains and run tests on windows x64
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python 3
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+    - name: Install colorama
+      run: >-
+        python -m pip install colorama
+    - name: install nasm
+      run: |
+        choco install nasm
+        echo "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    - name: run tests
+      run: >-
+        ./tests/tests.bat

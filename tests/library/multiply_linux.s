@@ -1,8 +1,7 @@
 .text
-.globl	multiply
-.type	multiply, @function
+.globl	_multiply
 
-multiply:
+_multiply:
 	movl    %edi, %eax
 	imull   %esi, %eax
 	ret

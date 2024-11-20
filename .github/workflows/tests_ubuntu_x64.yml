@@ -8,11 +8,6 @@ jobs:
   tests:
     name: Install toolchains and run tests on ubuntu x64
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/powermake
-    permissions:
-      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3
