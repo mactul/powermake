@@ -563,8 +563,8 @@ It's used to determine the subfolder of the build folder and for the functions `
 On Linux, if you set this to "Windows" (or anything that starts win "win"), it will enable mingw as the default toolchain.
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
-- > [!WARNING]  
-  > Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated.
+> [!WARNING]  
+> Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated.
 
 
 ##### host_architecture
@@ -587,8 +587,8 @@ If you need an easier string to work with, use `config.target_simplified_archite
 It's used to determine the subfolder of the build folder and to set the compiler architecture (if possible).
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
-- > [!WARNING]  
-  > Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture, use [config.set_target_architecture](#set_target_architecture) to reload the environment.
+> [!WARNING]  
+> Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture, use [config.set_target_architecture](#set_target_architecture) to reload the environment.
 
 
 ##### c_compiler
