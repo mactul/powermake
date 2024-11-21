@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 
 
@@ -9,6 +10,16 @@ def makedirs(path: str, exist_ok: bool = True) -> None:
 
 def join_absolute_paths(path1: str, path2: str) -> str:
     return os.path.normpath(path1 + "/" + os.path.splitdrive(path2)[1].replace("..", "__"))
+
+
+def print_bytes(b: bytes) -> None:
+    sys.stdout.flush()
+    stdout_fd = sys.stdout.fileno()
+
+    written = 0
+    while written < len(b):
+        written += os.write(stdout_fd, b[written:])
+    sys.stdout.flush()
 
 
 _tempdir = None

@@ -222,6 +222,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
     # This is used by the powermake.run_another_powermake function.
     if config._args_parsed.get_lib_build_folder:
         if config.lib_build_directory is not None and os.path.exists(config.lib_build_directory):
+            print()
             print(os.path.abspath(config.lib_build_directory))
         else:
             print()

@@ -14,27 +14,18 @@
 
 
 import os
-import sys
 import subprocess
 import typing as T
 import __main__ as __makefile__
 from threading import Lock
 
 from .config import Config
+from .utils import print_bytes
 from .display import print_info, print_debug_info, error_text
 
 
 _print_lock = Lock()
 _commands_counter = 0
-
-def print_bytes(b: bytes) -> None:
-    sys.stdout.flush()
-    stdout_fd = sys.stdout.fileno()
-
-    written = 0
-    while written < len(b):
-        written += os.write(stdout_fd, b[written:])
-    sys.stdout.flush()
 
 
 def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, **kwargs: T.Any) -> int:

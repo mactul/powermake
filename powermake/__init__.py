@@ -25,8 +25,8 @@ import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
-from .utils import makedirs, join_absolute_paths
 from .__version__ import __version__
+from .utils import makedirs, join_absolute_paths, print_bytes
 from .display import print_info, print_debug_info, error_text
 from .operation import Operation, needs_update, run_command
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
@@ -386,16 +386,18 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     print_debug_info(command, config.verbosity)
 
     try:
-        output = subprocess.check_output(command, encoding="utf-8", stderr=subprocess.STDOUT).splitlines()
+        output: bytes = subprocess.check_output(command, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print(e.output)
+        print_bytes(e.output)
         raise RuntimeError(error_text(f"Failed to run powermake {path}")) from None
 
-    if verbosity != 0:
-        for line in output[:-1]:
-            print(line)
+    last_line_offset = output[:-1].rfind(ord('\n'))
+    if last_line_offset == -1:
+        return None
 
-    path = output[-1]
+    print_bytes(output[:last_line_offset])
+
+    path = output[last_line_offset+1:].decode("utf-8").strip()
     if path != "":
         return [os.path.join(path, file) for file in os.listdir(path)]
     return None

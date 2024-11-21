@@ -21,4 +21,9 @@ def on_build(config: powermake.Config):
 
     powermake.archive_files(config, objects)
 
+    print("print utf-8 french \"e accent grave\" to test decoding: è")
+
+    print("print non-utf8 byte to test decoding")
+    powermake.utils.print_bytes(b"\xf8")
+
 powermake.run("my_lib", build_callback=on_build)
