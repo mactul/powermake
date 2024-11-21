@@ -619,8 +619,8 @@ If the `"type"` field is omitted, his value is determined based on the name of t
       "path": "C:\\msys64\\ucrt64\\bin\\gcc.exe"
   }
   ```
-  > [!NOTE]  
-  > For mingw on Windows, you should simply set  `C:\msys64\ucrt64\bin` in your PATH and powermake will be able to find it automatically
+> [!NOTE]  
+> For mingw on Windows, you should simply set  `C:\msys64\ucrt64\bin` in your PATH and powermake will be able to find it automatically
 
 - The `"path"` field indicates where is the executable of the compiler. Note that PATH searching is always applied, so `"gcc"` work as well as `"/usr/bin/gcc"`  
   For using i386-elf-gcc on Linux, your compiler can be set like this:
@@ -1323,8 +1323,8 @@ Returns a set of filepaths that matches at least one of the patterns.
 Authorized patterns are:
 - `*` to match a filename, for example `"foo/*.c"` will match `"foo/test.c"` but not `"foo/bar/test.c"`
 - `**/` to match recursive directories, for example, `"foo/**/test.c"` will match  `"foo/test.c"` and `"foo/bar/test.c"`.  
-  > [!IMPORTANT]  
-  > `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
+> [!IMPORTANT]  
+> `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
 
 This function is variadic.
 
@@ -1340,8 +1340,8 @@ Returns a new filepaths set, filtered.
 Authorized patterns are:
 - `*` to match a filename, for example `"foo/*.c"` will match `"foo/test.c"` but not `"foo/bar/test.c"`
 - `**/` to match recursive directories, for example, `"foo/**/test.c"` will match  `"foo/test.c"` and `"foo/bar/test.c"`.  
-  > [!IMPORTANT]  
-  > `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
+> [!IMPORTANT]  
+> `"**.c"` will not match `"foo/test.c"`, you have to write `"**/*.c"` for that.
 
 This function is variadic.
 
