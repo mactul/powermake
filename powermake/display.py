@@ -21,17 +21,41 @@ def init_colors() -> None:
     colorama.init()
 
 
-def print_info(string: T.Any, verbosity: int, counter: int = 0, total: int = 0) -> None:
+def print_info(string: T.Any, verbosity: int, step_counter: int = 0, step_total: int = 0) -> None:
+    """
+    Display a string in Magenta if the verbosity is at least 1.
+
+    Parameters
+    ----------
+    string : Any
+        The printable object we want to display
+    verbosity : int
+        An integer >= 0, should be config.verbosity.
+    step_counter : int, optional
+        If non-zero, it's printed before the string in the format [step_counter/step_total]
+    step_total : int, optional
+        If `step_counter` is non-zero, [step_counter/step_total] is displayed before the string. If `step_total` is 0, it prints [step_counter/-]
+    """
     if verbosity >= 1:
-        if counter == 0:
+        if step_counter == 0:
             print(colorama.Fore.LIGHTMAGENTA_EX + str(string) + colorama.Style.RESET_ALL)
-        elif total != 0:
-            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{counter}/{total}] {round(100*counter/total)}% " + str(string) + colorama.Style.RESET_ALL)
+        elif step_total != 0:
+            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{step_counter}/{step_total}] {round(100*step_counter/step_total)}% " + str(string) + colorama.Style.RESET_ALL)
         else:
-            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{counter}/-] " + str(string) + colorama.Style.RESET_ALL)
+            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{step_counter}/-] " + str(string) + colorama.Style.RESET_ALL)
 
 
 def print_debug_info(string: T.Any, verbosity: int) -> None:
+    """
+    Display a string in Grey if the verbosity is at least 2.
+
+    Parameters
+    ----------
+    string : T.Any
+        The printable object we want to display
+    verbosity : int
+        An integer >= 0, should be config.verbosity.
+    """
     if verbosity >= 2:
         print(colorama.Fore.LIGHTBLACK_EX + str(string) + colorama.Style.RESET_ALL)
 

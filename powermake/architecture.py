@@ -17,6 +17,19 @@ import typing as T
 
 
 def simplify_architecture(architecture: str) -> str:
+    """
+    Reduce a string representing a specific architecture to either x86, x64, arm32 or arm64
+
+    Parameters
+    ----------
+    architecture : str
+        A precise architecture name.
+
+    Returns
+    -------
+    simplified_architecture: str
+        Either x86, x64, arm32, arm64 or "" if the architecture is unknown.
+    """
     arch = architecture.lower()
     if arch in ["x86", "x32", "80x86", "8086", "80386", "i286", "i386", "i486", "i586", "i686", "i786", "amd386", "am386", "amd486", "am486", "amd-k5", "amd-k6", "amd-k7"]:
         return "x86"
@@ -56,6 +69,23 @@ def get_toolchain_tool(path: str) -> T.Union[str, None]:
     return None
 
 def search_new_toolchain(toolchain_name: str, host_architecture: str, required_architecture: str) -> T.Union[str, None]:
+    """
+    Search a new toolchain name that better matches the architecture than the current toolchain.
+
+    Parameters
+    ----------
+    toolchain_name : str
+        The actual name of the toolchain
+    host_architecture : str
+        the host architecture
+    required_architecture : str
+        the requested target architecture
+
+    Returns
+    -------
+    str | None
+        A new toolchain or None if none is found.
+    """
     arch, toolchain_suffix = split_toolchain_architecture(toolchain_name)
     if arch == required_architecture:
         return toolchain_name

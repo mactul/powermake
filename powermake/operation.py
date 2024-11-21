@@ -141,17 +141,24 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
 
 
 def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_includedirs: T.List[str]) -> bool:
-    """Returns whether or not `outputfile` is up to date with all his dependencies
+    """
+    Returns whether or not `outputfile` is up to date with all his dependencies
 
     If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
 
-    Args:
-        outputfile (str): the path to the target file
-        dependencies (set): a set of all files on which `outputfile` depends
-        additional_includedirs (list): The list of additional includedirs used by the compiler. This is necessary to discover hidden dependencies.
+    Parameters
+    ----------
+    outputfile : str
+        The path to the target file.
+    dependencies : Iterable[str]
+        A set of all files on which `outputfile` depends.
+    additional_includedirs : list[str]
+        The list of additional includedirs used by the compiler. This is necessary to discover hidden dependencies.
 
-    Returns:
-        bool: True if `outputfile` is **not** up to date with all his dependencies and hidden dependencies.
+    Returns
+    -------
+    bool
+        True if `outputfile` is **not** up to date with all his dependencies and hidden dependencies.
     """
     try:
         output_date = os.path.getmtime(outputfile)
@@ -171,13 +178,19 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 
 class Operation:
     def __init__(self, outputfile: str, dependencies: T.Iterable[str], config: Config, command: T.List[str]):
-        """Provide a simple object that can execute a command only if it's needed.
+        """
+        Provide a simple object that can execute a command only if it's needed.
 
-        Args:
-            outputfile (str): the path to the target file
-            dependencies (set): a set of all files on which `outputfile` depends
-            config (Config): A powermake.Config object, the additional_includedirs in it should be completed
-            command (list): The command that will be executed by subprocess. It's a list representing the argv that will be passed to the program at the first list position.
+        Parameters
+        ----------
+        outputfile : str
+            The path to the target file.
+        dependencies : Iterable[str]
+            A set of all files on which `outputfile` depends
+        config : powermake.Config
+            A powermake.Config object, the additional_includedirs in it should be completed
+        command : list[str]
+            The command that will be executed by subprocess. It's a list representing the argv that will be passed to the program at the first list position.
         """
         self.outputfile = outputfile
         self.dependencies = dependencies
@@ -186,19 +199,26 @@ class Operation:
         self.config = config
 
     def execute(self, force: bool = False) -> str:
+        """
+        Verify if the outputfile is up to date with his dependencies and if not, execute the command.
+
+        Parameters
+        ----------
+        force : bool, optional
+            If True, this function will always execute the command without verifying if this is needed.
+
+        Returns
+        -------
+        outputfile: str
+            The outputfile, like that we can easily parallelize this method.
+
+        Raises
+        ------
+        RuntimeError
+            If the command fails.
+        """
         global _commands_counter
 
-        """Verify if the outputfile is up to date with his dependencies and if not, execute the command.
-
-        Args:
-            force (bool, optional): If True, this function will always execute the command without verifying if this is needed.
-
-        Raises:
-            RuntimeError: If the command fails.
-
-        Returns:
-            str: The outputfile, like that we can easily parallelize this method.
-        """
         if force or needs_update(self.outputfile, self.dependencies, self.config.additional_includedirs):
 
             if run_command(self.config, self.command, target=self.outputfile) == 0:

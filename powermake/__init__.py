@@ -25,26 +25,36 @@ import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
+from .utils import makedirs
+from . import utils, display
 from .__version__ import __version__
-from .utils import makedirs, join_absolute_paths, print_bytes
-from .display import print_info, print_debug_info, error_text
+from .display import print_info, print_debug_info
 from .operation import Operation, needs_update, run_command
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
 
 if hasattr(__makefile__, '__file__'):
+    # Change the cwd to the directory of the makefile.
     os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
 
 
 def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T.Any:
-    """Import a custom module from a path
+    """
+    Import a custom module from a path
 
-    Args:
-        module_name (str): The name of the module once it will be imported
-        module_path (str, optional): The path of the module, if None, it takes the module_name as a path.
+    You can do this instead of a regular `import` and updating the `PYTHONPATH` env variable.
 
-    Returns:
-        module: an module object, that you can use as a namespace
+    Parameters
+    ----------
+    module_name : str
+        The name of the module once it will be imported
+    module_path : str | None, optional
+        The path of the module, if None, it takes the module_name as a path.
+
+    Returns
+    -------
+    module : module
+        A module object, that you can use as a namespace
     """
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:
@@ -56,17 +66,22 @@ def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T
 
 
 def get_files(*patterns: str) -> T.Set[str]:
-    """Return all files on the disk that matches one of the patterns given
+    """
+    Return all files on the disk that matches one of the patterns given.
 
     Supported patterns are `*`, like `./*.c` and `**/` like `./**/*.c` to search all .c recursively, starting at `./`
 
-    Warning: `**.c` will not return all .c recursively, you have to use `**/*.c` for that.
+    **Warning**: `**.c` will not return all .c recursively, you have to use `**/*.c` for that.
 
-    Args:
-        patterns (str): As many patterns as you want to include
+    Parameters
+    ----------
+    *patterns : str
+        As many patterns as you want to include
 
-    Returns:
-        set: A set (unordered list) of files. You can use the methods `add` and `update` to add files to this set.
+    Returns
+    -------
+    files : set[str]
+        A set (unordered list) of files. You can use the methods `add` and `update` to add files to this set.
     """
     files = set()
     for pattern in patterns:
@@ -82,16 +97,22 @@ def _match_a_pattern(file: str, patterns: T.Iterable[str]) -> bool:
 
 
 def filter_files(files: T.Set[str], *patterns: str) -> T.Set[str]:
-    """Create a copy of the set `files` with all elements that matches `pattern` removed.
+    """
+    Create a copy of the set `files` with all elements that matches `pattern` removed.
 
     This function will equally works if `files` is an iterable but will always returns a set.
 
-    Args:
-        files (set): The set of files to filter
-        patterns (str): As many patterns as you want to exclude
+    Parameters
+    ----------
+    files : set[str]
+        The set of files to filter.
+    *patterns : str
+        As many patterns as you want to exclude
 
-    Returns:
-        set: the filtered set
+    Returns
+    -------
+    files : set[str]
+        the filtered set
     """
     output = set()
     for file in files:
@@ -100,7 +121,7 @@ def filter_files(files: T.Set[str], *patterns: str) -> T.Set[str]:
     return output
 
 
-def file_in_files_set(file: str, files_set: T.Iterable[str]) -> bool:
+def _file_in_files_set(file: str, files_set: T.Iterable[str]) -> bool:
     for f in files_set:
         if os.path.samefile(f, file):
             return True
@@ -108,24 +129,34 @@ def file_in_files_set(file: str, files_set: T.Iterable[str]) -> bool:
 
 
 def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force: T.Union[bool, None] = None) -> T.Union[T.Set[str], T.List[str]]:
-    """Compile each C/C++/ASM file in the `files` set according to the compiler and options stored in `config`
+    """
+    Compile each C/C++/ASM file in the `files` set according to the compiler and options stored in `config`
 
     The compilation is parallelized with `config.nb_jobs` threads
 
     If `files` is a list, compile_files will return a list instead of a set, with the order preserved
 
-    Args:
-        config (Config): A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
-        files (set): A set of files that ends by .c, .cpp, .cc, .C, .s, .S or .asm to compile in .o (or the specified compiler equivalent extension)
-        force (bool, optional): Whether the function should verify if a file needs to be recompiled or if it should recompile everything.  
-            If not specified, this parameter takes the value of config.rebuild
+    Parameters
+    ----------
+    config : powermake.Config
+        A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
+    files : set[str] | list[str]
+        A set of files that ends by .c, .cpp, .cc, .C, .s, .S or .asm to compile in .o (or the specified compiler equivalent extension)
+    force : bool | None, optional
+        Whether the function should verify if a file needs to be recompiled or if it should recompile everything.  
+        If not specified, this parameter takes the value of config.rebuild
 
-    Raises:
-        RuntimeError: if no compiler is found
-        ValueError: if `files` contains a file that doesn't ends with .c, .cpp, .cc, .C, .s, .S or .asm
+    Returns
+    -------
+    set[str] | list[str]
+        A set of object filepaths generated by by the compilation
 
-    Returns:
-        set: A set of object filepaths generated by by the compilation
+    Raises
+    ------
+    RuntimeError
+        If no compiler is found.
+    ValueError
+        if `files` contains a file that doesn't ends with .c, .cpp, .cc, .C, .s, .S or .asm.
     """
     generated_objects: T.Union[T.Set[str], T.List[str]] = set()
 
@@ -140,7 +171,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         force = config.rebuild
 
     if config.single_file is not None:
-        if file_in_files_set(config.single_file, files):
+        if _file_in_files_set(config.single_file, files):
             if isinstance(files, set):
                 files = {config.single_file}
             else:
@@ -176,9 +207,9 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         elif config.cpp_compiler is not None:
             obj_extension = config.cpp_compiler.obj_extension
         else:
-            raise RuntimeError(error_text("No C/C++ compiler has been specified and the default config didn't find any"))
+            raise RuntimeError(display.error_text("No C/C++ compiler has been specified and the default config didn't find any"))
 
-        output_file = join_absolute_paths(config.obj_build_directory, file + obj_extension)
+        output_file = utils.join_absolute_paths(config.obj_build_directory, file + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
         if "../" in file:
@@ -187,22 +218,22 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
         if file.endswith(".c"):
             if config.c_compiler is None:
-                raise RuntimeError(error_text("No C compiler has been specified and the default config didn't find any"))
+                raise RuntimeError(display.error_text("No C compiler has been specified and the default config didn't find any"))
             command = config.c_compiler.basic_compile_command(output_file, file, c_args)
         elif file.endswith((".cpp", ".cc", ".C")):
             if config.cpp_compiler is None:
-                raise RuntimeError(error_text("No C++ compiler has been specified and the default config didn't find any"))
+                raise RuntimeError(display.error_text("No C++ compiler has been specified and the default config didn't find any"))
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
         elif file.endswith((".s", ".S")):
             if config.as_compiler is None:
-                raise RuntimeError(error_text("No AS compiler has been specified and the default config didn't find any"))
+                raise RuntimeError(display.error_text("No AS compiler has been specified and the default config didn't find any"))
             command = config.as_compiler.basic_compile_command(output_file, file, as_args)
         elif file.endswith(".asm"):
             if config.asm_compiler is None:
-                raise RuntimeError(error_text("No ASM compiler has been specified and the default config didn't find any"))
+                raise RuntimeError(display.error_text("No ASM compiler has been specified and the default config didn't find any"))
             command = config.asm_compiler.basic_compile_command(output_file, file, asm_args)
         else:
-            raise ValueError(error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
+            raise ValueError(display.error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
         op = Operation(output_file, {file}, config, command)
         if isinstance(files, set):
             T.cast(T.Set[Operation], operations).add(op)
@@ -234,20 +265,30 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
 
 def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
-    """Create a static library from A set of object files.
+    """
+    Create a static library from a set or a list of object files.
 
-    Args:
-        config (Config): A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
-        object_files (set or list): A set of object files, potentially the set generated by `compile_files`. It can be a list if the order matters.
-        archive_name (str, optional): The name of the static library you want to create, minus the extension. If None, it will be lib{config.target_name}
-        force (bool, optional): Whether the function should verify if the static library needs to be re-archived or if it should re-archive in any case.  
-            If not specified, this parameter takes the value of config.rebuild
+    Parameters
+    ----------
+    config : powermake.Config
+        A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
+    object_files : Iterable[str]
+        A set of object files, potentially the set generated by `powermake.compile_files`. It can be a list if the order matters.
+    archive_name : str | None, optional
+        The name of the static library you want to create, minus the extension. If None, it will be lib{config.target_name}
+    force : bool | None, optional
+        Whether the function should verify if the static library needs to be re-archived or if it should re-archive in any case.  
+        If not specified, this parameter takes the value of config.rebuild
 
-    Raises:
-        RuntimeError: if no archiver is found
+    Returns
+    -------
+    path : str
+        The path of the archive generated
 
-    Returns:
-        str: the path of the archive generated
+    Raises
+    ------
+    RuntimeError
+        If no archiver is found.
     """
     if force is None:
         force = config.rebuild
@@ -256,7 +297,7 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         archive_name = "lib" + config.target_name
 
     if config.archiver is None:
-        raise RuntimeError(error_text("No archiver has been specified and the default config didn't find any"))
+        raise RuntimeError(display.error_text("No archiver has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, archive_name + config.archiver.static_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
@@ -264,21 +305,32 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
 
 
 def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[str] = [], executable_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
-    """Create an executable from a list of object files and a list of archive files.
+    """
+    Create an executable from a list of object files and a list of archive files.
 
-    Args:
-        config (Config): A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
-        object_files (set or list): A set of object files, potentially the set generated by `compile_files`. It can be a list if the order matters.
-        archives (list): A set of static libraries filepaths
-        executable_name (str, optional): The name of the executable you want to create, minus the extension. If None, it will be config.target_name
-        force (bool, optional): Whether the function should verify if the executable needs to be re-linked or if it should re-link in any case.  
-            If not specified, this parameter takes the value of config.rebuild
+    Parameters
+    ----------
+    config : powermake.Config
+        A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
+    object_files : Iterable[str]
+        A set of object files, potentially the set generated by `powermake.compile_files`. It can be a list if the order matters.
+    archives : list[str], optional
+        A list of static libraries filepaths.
+    executable_name :str | None, optional
+        The name of the executable you want to create, minus the extension. If None, it will be config.target_name.
+    force : bool | None, optional
+        Whether the function should verify if the executable needs to be re-linked or if it should re-link in any case.  
+        If not specified, this parameter takes the value of config.rebuild
 
-    Raises:
-        RuntimeError: if no linker is found
+    Returns
+    -------
+    path: str
+        The path of the executable generated
 
-    Returns:
-        str: the path of the executable generated
+    Raises
+    ------
+    RuntimeError
+        If no linker is found.
     """
     if force is None:
         force = config.rebuild
@@ -287,7 +339,7 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
         executable_name = config.target_name
 
     if config.linker is None:
-        raise RuntimeError(error_text("No linker has been specified and the default config didn't find any"))
+        raise RuntimeError(display.error_text("No linker has been specified and the default config didn't find any"))
     extension = ""
     if config.target_is_windows():
         extension = ".exe"
@@ -299,21 +351,32 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
 
 def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.List[str] = [], lib_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
-    """Create a shared library from a list of object files and a list of archive files.
+    """
+    Create a shared library from a list of object files and a list of archive files.
 
-    Args:
-        config (Config): A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
-        object_files (set): A set of object files, potentially the set generated by `compile_files`
-        archives (list): A set of static libraries filepaths
-        lib_name (str, optional): The name of the library you want to create, minus the extension. If None, it will be lib{config.target_name}
-        force (bool, optional): Whether the function should verify if the library needs to be re-linked or if it should re-link in any case.  
-            If not specified, this parameter takes the value of config.rebuild
+    Parameters
+    ----------
+    config : powermake.Config
+        A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
+    object_files : Iterable[str]
+        A set of object files, potentially the set generated by `powermake.compile_files`. It can be a list if the order matters.
+    archives : list[str], optional
+        A list of static libraries filepaths.
+    lib_name :str | None, optional
+        The name of the library you want to create, minus the extension. If None, it will be lib{config.target_name}.
+    force : bool | None, optional
+        Whether the function should verify if the library needs to be re-linked or if it should re-link in any case.  
+        If not specified, this parameter takes the value of config.rebuild
 
-    Raises:
-        RuntimeError: if no shared linker is found
+    Returns
+    -------
+    path: str
+        The path of the library generated
 
-    Returns:
-        str: the path of the library generated
+    Raises
+    ------
+    RuntimeError
+        If no shared linker is found.
     """
     if force is None:
         force = config.rebuild
@@ -322,7 +385,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         lib_name = "lib" + config.target_name
 
     if config.shared_linker is None:
-        raise RuntimeError(error_text("No shared linker has been specified and the default config didn't find any"))
+        raise RuntimeError(display.error_text("No shared linker has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, lib_name + config.shared_linker.shared_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
@@ -330,36 +393,50 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
     return Operation(output_file, set(object_files).union(archives), config, command).execute(force=force)
 
 
-def delete_files_from_disk(*filepaths: str) -> None:
-    """Delete a set of filepaths from the disk and ignore them if they don't exists
+def delete_files_from_disk(*patterns: str) -> None:
     """
-    for filepath in filepaths:
-        try:
+    Delete files and folders match at least one of the patterns.
+
+    Warning: These files are permanently deleted.
+    """
+    for pattern in patterns:
+        filepaths = get_files(pattern)
+        for filepath in filepaths:
             os.remove(filepath)
-        except OSError:
-            pass
 
 
 def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None) -> T.Union[T.List[str], None]:
-    """Run a powermake from another directory and returns a list of path to all libraries generated
+    """
+    Run a powermake from another directory and returns a list of path to all libraries generated
 
-    Args:
-        config (Config): A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
-        path (str): The path of the powermake to run
-        debug (bool, optional): Whether the other powermake should be run in debug mode.  
-            If not specified, this parameter takes the value of config.debug
-        rebuild (bool, optional): Whether the other powermake should be run in rebuild mode.  
-            If not specified, this parameter takes the value of config.rebuild
-        verbosity (int, optional): With which verbosity level the other powermake should be run.  
-            If not specified, this parameter takes the value of config.verbosity
-        nb_jobs (int, optional): With how many threads the other powermake should be run.  
-            If not specified, this parameter takes the value of config.nb_jobs
+    Parameters
+    ----------
+    config : powermake.Config
+        A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
+    path : str
+        The path of the powermake to run.
+    debug : bool | None, optional
+        Whether the other powermake should be run in debug mode.  
+        If not specified, this parameter takes the value of config.debug
+    rebuild : bool | None, optional
+        Whether the other powermake should be run in rebuild mode.  
+        If not specified, this parameter takes the value of config.rebuild
+    verbosity : int | None, optional
+        With which verbosity level the other powermake should be run.  
+        If not specified, this parameter takes the value of config.verbosity
+    nb_jobs : int | None, optional
+        With how many threads the other powermake should be run.  
+        If not specified, this parameter takes the value of config.nb_jobs
 
-    Raises:
-        RuntimeError: if the other powermake fails
+    Returns
+    -------
+    paths: list[str] | None
+        A list of path to all libraries generated
 
-    Returns:
-        list: A list of path to all libraries generated
+    Raises
+    ------
+    RuntimeError
+        If the other powermake fails.
     """
     if debug is None:
         debug = config.debug
@@ -388,14 +465,14 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     try:
         output: bytes = subprocess.check_output(command, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print_bytes(e.output)
-        raise RuntimeError(error_text(f"Failed to run powermake {path}")) from None
+        utils.print_bytes(e.output)
+        raise RuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
 
     last_line_offset = output[:-1].rfind(ord('\n'))
     if last_line_offset == -1:
         return None
 
-    print_bytes(output[:last_line_offset])
+    utils.print_bytes(output[:last_line_offset])
 
     path = output[last_line_offset+1:].decode("utf-8").strip()
     if path != "":

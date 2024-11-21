@@ -4,6 +4,20 @@ import tempfile
 
 
 def makedirs(path: str, exist_ok: bool = True) -> None:
+    """
+    Generate directories recursively.
+    Equivalent of `mkdir -p $PATH` on Linux.
+
+    The only difference with `os.makedirs` is that this function accept a empty path; it just do nothing in this case.
+
+    Parameters
+    ----------
+    path : str
+        The path of the directory to create recursively.
+    exist_ok : bool, optional
+        - if `False`, raises an error if the directory already exists.
+        - if `True`, an existing directory is just ignored.
+    """
     if path != '':
         os.makedirs(path, exist_ok=exist_ok)
 

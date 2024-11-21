@@ -27,10 +27,13 @@ from .display import print_info, print_debug_info, init_colors, error_text
 
 
 def default_on_clean(config: Config) -> None:
-    """Remove exe, lib and obj directories
+    """
+    Remove exe, lib and obj directories
 
-    Args:
-        config (Config): the object given by `powermake.run`
+    Parameters
+    ----------
+    config : powermake.Config
+        the object given by `powermake.run`
     """
     print_info("Cleaning", config.verbosity)
 
@@ -48,7 +51,8 @@ def default_on_clean(config: Config) -> None:
 
 
 def default_on_install(config: Config, location: T.Union[str, None]) -> None:
-    """Install binary files, library files and exported headers into the subfolders `bin/`, `lib/` and `include/` of the location provided.
+    """
+    Install binary files, library files and exported headers into the subfolders `bin/`, `lib/` and `include/` of the location provided.
 
     You can directly give this function as a callback to `powermake.run` (it's the default behavior), but it's even better to call it from your own implementation of the install_callback.
     Like that, you can do work before this function, especially adding exported headers to the config with `config.add_exported_headers`
@@ -57,9 +61,12 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
 
     For each exported header, if it has been exported with a None subfolder, it is simply copied into `include/`. If it has been exported with a subfolder, it is copied into `include/{subfolder}/`
 
-    Args:
-        config (Config): The powermake.Config object created by the `powermake.run`. You should have called the method `config.add_exported_headers` on this object before giving it to this function.
-        location (str): Where to install `bin/`, `lib/` and `include/` subfolders. Ideally, if the location given to the install_callback by `powermake.run` was not None, you should give that to this function.
+    Parameters
+    ----------
+    config : powermake.Config
+        The powermake.Config object created by the `powermake.run`. You should have called the method `config.add_exported_headers` on this object before giving it to this function.
+    location : str | None
+        Where to install `bin/`, `lib/` and `include/` subfolders. Ideally, if the location given to the install_callback by `powermake.run` was not None, you should give that to this function.
     """
     if location is None:
         location = "./install/"
@@ -112,6 +119,14 @@ def get_version_str() -> str:
     return f"PowerMake {__version__}\nCopyright (C) 2024 Macéo Tuloup\nLicense Apache-2.0: <http://www.apache.org/licenses/LICENSE-2.0>\nThis is a free software; see the sources for copying conditions: <https://github.com/mactul/powermake>\nThere is NO WARRANTY, to the extent permitted by law."
 
 class ArgumentParser(argparse.ArgumentParser):
+    """
+    This object is a superset of [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html), you can read the documentation of argparse, it works exactly the same.
+
+    Warning
+    -------
+    **Use this object and never argparse.ArgumentParser directly** or you will break some powermake features. Obviously the usual command line options will be broken but you will also break other features like the [powermake.run_another_powermake](#powermakerun_another_powermake) function. This object ensure that none of this is broken.
+
+    """
     def __init__(self, prog: T.Union[str, None] = None, description: T.Union[str, None] = None, **kwargs: T.Any):
         if prog is None:
             prog = "python YOUR_MAKEFILE.py"
@@ -142,7 +157,20 @@ class ArgumentParser(argparse.ArgumentParser):
 
 
 def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, None] = None) -> Config:
-    """Parse the command line and create a powermake.Config object according to the command line arguments."""
+    """
+    Parse the command line and create a powermake.Config object.
+
+    If you use this function, you should call `powermake.run_callbacks` after.
+
+    Don't use the powermake.Config constructor, use this or powermake.run instead.
+
+    Parameters
+    ----------
+    target_name : str
+        The name of your application. It will be stored in the config and used for default naming.
+    args_parsed : argparse.Namespace | optional
+        Should be left to None. If set, it should be created by powermake.ArgumentParser().parse_args() to have all the required members for the Namespace
+    """
     parser = None
     if args_parsed is None:
         parser = ArgumentParser()
@@ -189,7 +217,28 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
 
 
 def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install) -> None:
-    """From a config generated by `powermake.generate_config` start each callback according to the command line."""
+    """
+    From a powermake.Config object generated by `powermake.generate_config` it calls the appropriate callback according to what is specified on the command line.
+
+    If multiples actions are passed trough the command line, like `-cri` (or `--clean --rebuild --install` in the long form), multiple callbacks can be called.  
+    Callbacks are always called in this order: clean -> build -> install.
+
+    Warning
+    -------
+    You shouldn't run anything important after the return of this function, because if `--get-lib-build-folder` is provided on the command line, this function calls `exit(0)`
+
+    Parameters
+    ----------
+    config : powermake.Config
+        The config generated by `powermake.generate_config`
+    build_callback : Callable[[Config], None]
+        The function that will be called when building or rebuilding. This callback takes a single parameter: config
+    clean_callback : Callable[[Config], None], optional
+        The function that will be called when cleaning. This callback takes a single parameter: config
+    install_callback : T.Callable[[Config, T.Union[str, None]], None], optional
+        The function that will be called when installing. This callback takes 2 parameters: config and location.  
+        If the location is not provided on the command line, his value is None
+    """
 
     clean = False
     build = False
@@ -230,20 +279,29 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
 
 
 def run(target_name: str, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install, args_parsed: T.Union[argparse.Namespace, None] = None) -> None:
-    """Parse the command line, create a powermake.Config object according to the command line arguments and call the appropriate callback.
+    """
+    Parse the command line, create a powermake.Config object according to the command line arguments and call the appropriate callback.
 
     If multiples actions are passed trough the command line, like `-cri` (or `--clean --rebuild --install` in the long form), multiple callbacks can be called.  
     Callbacks are always called in this order: clean -> build -> install.
 
-    Warning: You shouldn't run anything important after the return of this function, because if `--get-lib-build-folder` is provided on the command line, this function call `exit(0)`
+    Warning
+    -------
+    You shouldn't run anything important after the return of this function, because if `--get-lib-build-folder` is provided on the command line, this function calls `exit(0)`
 
-    Args:
-        target_name (str): The name of your application. It will be stored in the config and used for default naming.
-        build_callback (callable): The function that will be called when building or rebuilding. This callback takes a single parameter: config
-        clean_callback (callable, optional): The function that will be called when cleaning. This callback takes a single parameter: config
-        install_callback (callable, optional): The function that will be called when installing. This callback takes 2 parameters: config and location.  
-            If the location is not provided on the command line, his value is None
-        args_parsed (argparse.Namespace, optional): Should be left to None. If set, it should be created by powermake.ArgumentParser().parse_args() to have all the required members for the Namespace
+    Parameters
+    ----------
+    target_name : str
+        The name of your application. It will be stored in the config and used for default naming.
+    build_callback : Callable[[Config], None]
+        The function that will be called when building or rebuilding. This callback takes a single parameter: config
+    clean_callback : Callable[[Config], None], optional
+        The function that will be called when cleaning. This callback takes a single parameter: config
+    install_callback : T.Callable[[Config, T.Union[str, None]], None], optional
+        The function that will be called when installing. This callback takes 2 parameters: config and location.  
+        If the location is not provided on the command line, his value is None
+    args_parsed : argparse.Namespace | optional
+        Should be left to None. If set, it should be created by powermake.ArgumentParser().parse_args() to have all the required members for the Namespace
     """
 
     config = generate_config(target_name, args_parsed)
