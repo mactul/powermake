@@ -29,6 +29,11 @@ def on_build(config: powermake.Config):
     # Search recursively into subfolders.
     files = powermake.get_files("**/*.c", "**/*.cpp")
 
+    # This line is optional. It's purpose is to enable percent elapsed display.
+    # The number of operations here is the number of files to compile (len(files))
+    # + the operation of linking everything together
+    config.nb_total_operations = len(files) + 1
+
     # Compile each file in the set files with the C and C++ compiler of the config object.
     # This function parallelize the compilation of each file
     # returns a set containing the path of each .o (or equivalent)
@@ -67,6 +72,9 @@ def on_build(config: powermake.Config):
     # These flags are not translated for the moment but this will arrive soon
     config.add_ld_flags("-static")
 
+    # always optional
+    config.nb_total_operations = len(files) + 1
+
     objects = powermake.compile_files(config, files)
 
     powermake.link_files(config, objects)
@@ -87,6 +95,9 @@ def on_build(config: powermake.Config):
     config.add_includedirs("./", "/usr/include/mariadb/")
 
     config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
+
+    # always optional
+    config.nb_total_operations = len(files) + 1
 
     objects = powermake.compile_files(config, files)
 
@@ -132,6 +143,9 @@ def on_build(config: powermake.Config):
 
     config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
 
+    # always optional
+    config.nb_total_operations = len(files) + 1
+
     objects = powermake.compile_files(config, files)
 
     # link all object files into a shared library.
@@ -150,7 +164,7 @@ def on_install(config: powermake.Config, location: str):
             location = "C:/personal_libs/"
         else:
             location = "/usr/local/"
-    
+
     # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
     # The .so (or .dll and .lib - or equivalent) will be copied into /usr/local/lib/my_lib.so
     config.add_exported_headers("my_lib.h", subfolder="my_lib")

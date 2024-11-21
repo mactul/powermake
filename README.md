@@ -22,6 +22,10 @@
     - [powermake.run](#powermakerun)
     - [powermake.Config](#powermakeconfig)
       - [Members](#members)
+        - [debug](#debug)
+        - [rebuild](#rebuild)
+        - [nb\_total\_operations](#nb_total_operations)
+        - [target\_name](#target_name)
         - [nb\_jobs](#nb_jobs)
         - [compile\_commands\_dir](#compile_commands_dir)
         - [host\_operating\_system](#host_operating_system)
@@ -114,17 +118,18 @@
 
 Powermake is a utility that compiles C/C++/AS/ASM code, just like Make, Ninja, cmake, or xmake.
 
-His goal is to give full power to the user, while being cross-platform, easier to use than Make, and faster than Ninja.
+His goal is to give full power to the user, while being cross-platform and easier to use than Make.
+
+Powermake extends what is possible to do during the compilation by providing a lot of functions to manipulate your files and a lot of freedom on the way you will implement your makefile.  
+Powermake is entirely configurable, but for every behavior you haven't explicitly defined, PowerMake will do most of the job for you by detecting installed toolchains, translating compiler flags, etc...
 
 ## For which project is PowerMake suitable?
 
 PowerMake was specifically designed for complex projects that have very complicated compilation steps, with a lot of pre-built tasks that need to be compiled on multiple operating systems with different options.
 
-## Advantages of PowerMake
+However, today, even for a 5 files project on Linux with GCC, PowerMake is more convenient than make because out of the box it provides a debug/release mode with different options and different build directories, it can generates a compile_commands.json file for a better integration with vscode, it detects better than make when files need to be recompiled, it provides default rebuild/clean/install options without any configuration, etc...
 
-- Extremely fast:
-  - PowerMake is faster than Ninja/make/xmake when building a project for the first time.
-  - There are still some improvements to do to detect that there is nothing to do for a huge codebase because PowerMake doesn't store hidden dependencies (header files). But with less than 2000 files, this step is almost instant.
+## Advantages of PowerMake
 
 - Cross-Platform:
   - PowerMake can detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
@@ -132,12 +137,20 @@ PowerMake was specifically designed for complex projects that have very complica
   - Because it's written in python it works on almost all machines and you can always write the compilation instructions for your machine and your compiler.
 
 - Gives you complete control of what you are doing. Nothing is hidden and any behavior can be overwritten.
+  - Missing features can always be written in the makefile.
+
+- Provides good automatic configurations
+  - PowerMake have local and global config files, but on top of that, PowerMake is able to automatically find a value that make sense for each field that is not explicitly assigned, you can easily have very basic configurations files (often no config file at all) and it will still work for most systems.
+
+- Extremely fast:
+  - PowerMake is faster than make/xmake and most of the time faster than Ninja when building a project for the first time.
+  - There are still some improvements to do to detect that there is nothing to do for a huge codebase because PowerMake doesn't store hidden dependencies (header files). But with less than 2000 files, this step is almost instant.
 
 ## Disadvantages of PowerMake
 
-- PowerMake is very young so it changes a lot with each version and you may have to write some features by yourself (the whole point of PowerMake is that you can write missing features).
+- PowerMake is very young so it changes a lot with each version and you may have to write some features by yourself (the whole point of PowerMake is that you can write missing features). In theory retrocompatibilty is kept between versions, but this might not be true if you are using very specific features, especially undocumented ones.
 
-- Because PowerMake gives you full control, the tool can't know what you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is run the PowerMake where it stands and scan its output directory. This works well but has some limitations...
+- Because PowerMake gives you full control, the tool can't know what you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is run the PowerMake where it stands and scan its output directory. This works well but has some limitations... Another example of this problem is that PowerMake can't know how many steps will be done during the compilation, so if you want PowerMake to print the percent of compilation elapsed, you have to manually specify the number of steps PowerMake will do.
 
 ## Philosophy
 
@@ -146,10 +159,37 @@ All other Make-like utilities that I know parse a file to understand directives 
 PowerMake does the opposite. You write a python script, you do whatever you like in this script and you call PowerMake functions to help you compile your code.  
 This gives you complete control; you can retrieve files from the web, read and write files, and even train a Neural Network if you want, and at any time you can use Powermake functions to help you in your compilation journey.
 
+This also mean that the philosophy is completely different than in tool like make.  
+When you read a GNU Makefile, you start at the end, the final target and you read each target dependency recursively before executing the task.  
+In a GNU Makefile, the order of each target doesn't reflect at all the order of execution.
+
+Powermake is read as a script. the order of each instruction has a capital importance. The first step is read, if it needs to be executed, it's executed, then the next step is read, etc...
+- The main advantage of this approach is that it's extremely easy to write and read the makefile, it's just a good old script that executes from top to bottom. You can also do loops, functions, etc... everything python offers which is way more powerful than the make approach.
+- The main disadvantage of this approach is that that steps during the makefile can't automatically be parallelized. [powermake.compile_files](#powermakecompile_files) offers a good parallelization that counteracts this problem, but you have to compile most of your files in this function for this parallelization to have an effect. The worse thing you can do is loop over each one of your file and call this function for one file at a time.
+
 ## Installation
 
+> [!WARNING]  
+> In this documentation, the command `python` refers to python >= python 3.7.  
+> On old systems, `python` and `pip` can refer to python 2.7, in this case, use `python3` and `pip3`.
+
+Install from Pypi: (RECOMMENDED)
 ```sh
 pip install -U powermake
+```
+Don't hesitate to run this command regularly to benefit from new features and bug fixes.
+
+
+Or install from sources: (NOT RECOMMENDED AT ALL - might be unstable)
+```sh
+# USE AT YOUR OWN RISKS
+pip install -U build twine
+git clone https://github.com/mactul/powermake
+cd powermake
+sed -i "s/{{VERSION_PLACEHOLDER}}/0.0.0/g" pyproject.toml
+rm -rf ./dist/
+python -m build
+pip install -U dist/powermake-*-py3-none-any.whl --force-reinstall
 ```
 
 ## Quick Example
@@ -430,9 +470,62 @@ Please note that this example is incoherent, but it shows as many options as pos
 
 #### Members
 
-All fields have the same name in the `powermake_config.json` and in the `powermake.Config` object, so we have grouped them below.
+All fields that can be set in the `powermake_config.json` have the same name in the `powermake.Config` object, so we have grouped them below.
+
+Most of the `powermake.Config` members can be set in the json configuration but there are 4 exceptions: `config.debug`, `config.rebuild`, `config.nb_total_operations` and `config.target_name`.
+
+##### debug
+```py
+config.debug: bool
+```
+This member is `True` if the the makefile is ran in debug mode (with the flag -d or the flag --debug).  
+Changing this at runtime will not do anything useful, please use [powermake.set_debug](#set_debug).
+
+> [!IMPORTANT]  
+> This member is one of the 4 exceptions that can't be set in the json configuration.
+
+
+##### rebuild
+```py
+config.rebuild: bool
+```
+This member is `True` if the the makefile is ran in rebuild mode (with the flag -r or the flag --rebuild).  
+If you change its value at runtime, the following steps will change their behavior.
+
+> [!IMPORTANT]  
+> This member is one of the 4 exceptions that can't be set in the json configuration.
+
+
+##### nb_total_operations
+```py
+config.nb_total_operations: int
+```
+This member is always 0 after the creation of a new powermake.Config object, if you set a value > 0, if PowerMake is not in quiet mode, it will display a percent of the compilation elapsed at each step, calculated based on the value of this member.
+
+For example, if you compile `len(files)` files and you then link all these files, you should set:
+```py
+config.nb_total_operations = len(files) + 1
+```
+
+> [!IMPORTANT]  
+> This member is one of the 4 exceptions that can't be set in the json configuration.
+
+
+##### target_name
+```py
+config.target_name: str
+```
+
+The name registered by [powermake.run](#powermakerun). It's used to determine the default name of executables and libraries.
+
+> [!IMPORTANT]  
+> This member is one of the 4 exceptions that can't be set in the json configuration.
+
 
 ##### nb_jobs
+```py
+config.nb_jobs: int
+```
 
 This number determines how many threads the compilation should be parallelized.  
 If non-set or set to zero, this number is chosen according to the number of CPU cores you have.
@@ -443,50 +536,65 @@ This can be overwritten by the command-line.
 
 
 ##### compile_commands_dir
-
+```py
+config.compile_commands_dir: str | None
+```
 If this is set, [powermake.compile_files](#powermakecompile_files) will generate a `compile_commands.json` in the directory specified by this parameter.
 
 
 ##### host_operating_system
-
-A string representing the name of your operating system. For the moment it doesn't serve any purpose, but you can access it if needed.
+```py
+config.host_operating_system: str
+```
+A string representing the name of your operating system.
 
 > [!TIP]  
 > It's not recommended to set this in the json file, the autodetection should do a better job.
 
 
 ##### target_operating_system
+```py
+config.target_operating_system: str
+```
 
 A string representing the name of the operating system for which the executable is for.  
 It's used to determine the subfolder of the build folder and for the functions `target_is_linux`, `target_is_windows`, etc...
 
+On Linux, if you set this to "Windows" (or anything that starts win "win"), it will enable mingw as the default toolchain.
+
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
 - > [!WARNING]  
-  > Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated
+  > Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated.
 
 
 ##### host_architecture
-
+```py
+config.host_architecture: str
+```
 A string representing the architecture of your system, which can be "amd64", "x64", "x86", "i386", etc...  
-If you need an easier string to work with, use `config.host_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
-For the moment it doesn't serve any purpose, but you can access it if needed.
+If you need an easier string to work with, use `config.host_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".
 
 > [!TIP]  
 > It's not recommended to set this in the json file, the autodetection should do a better job.
 
 
 ##### target_architecture
-
+```py
+config.target_architecture: str
+```
 A string representing the architecture of the executable, which can be "amd64", "x64", "x86", "i386", etc...  
 If you need an easier string to work with, use `config.target_simplified_architecture` which can only be "x86", "x64", "arm32" or "arm64".  
-It's used to determine the subfolder of the build folder and to set the compiler architecture. However, for the moment, gcc and clang only switch from 64 bits to 32 bits. If you are on x64 and you set the target_architecture to "arm32", you will in reality compile for x86. You have to give the path of a cross-compiler to achieve what you want.
+It's used to determine the subfolder of the build folder and to set the compiler architecture (if possible).
 
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
 - > [!WARNING]  
-  > Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture
+  > Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture, use [config.set_target_architecture](#set_target_architecture) to reload the environment.
 
 
 ##### c_compiler
+```py
+config.c_compiler: powermake.compilers.Compiler
+```
 
 This one is different in the json config and the loaded config.
 
@@ -499,12 +607,12 @@ In the json config, it's defined as an object with 2 fields, like this:
 ```
 If the `"path"` field is omitted, the compiler corresponding to the type is searched in the path. For example if `"type"` is `"msvc"`, the compiler "cl.exe" is searched in the path.
 
-If the `"type"` field is omitted, his default value is `"gnu"`.
+If the `"type"` field is omitted, his value is determined based on the name of the executable and the rest of the toolchain.
 
 
-- The `"type"` field can have the value `"gnu"`, `"gcc"`, `"clang"`, `"msvc"` or `"clang-cl"`.  
-  It determines the syntax that should be used. For example, if you are using mingw, the syntax of the compiler is the same as the `gcc` syntax, and the default callback used by [powermake.run](#powermakerun) if the `default_callback` is unspecified but you can use it whenever you want.
-our compiler should be set like this:
+- The `"type"` field can have the value `"gnu"`, `"gcc"`, `"clang"`, `"mingw"`, `"msvc"` or `"clang-cl"`.  
+  It determines the syntax that should be used. For example, if you are using afl-gcc, the syntax of the compiler is the same as the `gcc` syntax.  
+  For mingw on Windows, our compiler should be set like this:
   ```json
   "c_compiler" {
       "type": "gcc",
@@ -514,29 +622,36 @@ our compiler should be set like this:
   > [!NOTE]  
   > For mingw on Windows, you should simply set  `C:\msys64\ucrt64\bin` in your PATH and powermake will be able to find it automatically
 
-- The `"path"` field indicates where is the executable of the compiler. Note that PATH searching is always applied, so `"gcc"` work as well as `"/usr/bin/gcc"`
-  For mingw on Linux, your compiler can be set like this:
+- The `"path"` field indicates where is the executable of the compiler. Note that PATH searching is always applied, so `"gcc"` work as well as `"/usr/bin/gcc"`  
+  For using i386-elf-gcc on Linux, your compiler can be set like this:
   ```json
   "c_compiler" {
       "type": "gcc",
-      "path": "x86_64-w64-mingw32-gcc"
+      "path": "i386-elf-gcc"
   }
   ```
 
 When the `powermake.Config` object is loaded, the `c_compiler` member is no longer a `dict`, it's a virtual class that inherits from `powermake.compilers.Compiler` and which can generate compile commands. see [documentation is coming]
 
 ##### cpp_compiler
+```py
+config.cpp_compiler: powermake.compilers.Compiler
+```
 
 The cpp_compiler behave exactly like the [c_compiler](#c_compiler) but the possible types are:
 - `gnu++`
 - `g++`
 - `clang++`
 - `msvc`
+- `mingw++`
 
 You can also use one of the [c_compiler](#c_compiler) types, but in this case you **must** add a path, or the compilers will not be C++ compilers.
 
 
 ##### as_compiler
+```py
+config.as_compiler: powermake.compilers.Compiler
+```
 
 This compiler is used to compile GNU Assembly (.s and .S files)
 
@@ -544,11 +659,15 @@ The as_compiler behave exactly like the [c_compiler](#c_compiler) but the possib
 - `gnu`
 - `gcc`
 - `clang`
+- `mingw`
 
 You can also use one of the [asm_compiler](#asm_compiler) types if you have to compile a .s or .S file with `nasm` or something like that.
 
 
 ##### asm_compiler
+```py
+config.asm_compiler: powermake.compilers.Compiler
+```
 
 This compiler is used to compile .asm files (generally Intel asm)
 
@@ -559,7 +678,9 @@ You can also use one of the [as_compiler](#as_compiler) types if you have to com
 
 
 ##### archiver
-
+```py
+config.archiver: powermake.archivers.Archiver
+```
 The archiver is the program used to create a static library.
 
 The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
@@ -567,11 +688,15 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 - `ar`
 - `llvm-ar`
 - `msvc`
+- `mingw`
 
 Once loaded, the `config.archiver` is a virtual class that inherits from `powermake.archivers.Archiver`.
 
 
 ##### linker
+```py
+config.linker: powermake.linkers.Linker
+```
 
 The configuration in the json behave exactly like the [c_compiler](#c_compiler) but the possible types are:
 - `gnu`
@@ -582,11 +707,16 @@ The configuration in the json behave exactly like the [c_compiler](#c_compiler) 
 - `clang++`
 - `ld`
 - `msvc`
+- `mingw`
+- `mingw++`
 
 Once loaded, the `config.linker` is a virtual class that inherits from `powermake.linkers.Linker`.
 
 
 ##### shared_linker
+```py
+config.shared_linker: powermake.shared_linkers.SharedLinker
+```
 
 The configuration in the json behaves exactly like [config.linker](#linker) but is used to link shared libraries.
 
@@ -594,6 +724,9 @@ Once loaded, the `config.shared_linker` is a virtual class that inherits from `p
 
 
 ##### obj_build_directory
+```py
+config.obj_build_directory: str
+```
 
 This is the directory in which all .o (or equivalent) will be stored.
 
@@ -602,6 +735,9 @@ This is the directory in which all .o (or equivalent) will be stored.
 
 
 ##### lib_build_directory
+```py
+config.lib_build_directory: str
+```
 
 This is the directory in which all .a, .so, .lib, .dll, etc... will be stored.
 
@@ -610,6 +746,9 @@ This is the directory in which all .a, .so, .lib, .dll, etc... will be stored.
 
 
 ##### exe_build_directory
+```py
+config.exe_build_directory: str
+```
 
 This is the directory in which the linked executable will be stored.
 
@@ -618,6 +757,9 @@ This is the directory in which the linked executable will be stored.
 
 
 ##### defines
+```py
+config.defines: list[str]
+```
 
 This is a list of some defines that will be used during the compilation process.
 
@@ -627,6 +769,9 @@ This is a list of some defines that will be used during the compilation process.
 
 
 ##### additional_includedirs
+```py
+config.additional_includedirs: list[str]
+```
 
 This is a list of additional includedirs that will be used during the compilation process.
 
@@ -636,6 +781,9 @@ This is a list of additional includedirs that will be used during the compilatio
 
 
 ##### shared_libs
+```py
+config.shared_libs: list[str]
+```
 
 This is a list of shared libraries that will be used for the link.
 
@@ -645,6 +793,9 @@ This is a list of shared libraries that will be used for the link.
 
 
 ##### c_flags
+```py
+config.c_flags: list[str]
+```
 
 A list of flags that will be passed to the C compiler (not the C++ compiler).
 
@@ -657,6 +808,9 @@ If not, they are simply passed to the compiler.
 
 
 ##### cpp_flags
+```py
+config.cpp_flags: list[str]
+```
 
 A list of flags that will be passed to the C++ compiler (not the C compiler).
 
@@ -669,6 +823,9 @@ If not, they are simply passed to the compiler.
 
 
 ##### c_cpp_flags
+```py
+config.c_cpp_flags: list[str]
+```
 
 A list of flags that will be passed to the C compiler AND the C++ compiler.
 
@@ -683,6 +840,9 @@ In the `powermake.Config` object, this list doesn't correspond to a real list, i
 
 
 ##### as_flags
+```py
+config.as_flags: list[str]
+```
 
 A list of flags that will be passed to the GNU assembly compiler.
 
@@ -695,6 +855,9 @@ If not, they are simply passed to the compiler.
 
 
 ##### asm_flags
+```py
+config.asm_flags: list[str]
+```
 
 A list of flags that will be passed to the Intel ASM compiler.
 
@@ -707,6 +870,9 @@ If not, they are simply passed to the compiler.
 
 
 ##### c_cpp_as_asm_flags
+```py
+config.c_cpp_as_asm_flags: list[str]
+```
 
 A list of flags that will be passed to the C AND the C++ compiler AND the AS compiler AND the ASM compiler.
 
@@ -714,6 +880,9 @@ This behaves exactly like [config.c_cpp_flags](#c_cpp_flags), with the same limi
 
 
 ##### ar_flags
+```py
+config.ar_flags: list[str]
+```
 
 A list of flags that will be passed to the archiver.
 
@@ -726,6 +895,9 @@ If not, they are simply passed to the archiver.
 
 
 ##### ld_flags
+```py
+config.ld_flags: list[str]
+```
 
 A list of flags that will be passed to the linker.
 
@@ -738,6 +910,9 @@ If not, they are simply passed to the linker.
 
 
 ##### shared_linker_flags
+```py
+config.shared_linker_flags: list[str]
+```
 
 A list of flags that will be passed to the linker when linking a shared library.
 
@@ -745,6 +920,9 @@ This behaves exactly like [config.ld_flags](#c_cpp_flags), with the same limitat
 
 
 ##### exported_headers
+```py
+config.exported_headers: list[str | tuple[str, str | None]]
+```
 
 This is a list of .h and .hpp that need to be exported in a `include` folder during the installation process.
 

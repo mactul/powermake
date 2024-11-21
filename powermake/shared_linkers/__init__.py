@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = [
-    "SharedLinker", "SharedLinkerGNU", "SharedLinkerGCC", "SharedLinkerClang", "SharedLinkerGPlusPlus", "SharedLinkerClangPlusPlus", "SharedLinkerMSVC", "SharedLinkerClang_CL"
-]
-
 import typing as T
 
 from .common import SharedLinker

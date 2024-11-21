@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = [
-    "Linker", "LinkerGNU", "LinkerLD", "LinkerGCC", "LinkerClang", "LinkerGPlusPlus", "LinkerClangPlusPlus", "LinkerMSVC", "LinkerClang_CL"
-]
-
 import typing as T
 
 from .common import Linker
