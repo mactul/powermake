@@ -6,6 +6,7 @@
   - [C/C++ program with compilation arguments](#cc-program-with-compilation-arguments)
   - [C/C++ static library](#cc-static-library)
   - [C/C++ shared library](#cc-shared-library)
+  - [Using a tool unsupported by PowerMake](#using-a-tool-unsupported-by-powermake)
 
 
 ## General Notes
@@ -59,14 +60,18 @@ import powermake
 def on_build(config: powermake.Config):
     files = powermake.get_files("**/*.c", "**/*.cpp")
 
-
     # Add new folders for the compiler to search headers.
     config.add_includedirs("./", "/usr/include/mariadb/")
 
     # These flags are automatically translated for the compiler you are going to use at compile step.
     # The flags that are unknown by PowerMake will be passed untranslated.
-    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
+    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer")
 
+    # This will remove precedent optimization flags and put the optimization level to the equivalent of -Oz on GCC.
+    # PowerMake already set the optimization to -Og when compiling in debug mode and to -O3 when compiling in release mode.
+    config.set_optimization("-Oz")
+
+    # Tell the linker to link with mariadb (typically on GCC this correspond to the -lmariadb option)
     config.add_shared_libs("mariadb")
 
     # These flags are not translated for the moment but this will arrive soon
@@ -94,7 +99,7 @@ def on_build(config: powermake.Config):
 
     config.add_includedirs("./", "/usr/include/mariadb/")
 
-    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
+    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer")
 
     # always optional
     config.nb_total_operations = len(files) + 1
@@ -117,7 +122,7 @@ def on_install(config: powermake.Config, location: str):
             location = "C:/personal_libs/"
         else:
             location = "/usr/local/"
-    
+
     # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
     # The .a (or .lib or equivalent) will be copied into /usr/local/lib/my_lib.a
     config.add_exported_headers("my_lib.h", subfolder="my_lib")
@@ -141,7 +146,7 @@ def on_build(config: powermake.Config):
 
     config.add_includedirs("./", "/usr/include/mariadb/")
 
-    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer", "-O3")
+    config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer")
 
     # always optional
     config.nb_total_operations = len(files) + 1
@@ -174,4 +179,62 @@ def on_install(config: powermake.Config, location: str):
 
 
 powermake.run("my_lib", build_callback=on_build, install_callback=on_install)
+```
+
+## Using a tool unsupported by PowerMake
+
+This is a makefile for a compiler which requires bison and flex for the compilation.  
+Flex and Bison doesn't benefit from a special support in PowerMake but they can still be ran as simple commands.
+
+```py
+import powermake
+
+def on_build(config: powermake.Config):
+    # We use the Wsecurity flag because it's a good way to prevent bugs
+    config.add_c_flags("-Wsecurity")
+
+    config.add_includedirs("./")
+
+    # Linking with flex requires the libfl.so
+    config.add_shared_libs("fl")
+
+    files = powermake.get_files("src/**/*.c")
+
+    # as always, this is optional
+    config.nb_total_operations = len(files) + 3
+
+    # The command will be run either if outputfile is not up to date with parser.y or if the makefile is ran with -r (--rebuild)
+    powermake.run_command_if_needed(
+        config=config,
+        outputfile="src/parser.tab.c",
+        dependencies={"src/parser.y"},
+        command="bison --header=include/parser.tab.h --output=src/parser.tab.c src/parser.y",
+        shell=True
+    )
+
+    powermake.run_command_if_needed(
+        config=config,
+        outputfile="src/lexer.lex.c",
+        dependencies={"src/lexer.lex"},
+        command="flex -o src/lexer.lex.c src/lexer.lex",
+        shell=True
+    )
+
+    # We compile every file except for the generated ones, because we want to change the flags for these.
+    objects = powermake.compile_files(config, powermake.filter_files(files, "**/*.lex.c", "**/*.tab.c"))
+
+    config.remove_c_flags("-fanalyzer")  # This raises too many errors for the generated lexer.lex.c and parser.tab.c
+    objects.update(powermake.compile_files(config, powermake.get_files("**/*.lex.c", "**/*.tab.c")))
+
+
+    powermake.link_files(config, objects)
+
+
+def on_clean(config: powermake.Config):
+    # We destroy generated files in the cleanup
+    powermake.delete_files_from_disk("src/lexer.lex.c", "src/parser.tab.*")
+
+    powermake.default_on_clean(config)
+
+powermake.run("compiler", build_callback=on_build, clean_callback=on_clean)
 ```

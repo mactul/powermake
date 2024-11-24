@@ -128,6 +128,15 @@ def _file_in_files_set(file: str, files_set: T.Iterable[str]) -> bool:
     return False
 
 
+def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Iterable[str], command: T.Union[T.List[str], str], shell: bool = False, force: T.Union[bool, None] = None, **kwargs: T.Any) -> str:
+    if force is None:
+        force = config.rebuild
+    if force or needs_update(outputfile, dependencies, additional_includedirs=config.additional_includedirs):
+        if run_command(config, command, shell=shell, target=outputfile, **kwargs) != 0:
+            raise RuntimeError(utils.error_text(f"Unable to generate {os.path.basename(outputfile)}"))
+    return outputfile
+
+
 def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force: T.Union[bool, None] = None) -> T.Union[T.Set[str], T.List[str]]:
     """
     Compile each C/C++/ASM file in the `files` set according to the compiler and options stored in `config`

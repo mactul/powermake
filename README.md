@@ -8,11 +8,14 @@
 
 - [PowerMake](#powermake)
   - [What is PowerMake?](#what-is-powermake)
+  - [Does PowerMake generates a Makefile like cmake ?](#does-powermake-generates-a-makefile-like-cmake-)
   - [For which project is PowerMake suitable?](#for-which-project-is-powermake-suitable)
   - [Advantages of PowerMake](#advantages-of-powermake)
   - [Disadvantages of PowerMake](#disadvantages-of-powermake)
   - [Philosophy](#philosophy)
   - [Installation](#installation)
+  - [Install from Pypi: (RECOMMENDED)](#install-from-pypi-recommended)
+  - [install from sources: (NOT RECOMMENDED AT ALL)](#install-from-sources-not-recommended-at-all)
   - [Quick Example](#quick-example)
     - [See more examples](#see-more-examples)
   - [Documentation](#documentation)
@@ -100,8 +103,10 @@
     - [powermake.link\_shared\_lib](#powermakelink_shared_lib)
     - [powermake.delete\_files\_from\_disk](#powermakedelete_files_from_disk)
     - [powermake.run\_another\_powermake](#powermakerun_another_powermake)
+    - [powermake.run\_command\_if\_needed](#powermakerun_command_if_needed)
     - [powermake.needs\_update](#powermakeneeds_update)
-    - [powermake.Operation](#powermakeoperation)
+    - [powermake.run\_command](#powermakerun_command)
+    - [powermake.Operation (deprecated)](#powermakeoperation-deprecated)
       - [execute()](#execute)
     - [Having more control than what powermake.run offers](#having-more-control-than-what-powermakerun-offers)
       - [powermake.ArgumentParser](#powermakeargumentparser)
@@ -123,11 +128,22 @@ His goal is to give full power to the user, while being cross-platform and easie
 Powermake extends what is possible to do during the compilation by providing a lot of functions to manipulate your files and a lot of freedom on the way you will implement your makefile.  
 Powermake is entirely configurable, but for every behavior you haven't explicitly defined, PowerMake will do most of the job for you by detecting installed toolchains, translating compiler flags, etc...
 
+
+## Does PowerMake generates a Makefile like cmake ?
+
+No.
+
+PowerMake does not build on top of make, it replaces make.
+
+We are looking to add a feature to convert a PowerMake into a GNU Makefile but it will never be as powerful as directly running the PowerMake.
+
+
 ## For which project is PowerMake suitable?
 
 PowerMake was specifically designed for complex projects that have very complicated compilation steps, with a lot of pre-built tasks that need to be compiled on multiple operating systems with different options.
 
 However, today, even for a 5 files project on Linux with GCC, PowerMake is more convenient than make because out of the box it provides a debug/release mode with different options and different build directories, it can generates a compile_commands.json file for a better integration with vscode, it detects better than make when files need to be recompiled, it provides default rebuild/clean/install options without any configuration, etc...
+
 
 ## Advantages of PowerMake
 
@@ -146,11 +162,13 @@ However, today, even for a 5 files project on Linux with GCC, PowerMake is more 
   - PowerMake is faster than make/xmake and most of the time faster than Ninja when building a project for the first time.
   - There are still some improvements to do to detect that there is nothing to do for a huge codebase because PowerMake doesn't store hidden dependencies (header files). But with less than 2000 files, this step is almost instant.
 
+
 ## Disadvantages of PowerMake
 
 - PowerMake is very young so it changes a lot with each version and you may have to write some features by yourself (the whole point of PowerMake is that you can write missing features). In theory retrocompatibilty is kept between versions, but this might not be true if you are using very specific features, especially undocumented ones.
 
 - Because PowerMake gives you full control, the tool can't know what you are doing during the compilation step. For example, if we want to import dependencies from another PowerMake, the only thing we can do for you is run the PowerMake where it stands and scan its output directory. This works well but has some limitations... Another example of this problem is that PowerMake can't know how many steps will be done during the compilation, so if you want PowerMake to print the percent of compilation elapsed, you have to manually specify the number of steps PowerMake will do.
+
 
 ## Philosophy
 
@@ -164,8 +182,9 @@ When you read a GNU Makefile, you start at the end, the final target and you rea
 In a GNU Makefile, the order of each target doesn't reflect at all the order of execution.
 
 Powermake is read as a script. the order of each instruction has a capital importance. The first step is read, if it needs to be executed, it's executed, then the next step is read, etc...
-- The main advantage of this approach is that it's extremely easy to write and read the makefile, it's just a good old script that executes from top to bottom. You can also do loops, functions, etc... everything python offers which is way more powerful than the make approach.
-- The main disadvantage of this approach is that that steps during the makefile can't automatically be parallelized. [powermake.compile_files](#powermakecompile_files) offers a good parallelization that counteracts this problem, but you have to compile most of your files in this function for this parallelization to have an effect. The worse thing you can do is loop over each one of your file and call this function for one file at a time.
+- The main advantage of this approach is that it's extremely easy to write and read the makefile, it's just a good old script that executes from top to bottom. You can also do loops, functions, etc... everything python offers, which is way more powerful than the make approach.
+- The main disadvantage of this approach is that steps during the makefile can't automatically be parallelized. [powermake.compile_files](#powermakecompile_files) offers a good parallelization that counteracts this problem, but you have to compile most of your files in this function for this parallelization to have an effect. The worse thing you can do is loop over each one of your file and call this function for one file at a time.
+
 
 ## Installation
 
@@ -173,14 +192,19 @@ Powermake is read as a script. the order of each instruction has a capital impor
 > In this documentation, the command `python` refers to python >= python 3.7.  
 > On old systems, `python` and `pip` can refer to python 2.7, in this case, use `python3` and `pip3`.
 
-Install from Pypi: (RECOMMENDED)
+
+## Install from Pypi: (RECOMMENDED)
+
 ```sh
 pip install -U powermake
 ```
 Don't hesitate to run this command regularly to benefit from new features and bug fixes.
 
 
-Or install from sources: (NOT RECOMMENDED AT ALL - might be unstable)
+## install from sources: (NOT RECOMMENDED AT ALL)
+
+Version installed from sources might be untested and might not work at all.
+
 ```sh
 # USE AT YOUR OWN RISKS
 pip install -U build twine
@@ -191,6 +215,7 @@ rm -rf ./dist/
 python -m build
 pip install -U dist/powermake-*-py3-none-any.whl --force-reinstall
 ```
+
 
 ## Quick Example
 
@@ -219,12 +244,15 @@ def on_build(config: powermake.Config):
 powermake.run("program_test", build_callback=on_build)
 ```
 
+
 ### [See more examples](./examples.md)
+
 
 ## Documentation
 
 > [!NOTE]  
 > This documentation is not complete, if you struggle to do something, do not hesitate to ask a question in the [discussions section](https://github.com/mactul/powermake/discussions/categories/q-a), it may be that the feature you search for is undocumented.
+
 
 ### Command line arguments
 
@@ -269,6 +297,7 @@ This is especially useful to quickly compile with a different toolchain. For exa
 ```sh
 CC=x86_64-w64-mingw32-gcc python makefile.py -rvd
 ```
+
 
 ### PowerMake flags translation
 
@@ -1441,12 +1470,39 @@ If the parameters `debug`, `rebuild`, `verbosity`, and `nb_jobs` are left to Non
 These parameters are passed to the other powermake.
 
 
+### powermake.run_command_if_needed
+```py
+run_command_if_needed(config: powermake.Config, outputfile: str, dependencies: Iterable[str], command: list[str] | str, shell: bool = False, force: bool | None = None, **kwargs: Any) -> str
+```
+
+Run a command generating a file only if this file needs to be re-generated.
+
+Raise a RuntimeError if the command fails.
+
+`outputfile` is the file generated by the command and `dependencies` is an iterable of every file that if changed should trigger the run of the command.
+
+- If `shell` is `False`:
+  - `command` should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
+  This list is then directly passed to `subprocess.run`
+
+- If `shell` is `False`:
+  - `command` should be a string representing the shell command.
+
+
+- If `force` is True, the command is run anyway.
+- If `force` is False, the command is only run if `outputfile` is up to date with its dependencies.
+- If `force` is None (default), the value of `config.rebuild` is used.
+
+`**kwargs` is passed to `powermake.run`
+
+
 ### powermake.needs_update
 ```py
 powermake.needs_update(outputfile: str, dependencies: set, additional_includedirs: list) -> bool
 ```
 
-This function is low-level.
+> [!NOTE]  
+> This function is low-level.
 
 Returns whether or not `outputfile` is up to date with all his dependencies.  
 If `dependencies` include C/C++ files and headers, all headers these files include recursively will be added as hidden dependencies.
@@ -1454,22 +1510,54 @@ If `dependencies` include C/C++ files and headers, all headers these files inclu
 The `additional_includedirs` list is required to discover hidden dependencies. You must set this to the additional includedirs used during the compilation of `outputfile`. You can use [config.additional_includedirs](#additional_includedirs) if needed.
 
 
-### powermake.Operation
+### powermake.run_command
+```py
+run_command(config: powermake.Config, command: list[str] | str, shell: bool = False, target: str | None = None, output_filter: Callable[[bytes], bytes] | None = None, **kwargs) -> int
+```
+
+> [!NOTE]  
+> This function is low-level.
+
+Run a command regardless of what it does and if it's needed.
+
+Returns the exit code of the command.
+
+If `shell` is `False`:
+- `command` should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
+  This list is then directly passed to `subprocess.run`
+
+If `shell` is `False`:
+- `command` should be a string representing the shell command.
+
+`target` is currently only been used to print the name of the file generated, but in the future, it might be used to generate a Makefile.
+
+`output_filter` is a callback that can be used to edit the output of the command before it's printed to the screen. Warning, the output of the command is in bytes with no encoding determined. Let this to `None` to just print the output of the command.
+
+`**kwargs` is passed to `powermake.run`
+
+
+### powermake.Operation (deprecated)
 ```py
 powermake.Operation(outputfile: str, dependencies: set, config: Config, command: list)
 ```
+
+> [!NOTE]  
+> This object is low-level.
 
 This is a simple object to execute a command only if needed.  
 It can be used to easily parallelize multiple commands.
 > [!TIP]  
 > You can use [powermake.compile_files](#powermakecompile_files) which does that for you, but only for C/C++/AS/ASM files.
 
+> [!WARNING]  
+> Directly using powermake.Operation is deprecated
+
 The command should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
 This list is then directly passed to `subprocess.run`
 
 #### execute()
 ```py
-operation.execute(self, force: bool = False) -> str
+operation.execute(force: bool = False) -> str
 ```
 
 Run the `command` if `outputfile` is not up to date.
