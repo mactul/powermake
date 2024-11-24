@@ -133,7 +133,7 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
         force = config.rebuild
     if force or needs_update(outputfile, dependencies, additional_includedirs=config.additional_includedirs):
         if run_command(config, command, shell=shell, target=outputfile, **kwargs) != 0:
-            raise RuntimeError(utils.error_text(f"Unable to generate {os.path.basename(outputfile)}"))
+            raise RuntimeError(display.error_text(f"Unable to generate {os.path.basename(outputfile)}"))
     return outputfile
 
 

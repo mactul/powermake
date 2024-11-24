@@ -17,7 +17,7 @@ python3 ./multiplatform/makefile.py --version
 if [[ $# -ne 1 && $1 != "weak" ]]
 then
     echo "Checking typing"
-    mypy ../powermake --check-untyped-defs --python-version=3.8 --strict || failure
+    mypy ../powermake --check-untyped-defs --python-version=3.8 --strict --implicit-reexport || failure
 fi
 
 echo "checking multiplatform makefile with default, clang and MinGW toolchains"
