@@ -259,15 +259,15 @@ powermake.run("program_test", build_callback=on_build)
 To benefit from the command line parser, you have to use the [powermake.run](#powermakerun) function.
 
 If no arguments are passed through the command line, the default behavior is to trigger the build callback.  
-You can also write `python makefile.py build`, `python makefile.py clean`, or `python makefile.py install [install_location]` to trigger one of the three different callbacks.
+You can also write `python makefile.py build`, `python makefile.py clean`, `python makefile.py install [install_location]` or `python makefile.py test` to trigger one of the three different callbacks.
 
 There is also the `python makefile.py config` command, which doesn't trigger a callback but enters into an interactive mode for editing a configuration file.
 
-Alternatively, you can also use the option `-b` or `--build`, `-c` or `--clean`, `-i` or `--install`, and `-f` or `--config`.  
-This alternative has a great advantage: you can combine multiple tasks. For example, running `python makefile.py -bci` will first trigger the clean callback, then the build callback, and finally the install callback.
+Alternatively, you can also use the option `-b` or `--build`, `-c` or `--clean`, `-i` or `--install`, `-t` or `--test` and `-f` or `--config`.  
+This alternative has a great advantage: you can combine multiple tasks. For example, running `python makefile.py -btci` will first trigger the clean callback, then the build callback, the install callback and finally the test callback.
 
 > [!IMPORTANT]  
-> The order will always be config -> clean -> build -> install.
+> The order will always be config -> clean -> build -> install -> test.
 
 You can also replace the `-b` argument with `-r` (using `-br` does the same as `-r`) and this will force the makefile to recompile everything, without trying to figure out which file needs to be recompiled.
 
@@ -355,7 +355,7 @@ Here is the list of flags translated by PowerMake:
 
 ### powermake.run
 ```py
-powermake.run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install, args_parsed: argparse.Namespace = None)
+powermake.run(target_name: str, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install, test_callback: callable = default_on_test, args_parsed: argparse.Namespace = None)
 ```
 It's the entry point of most programs.  
 This function parses the command line and generates a [powermake.Config](#powermakeconfig) object, containing all the information required for the compilation, from the compiler path to the level of verbosity to use.
@@ -1618,10 +1618,13 @@ It can be helpful if you want a global instance of the config.
 
 In most cases you should let `args_parsed` to None, and this function will automatically parse the command line.
 
+> [!CAUTION]  
+> You have to call `powermake.run_callback` after the call of this function (but you can obviously do something between these 2 functions)
+
 
 #### powermake.run_callbacks
 ```py
-run_callbacks(config: Config, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install)
+run_callbacks(config: Config, *, build_callback: callable, clean_callback: callable = default_on_clean, install_callback: callable = default_on_install, test_callback: callable = default_on_test)
 ```
 
 This function only make sense after a call of [powermake.generate_config](#powermakegenerate_config).  
