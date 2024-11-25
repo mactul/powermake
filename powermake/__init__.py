@@ -427,7 +427,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         raise RuntimeError(display.error_text("No shared linker has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, lib_name + config.shared_linker.shared_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
-    args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
+    args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.shared_linker_flags)
     command = config.shared_linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command).execute(force=force)
 

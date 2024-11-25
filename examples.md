@@ -7,6 +7,7 @@
   - [C/C++ static library](#cc-static-library)
   - [C/C++ shared library](#cc-shared-library)
   - [Using a tool unsupported by PowerMake](#using-a-tool-unsupported-by-powermake)
+  - [Real examples](#real-examples)
 
 
 ## General Notes
@@ -238,3 +239,7 @@ def on_clean(config: powermake.Config):
 
 powermake.run("compiler", build_callback=on_build, clean_callback=on_clean)
 ```
+
+## Real examples
+
+You can found other real and often more complex examples in the forum in the "[share your powermake section](https://github.com/mactul/powermake/discussions/categories/share-your-powermakes)"

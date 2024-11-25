@@ -347,6 +347,7 @@ Here is the list of flags translated by PowerMake:
 | -mavx          | Enable avx vectorization. |
 | -mavx2         | Enable avx2 vectorization. |
 | -g             | Compile with debug symbols. |
+| -fPIC          | Position Independent Code, required when compiling objects that will be bundled in a shared library. |
 | -fsecurity=1   | Enable all flags that can mitigate security issues with negligible impact on performance. Warnings included. |
 | -fsecurity=2   | Enable all flags that can mitigate security issues. |
 | -fsecurity     | same as -fsecurity=2. |
@@ -1447,6 +1448,9 @@ From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 Returns the path of the shared library generated.
+
+> [!TIP]  
+> Don't forget to compile the `object_files` with the flag `-fPIC`.
 
 
 ### powermake.delete_files_from_disk

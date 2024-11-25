@@ -64,6 +64,7 @@ _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     **_powermake_optimization_flags_to_msvc_flags,
     **_powermake_machine_flags_to_msvc_flags,
     "-g": ["/Z7"],
+    "-fPIC": [],
     "-fdiagnostics-color": [],
     "-fsecurity=1": [],
     "-fsecurity=2": [],
