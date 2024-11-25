@@ -113,7 +113,7 @@ class Tool(abc.ABC):
         already_translated_flags: T.List[str] = []
         cache_modified = False
         for flag in flags:
-            cache_modified = cache_modified or self._translate_flag(flag, translated_flags, already_translated_flags)
+            cache_modified = self._translate_flag(flag, translated_flags, already_translated_flags) or cache_modified
 
         if cache_modified:
             store_cache_to_file(self.cache_file, self.cache, self.path)
