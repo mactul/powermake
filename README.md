@@ -259,7 +259,7 @@ powermake.run("program_test", build_callback=on_build)
 To benefit from the command line parser, you have to use the [powermake.run](#powermakerun) function.
 
 If no arguments are passed through the command line, the default behavior is to trigger the build callback.  
-You can also write `python makefile.py build`, `python makefile.py clean`, `python makefile.py install [install_location]` or `python makefile.py test` to trigger one of the three different callbacks.
+You can also write `python makefile.py build`, `python makefile.py clean`, `python makefile.py install [install_location]` or `python makefile.py test` to trigger one of the four different callbacks.
 
 There is also the `python makefile.py config` command, which doesn't trigger a callback but enters into an interactive mode for editing a configuration file.
 

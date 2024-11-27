@@ -25,6 +25,7 @@ from .utils import makedirs
 from .cache import get_cache_dir
 from .__version__ import __version__
 from .interactive_config import InteractiveConfig
+from .generation import gnu_makefile, compile_commands
 from .display import print_info, print_debug_info, init_colors, error_text
 
 
@@ -171,6 +172,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
         self.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
         self.add_argument("-o", "--compile-commands-dir", metavar="DIRECTORY", help="Run the compilation and generate a compile_commands.json file in the directory specified.", default=None)
+        self.add_argument("-m", "--makefile", help="Run the compilation and generate a GNU Makefile.", action="store_true")
         self.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal. This option is especially useful in the configuration of an IDE.", action="store_true")
         self.add_argument("--delete-cache", help="delete the cache, use this if PowerMake act weirdly", action="store_true")
         self.add_argument("--get-lib-build-folder", help="(Internal option) - Return the lib build folder path according to the config.", action="store_true")
@@ -224,6 +226,9 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         verbosity = 2
     else:
         verbosity = 1
+
+    if args_parsed.makefile:
+        args_parsed.rebuild = True
 
     if not args_parsed.retransmit_colors:
         init_colors()
@@ -303,6 +308,11 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
         else:
             print()
         exit(0)
+
+    if config._args_parsed.makefile:
+        gnu_makefile.generate_makefile(config)
+    if config.compile_commands_dir is not None:
+        compile_commands.generate_compile_commands(config)
 
 
 def run(target_name: str, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install, test_callback: T.Callable[[Config], None] = default_on_test, args_parsed: T.Union[argparse.Namespace, None] = None) -> None:
