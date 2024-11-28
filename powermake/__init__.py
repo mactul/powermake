@@ -30,7 +30,7 @@ from .utils import makedirs
 from .__version__ import __version__
 from . import utils, display, generation
 from .display import print_info, print_debug_info
-from .operation import Operation, needs_update, run_command, run_command_if_needed
+from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
 

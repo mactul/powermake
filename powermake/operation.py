@@ -147,7 +147,7 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 
 _print_lock = Lock()
 _commands_counter = 0
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> int:
+def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> T.Tuple[int, bytes]:
     global _commands_counter
 
     returncode = 0
@@ -181,8 +181,10 @@ def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool 
         generation._makefile_targets.append([(phony, target, _dependencies, command, _tool)])
         generation._makefile_targets_mutex.release()
 
-    return returncode
+    return returncode, output
 
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> int:
+    return run_command_get_output(config, command, shell, target, output_filter, _dependencies, _generate_makefile, _tool, **kwargs)[0]
 
 def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Iterable[str], command: T.Union[T.List[str], str], shell: bool = False, force: T.Union[bool, None] = None, _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> str:
     """
@@ -226,6 +228,10 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
         _print_lock.acquire()
         _commands_counter += 1
         _print_lock.release()
+        if config.compile_commands_dir is not None and _generate_makefile:
+            generation._makefile_targets_mutex.acquire()
+            generation._makefile_targets.append([(False, outputfile, dependencies, command, _tool)])
+            generation._makefile_targets_mutex.release()
     return outputfile
 
 

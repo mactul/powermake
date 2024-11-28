@@ -1,6 +1,5 @@
 import os
 import powermake
-import subprocess
 
 prog_test = True
 assert_cc = None
@@ -26,8 +25,8 @@ def on_build(config: powermake.Config):
 
     if prog_test:
         print("testing generated program")
-        output = subprocess.check_output([exe], encoding="ascii")
-        if output != "Hello\nWorld\n":
+        returncode, output = powermake.run_command_get_output(config, [exe])
+        if returncode != 0 or output.decode("ascii") not in ("Hello\nWorld\n", "Hello\r\nWorld\r\n"):
             print("Execution does not generate a good value")
             exit(1)
 
