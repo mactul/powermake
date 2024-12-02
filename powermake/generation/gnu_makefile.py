@@ -1,3 +1,17 @@
+# Copyright 2024 Macéo Tuloup
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import shlex
 import typing as T
@@ -68,13 +82,13 @@ def generate_makefile(config: Config) -> None:
 
     if "build" not in global_targets:
         build_target_name = "build"
-    elif "_powermake_all" not in global_targets:
-        build_target_name = "_powermake_all"
+    elif "_powermake_build" not in global_targets:
+        build_target_name = "_powermake_build"
     else:
         counter = 1
-        while f"_powermake_all{counter}" in global_targets:
+        while f"_powermake_build{counter}" in global_targets:
             counter += 1
-        build_target_name = f"_powermake_all{counter}"
+        build_target_name = f"_powermake_build{counter}"
 
     if "clean" not in global_targets:
         file_content += f".PHONY : clean\nclean :\n\t@rm -rf {os.path.join(config.obj_build_directory, "*")}\n\t@rm -rf {os.path.join(config.lib_build_directory, "*")}\n\t@rm -rf {os.path.join(config.exe_build_directory, "*")}\n\n"
@@ -92,6 +106,16 @@ def generate_makefile(config: Config) -> None:
         if variables[var] != "" and f"$({var})" in file_content:
             file.write(f"{var} := {variables[var]}\n")
 
-    file.write(f"\nMAKEFLAGS += --no-print-directory --no-builtin-rules\n\n.PHONY : all\nall: {build_target_name}\n\n")
+    if "all" not in global_targets:
+        all_target_name = "all"
+    elif "_powermake_all" not in global_targets:
+        all_target_name = "_powermake_all"
+    else:
+        counter = 1
+        while f"_powermake_all{counter}" in global_targets:
+            counter += 1
+        all_target_name = f"_powermake_all{counter}"
+
+    file.write(f"\nMAKEFLAGS += --no-print-directory --no-builtin-rules\n\n.PHONY : {all_target_name}\n{all_target_name}: {build_target_name}\n\n")
     file.write(file_content)
     file.close()
