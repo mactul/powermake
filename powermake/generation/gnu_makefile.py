@@ -48,7 +48,7 @@ def generate_makefile(config: Config) -> None:
             aggregation_operations_counter += 1
             target = f"_powermake_compile_files{aggregation_operations_counter}"
             global_targets.append(target)
-            file_content += f".PHONY : {target}\n{target}: {" ".join([operation[1] for operation in operations])}\n\n"
+            file_content += f""".PHONY : {target}\n{target}: {" ".join([operation[1] for operation in operations])}\n\n"""
         elif len(operations) != 0:
             global_targets.append(operations[0][1])
         for operation in operations:
@@ -78,7 +78,7 @@ def generate_makefile(config: Config) -> None:
             if tool == "SHLD" and len(variables["SHLDFLAGS"]) > 0:
                 command = command.replace(variables["SHLDFLAGS"], "$(SHLDFLAGS)")
 
-            file_content += f"{target} :{" " if len(str_dependencies) != 0 else ""}{str_dependencies}\n\t{"@mkdir -p $(@D)\n\t" if not phony else ""}{command}\n\n"
+            file_content += f"""{target} :{" " if len(str_dependencies) != 0 else ""}{str_dependencies}\n\t{"@mkdir -p $(@D)\n\t" if not phony else ""}{command}\n\n"""
 
     if "build" not in global_targets:
         build_target_name = "build"
@@ -91,11 +91,11 @@ def generate_makefile(config: Config) -> None:
         build_target_name = f"_powermake_build{counter}"
 
     if "clean" not in global_targets:
-        file_content += f".PHONY : clean\nclean :\n\t@rm -rf {os.path.join(config.obj_build_directory, "*")}\n\t@rm -rf {os.path.join(config.lib_build_directory, "*")}\n\t@rm -rf {os.path.join(config.exe_build_directory, "*")}\n\n"
+        file_content += f""".PHONY : clean\nclean :\n\t@rm -rf {os.path.join(config.obj_build_directory, "*")}\n\t@rm -rf {os.path.join(config.lib_build_directory, "*")}\n\t@rm -rf {os.path.join(config.exe_build_directory, "*")}\n\n"""
         if "rebuild" not in global_targets:
             file_content += f".NOTPARALLEL : rebuild\n.PHONY : rebuild\nrebuild : clean {build_target_name}\n\n"
 
-    file_content += f".NOTPARALLEL : {build_target_name}\n.PHONY : {build_target_name}\n{build_target_name} : {" ".join(global_targets)}"
+    file_content += f""".NOTPARALLEL : {build_target_name}\n.PHONY : {build_target_name}\n{build_target_name} : {" ".join(global_targets)}"""
 
     file = open("Makefile", "w")
     file.write("#" * (44 + len(__version__)))
