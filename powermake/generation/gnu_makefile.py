@@ -20,6 +20,8 @@ from ..__version__ import __version__
 from ..config import Config
 from . import _makefile_targets
 
+MKDIR = "@mkdir -p $(@D)\n\t"
+
 
 def generate_makefile(config: Config) -> None:
     aggregation_operations_counter = 0
@@ -78,7 +80,7 @@ def generate_makefile(config: Config) -> None:
             if tool == "SHLD" and len(variables["SHLDFLAGS"]) > 0:
                 command = command.replace(variables["SHLDFLAGS"], "$(SHLDFLAGS)")
 
-            file_content += f"""{target} :{" " if len(str_dependencies) != 0 else ""}{str_dependencies}\n\t{"@mkdir -p $(@D)\n\t" if not phony else ""}{command}\n\n"""
+            file_content += f"""{target} :{" " if len(str_dependencies) != 0 else ""}{str_dependencies}\n\t{MKDIR if not phony else ""}{command}\n\n"""
 
     if "build" not in global_targets:
         build_target_name = "build"
