@@ -16,7 +16,6 @@
 import os
 import sys
 import glob
-import json
 import shutil
 import fnmatch
 import subprocess
@@ -213,7 +212,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         output_file = utils.join_absolute_paths(config.obj_build_directory, file + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
-        if "../" in file:
+        if "../" in file or "..\\" in file:
             # if the path of the file contains ../, the ide might not be able to understand warning messages.
             file = os.path.abspath(file)
 
