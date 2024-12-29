@@ -15,6 +15,7 @@
 import os
 import sys
 import stat
+import json
 import shutil
 import argparse
 import subprocess
@@ -289,7 +290,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
             "type": "cppdbg",
             "preLaunchTask": "powermake_compile",
             "request": "launch",
-            "program": "%s",
+            "program": %s,
             "args": [],
             "cwd": "${workspaceFolder}"
         },
@@ -303,7 +304,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
         }
     ]
 }
-""" % (os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), ))
+""" % (json.dumps(os.path.abspath(os.path.join(config.exe_build_directory, config.target_name))), ))
         print("done")
         exit(0)
 
