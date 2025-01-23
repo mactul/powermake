@@ -408,7 +408,7 @@ def delete_files_from_disk(*patterns: str) -> None:
                 os.remove(filepath)
 
 
-def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None) -> T.Union[T.List[str], None]:
+def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = []) -> T.Union[T.List[str], None]:
     """
     Run a powermake from another directory and returns a list of path to all libraries generated
 
@@ -461,6 +461,8 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     if debug:
         command.append("-d")
+
+    command.extend(command_line_args)
 
     print_info(f"Running {path}", config.verbosity)
     print_debug_info(command, config.verbosity)
