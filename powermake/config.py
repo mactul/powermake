@@ -159,7 +159,7 @@ def replace_architecture(string: str, new_arch: str) -> str:
 
 
 class Config:
-    def __init__(self, target_name: str, *, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None) -> None:
+    def __init__(self, target_name: str, *, compilation_unit: str, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None) -> None:
         """
         Create an object that loads all configurations files and search for compilers.
 
@@ -175,6 +175,7 @@ class Config:
         self.nb_jobs = nb_jobs
         self.single_file = single_file
         self.compile_commands_dir = compile_commands_dir
+        self.compilation_unit = compilation_unit
         self.nb_total_operations = 0
 
         self.c_compiler: T.Union[Compiler, None] = None
@@ -196,6 +197,7 @@ class Config:
         self.obj_build_directory: str = ""
         self.exe_build_directory: str = ""
         self.lib_build_directory: str = ""
+        self.info_build_directory: str = ""
 
         self.defines: T.List[str] = []
         self.shared_libs: T.List[str] = []
@@ -266,6 +268,8 @@ class Config:
                         self.exe_build_directory = conf["exe_build_directory"]
                     if self.lib_build_directory == "" and "lib_build_directory" in conf:
                         self.lib_build_directory = conf["lib_build_directory"]
+                    if self.info_build_directory == "" and "info_build_directory" in conf:
+                        self.info_build_directory = conf["info_build_directory"]
 
                     if self.nb_jobs == 0 and "nb_jobs" in conf:
                         self.nb_jobs = conf["nb_jobs"]
@@ -367,6 +371,9 @@ class Config:
             self.target_architecture = platform.machine()
         if self.host_architecture == "":
             self.host_architecture = platform.machine()
+
+        if self.info_build_directory == "":
+            self.info_build_directory = "build/.info"
 
         self.c_compiler_path_specified = c_compiler_tuple is not None and c_compiler_tuple[0] is not None
         self.c_compiler_type_specified = c_compiler_tuple is not None and c_compiler_tuple[2]
@@ -701,7 +708,7 @@ class Config:
         """Generate a new fresh config object without anything inside. By default, even the local config file isn't used.  
         It can be very helpful if you have a local config file specifying a cross compiler but you want to have the default compiler at some point during the compilation step.
         """
-        return Config(self.target_name, args_parsed=self._args_parsed, debug=self.debug, rebuild=self.rebuild, verbosity=self.verbosity, nb_jobs=self.nb_jobs, single_file=self.single_file, compile_commands_dir=self.compile_commands_dir, local_config=local_config)
+        return Config(self.target_name, compilation_unit=self.compilation_unit, args_parsed=self._args_parsed, debug=self.debug, rebuild=self.rebuild, verbosity=self.verbosity, nb_jobs=self.nb_jobs, single_file=self.single_file, compile_commands_dir=self.compile_commands_dir, local_config=local_config)
 
     def set_debug(self, debug: bool = True, reset_optimization: bool = False) -> None:
         self.debug = debug

@@ -1466,13 +1466,20 @@ This function is variadic.
 
 ### powermake.run_another_powermake
 ```py
-powermake.run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None) -> list
+powermake.run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None, command_line_args: T.List[str] = []) -> list
 ```
 
 Run a powermake from another directory and return a list of paths to all libraries generated.
 
 If the parameters `debug`, `rebuild`, `verbosity`, and `nb_jobs` are left to None, the values in `config` are used.  
 These parameters are passed to the other powermake.
+
+You can pass any other parameter that you want in the list `command_line_args`.
+
+This function ensure that if a powermake A depends on powermakes B and C and the powermake B and the powermake C both depends on the powermake D, the powermake D will not be ran twice, even if the flag `-r` is provided.
+
+> [!WARNING]  
+> This function is not thread safe for now.
 
 
 ### powermake.run_command_if_needed

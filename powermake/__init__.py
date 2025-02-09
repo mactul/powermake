@@ -450,7 +450,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if nb_jobs is None:
         nb_jobs = config.nb_jobs
 
-    command = [sys.executable, path, "--get-lib-build-folder", "--retransmit-colors", "-j", str(nb_jobs)]
+    command = [sys.executable, path, "--get-lib-build-folder", "--retransmit-colors", "--compilation-unit", config.compilation_unit, "-j", str(nb_jobs)]
     if verbosity == 0:
         command.append("-q")
     elif verbosity >= 2:
