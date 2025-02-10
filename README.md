@@ -155,9 +155,9 @@ powermake.run("program_test", build_callback=on_build)
 
 See more examples [here](./examples.md).
 
-## [Documentation](./documentation.md)
+## [Documentation](./documentation.md#documentation)
 
-Read the documentation [here](./documentation.md).
+Read the documentation [here](./documentation.md#documentation).
 
 ## Compatibility with other tools
 
