@@ -53,7 +53,7 @@ def generate_vscode(config: Config, vscode_path: str) -> None:
             }
         },
         {
-            /* Cette tache est à mapper sur une touche, comme F6 par exemple (voir keybindings.json.readme) */
+            /* This task should be mapped to a key, like F6 for example */
             "type": "cppbuild",
             "label": "powermake_compile_single_file",
             "command": %s,
