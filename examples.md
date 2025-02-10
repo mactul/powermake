@@ -260,10 +260,12 @@ def on_build(config: powermake.Config):
     # Linking with flex requires the libfl.so
     config.add_shared_libs("fl")
 
-    files = powermake.get_files("src/**/*.c")
+    # We get every file except for the one that may have been generated during the last compilation.
+    files = powermake.filter_files(powermake.get_files("**/*.c"), "**/*.lex.c", "**/*.tab.c")
 
     # as always, this is optional
-    config.nb_total_operations = len(files) + 3
+    # 5 is for link + 2 generations + 2 compilations
+    config.nb_total_operations = len(files) + 5
 
     # The command will be run either if outputfile is not up to date with parser.y or if the makefile is ran with -r (--rebuild)
     powermake.run_command_if_needed(
@@ -283,7 +285,7 @@ def on_build(config: powermake.Config):
     )
 
     # We compile every file except for the generated ones, because we want to change the flags for these.
-    objects = powermake.compile_files(config, powermake.filter_files(files, "**/*.lex.c", "**/*.tab.c"))
+    objects = powermake.compile_files(config, files)
 
     config.remove_c_flags("-fanalyzer")  # This raises too many errors for the generated lexer.lex.c and parser.tab.c
     objects.update(powermake.compile_files(config, powermake.get_files("**/*.lex.c", "**/*.tab.c")))
