@@ -1154,11 +1154,12 @@ def on_build(config: powermake.Config):
 
     config.add_includedirs("/usr/include/mariadb/")
 
+    # Will add the `-lmariadb` option during link time
     config.add_shared_libs("mariadb")
 
     objects = powermake.compile_files(config, files)
 
-    powermake.link_shared_lib(config, objects)
+    powermake.link_files(config, objects)
 ```
 
 </details>
