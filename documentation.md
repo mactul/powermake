@@ -1648,9 +1648,9 @@ VSCode uses 3 important json files:
 > ```sh
 > python makefile.py --generate-vscode ../.vscode
 > ```
->
-> > [!NOTE]  
-> > You need the Microsoft C/C++ Extension Pack for this to work
+
+> [!NOTE]  
+> You need the Microsoft C/C++ Extension Pack for this to work
 
 
 If the tip above isn't enough to setup vscode, here is more details:
