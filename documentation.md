@@ -53,6 +53,7 @@
         - [target\_is\_windows()](#target_is_windows)
         - [target\_is\_linux()](#target_is_linux)
         - [target\_is\_mingw()](#target_is_mingw)
+        - [target\_is\_macos()](#target_is_macos)
         - [add\_defines()](#add_defines)
         - [remove\_defines()](#remove_defines)
         - [add\_shared\_libs()](#add_shared_libs)
@@ -486,7 +487,7 @@ If non-set or set to zero, this number is chosen according to the number of CPU 
 
 Set this to 1 to disable multithreading.
 
-This can be overwritten by the command-line.
+This can be overwritten by the command-line with the `-j` option.
 
 
 ##### compile_commands_dir
@@ -904,7 +905,7 @@ If `debug` is True, set everything to be in debug mode. It replaces the `NDEBUG`
 
 If `debug` is False, set everything to be in release mode. (does the opposite of what's explained above)
 
-If `reset_optimization` is set to True, then a `debug` to True will put the optimization to `-O0` and a `debug` to False will put the optimization to `-O3`
+If `reset_optimization` is set to True, then a `debug` to True will put the optimization to `-Og` and a `debug` to False will put the optimization to `-O3`
 
 > [!NOTE]  
 > If possible you should prefer using the command-line instead of this function.
@@ -915,8 +916,42 @@ If `reset_optimization` is set to True, then a `debug` to True will put the opti
 config.set_optimization(opt_flag: str)
 ```
 
-Remove all optimization flags set and add the `opt_flag`
+Remove all optimization flags set and add the `opt_flag`.
 
+`opt_flag` should be on the [GCC format](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
+
+Possible values are:
+```
+-O0
+-Og (default in debug)
+-O
+-O1
+-O2
+-O3 (default in release)
+-Os
+-Oz
+-Ofast
+```
+
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    config.set_optimization("-Oz")
+
+    # We can imagine that file1 and file2 must be compiled to optimize the space
+    objects = powermake.compile_files(config, {"file1.c", "file2.c"})
+
+    config.set_optimization("-O3")
+
+    # when file3 and file4 must be compiled to be as fast as possible
+    objects.update(powermake.compile_files(config, {"file3.c", "file4.c"}))
+
+    powermake.link_files(config, objects)
+```
+
+</details>
 
 ##### set_target_architecture()
 ```py
@@ -934,6 +969,27 @@ config.target_is_windows()
 Returns `True` if the target operating system is Windows.
 This uses the [config.target_operating_system](#target_operating_system) member.
 
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    if config.target_is_windows() or config.target_is_mingw():
+        config.add_defines("WIN32")
+    elif config.target_is_linux():
+        config.add_defines("LINUX")
+    elif config.target_is_macos():
+        config.add_defines("DARWIN")
+    else:
+        print("Warning: no define has been set")
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
 
 ##### target_is_linux()
 ```py
@@ -943,6 +999,28 @@ config.target_is_linux()
 Returns `True` if the target operating system is Linux.
 This uses the [config.target_operating_system](#target_operating_system) member.
 
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    if config.target_is_windows() or config.target_is_mingw():
+        config.add_defines("WIN32")
+    elif config.target_is_linux():
+        config.add_defines("LINUX")
+    elif config.target_is_macos():
+        config.add_defines("DARWIN")
+    else:
+        print("Warning: no define has been set")
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
+
 
 ##### target_is_mingw()
 ```py
@@ -951,6 +1029,59 @@ config.target_is_mingw()
 
 Returns `True` if the target operating system is MinGW
 This uses the [config.target_operating_system](#target_operating_system) member and the [config.c_compiler](#c_compiler) member.
+
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    if config.target_is_windows() or config.target_is_mingw():
+        config.add_defines("WIN32")
+    elif config.target_is_linux():
+        config.add_defines("LINUX")
+    elif config.target_is_macos():
+        config.add_defines("DARWIN")
+    else:
+        print("Warning: no define has been set")
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
+
+
+##### target_is_macos()
+```py
+config.target_is_macos()
+```
+
+Returns `True` if the target operating system is MacOS.
+This uses the [config.target_operating_system](#target_operating_system) member.
+
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    if config.target_is_windows() or config.target_is_mingw():
+        config.add_defines("WIN32")
+    elif config.target_is_linux():
+        config.add_defines("LINUX")
+    elif config.target_is_macos():
+        config.add_defines("DARWIN")
+    else:
+        print("Warning: no define has been set")
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
 
 
 ##### add_defines()
@@ -962,6 +1093,21 @@ Add new defines to [config.defines](#defines) if they do not exist.
 This method is variadic so you can put as many defines as you want.  
 The list order is preserved.
 
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    config.add_defines("LINUX", "_GNU_SOURCE", "PERSONAL_DEFINE")
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
+
 
 ##### remove_defines()
 ```py
@@ -970,6 +1116,24 @@ config.remove_defines(*defines: str)
 
 Remove defines from [config.defines](#defines) if they exists.  
 This method is variadic so you can put as many defines as you want.
+
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    config.add_defines("LINUX", "_GNU_SOURCE", "PERSONAL_DEFINE")
+
+    objects = powermake.compile_files(config, {"file1.c", "file2.c"})
+
+    config.remove_defines("PERSONAL_DEFINE", "_GNU_SOURCE")
+
+    objects.update(powermake.compile_files(config, {"file3.c", "file4.c"}))
+
+    powermake.link_files(config, objects)
+```
+
+</details>
 
 
 ##### add_shared_libs()
@@ -980,6 +1144,25 @@ config.add_shared_libs(*shared_libs: str)
 Add shared libraries to [config.shared_libs](#shared_libs) if they do not exist.  
 This method is variadic so you can put as many libs as you want.  
 The list order is preserved.
+
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    files = powermake.get_files("**/*.c", "**/*.cpp")
+
+    config.add_includedirs("/usr/include/mariadb/")
+
+    config.add_shared_libs("mariadb")
+
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_shared_lib(config, objects)
+```
+
+</details>
+
 
 
 ##### remove_shared_libs()
