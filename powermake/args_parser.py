@@ -1,4 +1,4 @@
-# Copyright 2024 Macéo Tuloup
+# Copyright 2025 Macéo Tuloup
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ def default_on_test(config: Config) -> None:
 
 
 def get_version_str() -> str:
-    return f"PowerMake {__version__}\nCopyright (C) 2024 Macéo Tuloup\nLicense Apache-2.0: <http://www.apache.org/licenses/LICENSE-2.0>\nThis is a free software; see the sources for copying conditions: <https://github.com/mactul/powermake>\nThere is NO WARRANTY, to the extent permitted by law."
+    return f"PowerMake {__version__}\nCopyright (C) 2025 Macéo Tuloup\nLicense Apache-2.0: <http://www.apache.org/licenses/LICENSE-2.0>\nThis is a free software; see the sources for copying conditions: <https://github.com/mactul/powermake>\nThere is NO WARRANTY, to the extent permitted by law."
 
 class ArgumentParser(argparse.ArgumentParser):
     """
