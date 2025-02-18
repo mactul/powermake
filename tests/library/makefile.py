@@ -1,7 +1,7 @@
 import powermake
 
 def on_build(config: powermake.Config):
-    config.add_c_cpp_as_asm_flags("-Wsecurity")
+    config.add_flags("-Wsecurity")
 
     if config.target_is_windows():
         if config.target_is_mingw():

@@ -322,6 +322,22 @@ class Config:
                                 if c_cpp_as_asm_flag not in self.asm_flags:
                                     self.asm_flags.append(c_cpp_as_asm_flag)
 
+                    if "flags" in conf and isinstance(conf["flags"], list):
+                        for flag in conf["flags"]:
+                            if isinstance(flag, str):
+                                if flag not in self.c_flags:
+                                    self.c_flags.append(flag)
+                                if flag not in self.cpp_flags:
+                                    self.cpp_flags.append(flag)
+                                if flag not in self.as_flags:
+                                    self.as_flags.append(flag)
+                                if flag not in self.asm_flags:
+                                    self.asm_flags.append(flag)
+                                if flag not in self.ld_flags:
+                                    self.ld_flags.append(flag)
+                                if flag not in self.shared_linker_flags:
+                                    self.shared_linker_flags.append(flag)
+
                     if "as_flags" in conf and isinstance(conf["as_flags"], list):
                         for as_flag in conf["as_flags"]:
                             if isinstance(as_flag, str) and as_flag not in self.as_flags:
@@ -616,6 +632,10 @@ class Config:
     def c_cpp_as_asm_flags(self) -> T.List[str]:
         return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
 
+    @property
+    def flags(self) -> T.List[str]:
+        return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags + self.shared_linker_flags + self.ld_flags
+
     def reload_env(self) -> None:
         if self.target_architecture == "" or self.host_architecture == "":
             raise RuntimeError(error_text("Unable to load environment because architecture is undetermined"))
@@ -870,6 +890,22 @@ class Config:
         self.remove_cpp_flags(*c_cpp_as_asm_flags)
         self.remove_as_flags(*c_cpp_as_asm_flags)
         self.remove_asm_flags(*c_cpp_as_asm_flags)
+
+    def add_flags(self, *flags: str) -> None:
+        self.add_c_flags(*flags)
+        self.add_cpp_flags(*flags)
+        self.add_as_flags(*flags)
+        self.add_asm_flags(*flags)
+        self.add_ld_flags(*flags)
+        self.add_shared_linker_flags(*flags)
+
+    def remove_flags(self, *flags: str) -> None:
+        self.remove_c_flags(*flags)
+        self.remove_cpp_flags(*flags)
+        self.remove_as_flags(*flags)
+        self.remove_asm_flags(*flags)
+        self.remove_ld_flags(*flags)
+        self.add_shared_linker_flags(*flags)
 
     def add_as_flags(self, *as_flags: str) -> None:
         for as_flag in as_flags:

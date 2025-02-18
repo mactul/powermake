@@ -45,6 +45,7 @@
         - [ar\_flags](#ar_flags)
         - [ld\_flags](#ld_flags)
         - [shared\_linker\_flags](#shared_linker_flags)
+        - [flags](#flags)
         - [exported\_headers](#exported_headers)
       - [Methods](#methods)
         - [set\_debug()](#set_debug)
@@ -60,6 +61,8 @@
         - [remove\_shared\_libs()](#remove_shared_libs)
         - [add\_includedirs()](#add_includedirs)
         - [remove\_includedirs()](#remove_includedirs)
+        - [add\_flags()](#add_flags)
+        - [remove\_flags()](#remove_flags)
         - [add\_c\_flags()](#add_c_flags)
         - [remove\_c\_flags()](#remove_c_flags)
         - [add\_cpp\_flags()](#add_cpp_flags)
@@ -874,6 +877,16 @@ A list of flags that will be passed to the linker when linking a shared library.
 This behaves exactly like [config.ld_flags](#c_cpp_flags), with the same limitations.
 
 
+##### flags
+```py
+config.flags: list[str]
+```
+
+A list of flags that will be passed to the C AND the C++ compiler AND the AS compiler AND the ASM compiler AND the shared linker AND the the linker
+
+This behaves exactly like [config.c_cpp_flags](#c_cpp_flags), with the same limitations.
+
+
 ##### exported_headers
 ```py
 config.exported_headers: list[str | tuple[str, str | None]]
@@ -1192,6 +1205,26 @@ config.remove_includedirs(*includedirs: str)
 
 Remove additional includedirs from [config.additional_includedirs](#additional_includedirs) if they exists.  
 This method is variadic so you can put as many includedirs as you want.  
+The list order is preserved.
+
+
+##### add_flags()
+```py
+config.add_flags(*flags: str)
+```
+
+Add flags to [config.flags](#flags) if they do not exist.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_flags()
+```py
+config.remove_flags(*c_flags: str)
+```
+
+Remove flags from [config.flags](#flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
 

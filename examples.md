@@ -76,7 +76,7 @@ def on_build(config: powermake.Config):
     # Tell the linker to link with mariadb (typically on GCC this correspond to the -lmariadb option)
     config.add_shared_libs("mariadb")
 
-    # These flags are not translated for the moment but this will arrive soon
+    # Add flags for the linker
     config.add_ld_flags("-static")
 
     # always optional
