@@ -35,7 +35,11 @@ from .args_parser import run, default_on_clean, default_on_install, ArgumentPars
 
 if hasattr(__makefile__, '__file__'):
     # Change the cwd to the directory of the makefile.
-    os.chdir(os.path.dirname(os.path.realpath(__makefile__.__file__)))
+    _cwd = os.path.dirname(os.path.realpath(__makefile__.__file__))
+    _use_absolute_path = False
+    if not os.path.samefile(_cwd, os.getcwd()):
+        _use_absolute_path = True
+        os.chdir(_cwd)
 
 
 def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T.Any:
@@ -212,8 +216,8 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         output_file = utils.join_absolute_paths(config.obj_build_directory, file + obj_extension)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
-        if "../" in file or "..\\" in file:
-            # if the path of the file contains ../, the ide might not be able to understand warning messages.
+        if _use_absolute_path:
+            # if the path of the file is not relative to the shell cwd, the ide might not be able to understand warning messages.
             file = os.path.abspath(file)
 
         if file.endswith(".c"):

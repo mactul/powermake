@@ -25,7 +25,7 @@ def on_build(config: powermake.Config):
 
     if prog_test:
         print("testing generated program")
-        returncode, output = powermake.run_command_get_output(config, [exe])
+        returncode, output = powermake.run_command_get_output(config, [exe], stderr=powermake.subprocess.DEVNULL)
         if returncode != 0 or output.decode("ascii") not in ("Hello\nWorld\n", "Hello\r\nWorld\r\n"):
             print("Execution does not generate a good value")
             exit(1)

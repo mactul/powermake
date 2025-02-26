@@ -147,12 +147,12 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 
 _print_lock = Lock()
 _commands_counter = 0
-def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> T.Tuple[int, bytes]:
+def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, **kwargs: T.Any) -> T.Tuple[int, bytes]:
     global _commands_counter
 
     returncode = 0
     try:
-        output = subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT, **kwargs)
+        output = subprocess.check_output(command, shell=shell, stderr=stderr, **kwargs)
     except subprocess.CalledProcessError as e:
         output = e.output
         returncode = e.returncode
