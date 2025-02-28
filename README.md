@@ -216,7 +216,7 @@ VSCode uses 3 important json files:
 > ```sh
 > python makefile.py --generate-vscode
 > ```
-> This will generate a .vscode folder that should work right out of the box.
+> This will generate a .vscode folder that should work right out of the box when you press F5.
 >
 > If your makefile is not at the root of your project, you can specify the destination of the .vscode folder, for example:
 > ```sh

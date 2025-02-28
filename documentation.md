@@ -341,6 +341,28 @@ The `install_callback` takes 2 arguments: The [powermake.Config](#powermakeconfi
 > powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
 > ```
 
+
+The `test_callback` also takes 2 arguments: The [powermake.Config](#powermakeconfig) object and a list of string representing the arguments of the tested program.
+
+Example:
+```py
+import powermake
+
+
+def on_build(config: powermake.Config):
+    print("The build callback was called !")
+    print(f"Compiling the project {config.target_name}...")
+
+
+def on_test(config: powermake.Config, args: list[str]):
+    print("test callback called")
+    powermake.default_on_test(config, args)
+
+
+powermake.run("my_project", build_callback=on_build, test_callback=on_test)
+```
+
+
 The `args_parsed` argument should be left to None in most cases, to understand his purpose, see [powermake.ArgumentsParser.parse_args](#parse_args)
 
 ### powermake.Config
@@ -1855,7 +1877,7 @@ VSCode uses 3 important json files:
 > ```sh
 > python makefile.py --generate-vscode
 > ```
-> This will generate a .vscode folder that should work right out of the box.
+> This will generate a .vscode folder that should work right out of the box when you press F5.
 >
 > If your makefile is not at the root of your project, you can specify the destination of the .vscode folder, for example:
 > ```sh

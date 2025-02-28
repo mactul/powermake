@@ -125,7 +125,7 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
     print_info(f"{nb_files_installed} files successfully copied", config.verbosity)
 
 
-def default_on_test(config: Config) -> None:
+def default_on_test(config: Config, args: T.List[str]) -> None:
     print_info("Running default test", config.verbosity)
     try:
         files = os.listdir(config.exe_build_directory)
@@ -135,7 +135,8 @@ def default_on_test(config: Config) -> None:
     for file in files:
         filepath = os.path.join(config.exe_build_directory, file)
         if os.path.isfile(filepath) and stat.S_IXUSR & os.stat(filepath)[stat.ST_MODE]:
-            if subprocess.run(filepath).returncode != 0:
+            print_debug_info([filepath, *args], config.verbosity)
+            if subprocess.run([filepath, *args]).returncode != 0:
                 raise RuntimeError(error_text(f"Unable to run the file {filepath}"))
             return
     print("Nothing to run")
@@ -160,8 +161,9 @@ class ArgumentParser(argparse.ArgumentParser):
             description = f"PowerMake {__version__}"
         super().__init__(prog=prog, description=description, **kwargs)
 
-        self.add_argument("action", choices=["build", "clean", "install", "test", "config"], nargs='?')
+        self.add_argument("action", help='Can be "build", "clean", "install", "test" or "config"', nargs='?')
         self.add_argument("install_location", nargs='?', help="Only if the action is set to install, indicate in which folder the installation should be")
+        self.add_argument('test_params', nargs='*', help="Only if the action is set to test or if -t (--test) is provided, will be passed to the tested program. You may want to use -- in front of those arguments, like this: python makefile.py -t -- arg1 -option1 arg2 -option2", default=[])
         self.add_argument("--version", help="display PowerMake version", action="store_true")
         self.add_argument("-d", "--debug", help="Trigger the build callback with config.debug set to True.", action="store_true")
         self.add_argument("-b", "--build", help="Trigger the build callback. This is the default but it can be used in combination with --clean or --install", action="store_true")
@@ -206,8 +208,24 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         parser = ArgumentParser()
         args_parsed = parser.parse_args()
 
-    if args_parsed.install_location is not None and args_parsed.action != "install":
-        print(f"Unexpected argument {args_parsed.install_location} with an action different from 'install'", file=sys.stderr)
+    if args_parsed.action is None:
+        pos_args = []
+    else:
+        if args_parsed.test:
+            pos_args = [args_parsed.action]
+        else:
+            pos_args = []
+        if args_parsed.install_location is not None:
+            pos_args += [args_parsed.install_location] + args_parsed.test_params
+
+    if len(pos_args) > 0 and args_parsed.action != "install" and args_parsed.action != "test" and not args_parsed.test:
+        print(f"Unexpected positional argument {pos_args[0]} with an action different than 'install' and 'test", file=sys.stderr)
+        if parser is not None:
+            parser.print_usage(file=sys.stderr)
+        exit(1)
+
+    if args_parsed.action == "install" and len(pos_args) > 1:
+        print(f"install takes a single argument", file=sys.stderr)
         if parser is not None:
             parser.print_usage(file=sys.stderr)
         exit(1)
@@ -250,7 +268,7 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
     else:
         compilation_unit = uuid.uuid1(random.randint(0, (1 << 48) -1)).hex
 
-    config = Config(target_name, compilation_unit=compilation_unit, args_parsed=args_parsed, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir)
+    config = Config(target_name, compilation_unit=compilation_unit, args_parsed=args_parsed, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, pos_args=pos_args)
 
     return config
 
@@ -264,7 +282,7 @@ def _get_last_compilation_unit(config: Config) -> T.Union[str, None]:
     except OSError:
         return None
 
-def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install, test_callback: T.Callable[[Config], None] = default_on_test) -> None:
+def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install, test_callback: T.Callable[[Config, T.List[str]], None] = default_on_test) -> None:
     """
     From a powermake.Config object generated by `powermake.generate_config` it calls the appropriate callback according to what is specified on the command line.
 
@@ -337,11 +355,11 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
         build_callback(config)
     if install:
         if config._args_parsed.action == "install":
-            install_callback(config, config._args_parsed.install_location)
+            install_callback(config, config._args_parsed.install_location or None)
         else:
             install_callback(config, config._args_parsed.install or None)
     if test:
-        test_callback(config)
+        test_callback(config, config._pos_args)
 
 
     if config._args_parsed.compilation_unit is not None:
@@ -367,7 +385,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
         compile_commands.generate_compile_commands(config)
 
 
-def run(target_name: str, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install, test_callback: T.Callable[[Config], None] = default_on_test, args_parsed: T.Union[argparse.Namespace, None] = None) -> None:
+def run(target_name: str, *, build_callback: T.Callable[[Config], None], clean_callback: T.Callable[[Config], None] = default_on_clean, install_callback: T.Callable[[Config, T.Union[str, None]], None] = default_on_install, test_callback: T.Callable[[Config, T.List[str]], None] = default_on_test, args_parsed: T.Union[argparse.Namespace, None] = None) -> None:
     """
     Parse the command line, create a powermake.Config object according to the command line arguments and call the appropriate callback.
 

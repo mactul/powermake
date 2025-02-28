@@ -40,7 +40,7 @@ You can start by sending a pull request and if your code is good enough, it will
 To make sure your pull request will not be rejected, here are the crucial guideline we want you to follow:
 
 - Undocumented feature will always be rejected.
-  - Every new feature should be documented at user end (in the README.md) to be published.
+  - Every new feature should be documented at user end (in the documentation.md) to be published.
   - Internal documentation of your code is not a big deal as long as your code is readable and has good namings.
 - commit to `dev` or a branch created for your feature, not to `main`.
   - small changes can be directly commited to `dev` and will the be merged to `main` after.

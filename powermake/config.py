@@ -159,7 +159,7 @@ def replace_architecture(string: str, new_arch: str) -> str:
 
 
 class Config:
-    def __init__(self, target_name: str, *, compilation_unit: str, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None) -> None:
+    def __init__(self, target_name: str, *, compilation_unit: str, args_parsed: T.Union[argparse.Namespace, None] = None, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None, pos_args: T.List[str] = []) -> None:
         """
         Create an object that loads all configurations files and search for compilers.
 
@@ -169,6 +169,7 @@ class Config:
         """
         self.target_name = target_name
         self._args_parsed = args_parsed
+        self._pos_args = pos_args
         self.verbosity = verbosity
         self.debug = debug
         self.rebuild = rebuild
