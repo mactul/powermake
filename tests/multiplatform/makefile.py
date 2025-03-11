@@ -9,11 +9,12 @@ def on_build(config: powermake.Config):
 
     if config.target_is_mingw():
         config.add_ld_flags("-static")
+        files = powermake.get_files("*.c", "*.cpp", "*.rc")
+    else:
+        files = powermake.get_files("*.c", "*.cpp")
 
     if config.target_is_windows():
         config.add_defines("POWERMAKE_WIN32")
-
-    files = powermake.get_files("*.c", "*.cpp")
 
 
     objects = powermake.compile_files(config, files)

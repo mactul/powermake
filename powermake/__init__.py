@@ -145,7 +145,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
     config : powermake.Config
         A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
     files : set[str] | list[str]
-        A set of files that ends by .c, .cpp, .cc, .C, .s, .S or .asm to compile in .o (or the specified compiler equivalent extension)
+        A set of files that ends by .c, .cpp, .cc, .C, .s, .S, .rc or .asm to compile in .o (or the specified compiler equivalent extension)
     force : bool | None, optional
         Whether the function should verify if a file needs to be recompiled or if it should recompile everything.  
         If not specified, this parameter takes the value of config.rebuild
@@ -160,7 +160,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
     RuntimeError
         If no compiler is found.
     ValueError
-        if `files` contains a file that doesn't ends with .c, .cpp, .cc, .C, .s, .S or .asm.
+        if `files` contains a file that doesn't ends with .c, .cpp, .cc, .C, .s, .S, .rc or .asm.
     """
     generated_objects: T.Union[T.Set[str], T.List[str]] = set()
 
@@ -199,6 +199,11 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         as_args = config.as_compiler.format_args(config.defines, config.additional_includedirs, config.as_flags)
     else:
         as_args = []
+
+    if config.rc_compiler is not None:
+        rc_args = config.rc_compiler.format_args(config.defines, config.additional_includedirs, config.rc_flags)
+    else:
+        rc_args = []
 
     if config.asm_compiler is not None:
         asm_args = config.asm_compiler.format_args(config.defines, config.additional_includedirs, config.asm_flags)
@@ -240,6 +245,11 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
                 raise RuntimeError(display.error_text("No ASM compiler has been specified and the default config didn't find any"))
             command = config.asm_compiler.basic_compile_command(output_file, file, asm_args)
             tool = "ASM"
+        elif file.endswith(".rc"):
+            if config.rc_compiler is None:
+                raise RuntimeError(display.error_text("No RC compiler has been specified and the default config didn't find any"))
+            command = config.rc_compiler.basic_compile_command(output_file, file, rc_args)
+            tool = "RC"
         else:
             raise ValueError(display.error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
         op = Operation(output_file, {file}, config, command, tool)

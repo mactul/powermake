@@ -27,6 +27,7 @@
         - [cpp\_compiler](#cpp_compiler)
         - [as\_compiler](#as_compiler)
         - [asm\_compiler](#asm_compiler)
+        - [rc\_compiler](#rc_compiler)
         - [archiver](#archiver)
         - [linker](#linker)
         - [shared\_linker](#shared_linker)
@@ -41,6 +42,7 @@
         - [c\_cpp\_flags](#c_cpp_flags)
         - [as\_flags](#as_flags)
         - [asm\_flags](#asm_flags)
+        - [rc\_flags](#rc_flags)
         - [c\_cpp\_as\_asm\_flags](#c_cpp_as_asm_flags)
         - [ar\_flags](#ar_flags)
         - [ld\_flags](#ld_flags)
@@ -75,6 +77,8 @@
         - [remove\_asm\_flags()](#remove_asm_flags)
         - [add\_c\_cpp\_as\_asm\_flags()](#add_c_cpp_as_asm_flags)
         - [remove\_c\_cpp\_as\_asm\_flags()](#remove_c_cpp_as_asm_flags)
+        - [add\_rc\_flags()](#add_rc_flags)
+        - [remove\_rc\_flags()](#remove_rc_flags)
         - [add\_ar\_flags()](#add_ar_flags)
         - [remove\_ar\_flags()](#remove_ar_flags)
         - [add\_ld\_flags()](#add_ld_flags)
@@ -433,11 +437,13 @@ Please note that this example is incoherent, but it shows as many options as pos
     "defines": ["WIN32", "DEBUG"],
     "additional_includedirs": ["/usr/local/include", "../my_lib/"],
     "shared_libs": ["mariadb", "ssl", "crypto"],
+    "flags": ["-Wall"],
     "c_flags": ["-fanalyzer", "-O3"],
     "cpp_flags": ["-g", "-O0"],
     "c_cpp_flags": ["-Wswitch"],
     "as_flags": [],
     "asm_flags": ["-s"],
+    "rc_flags": [],
     "c_cpp_as_asm_flags": ["-Wall", "-Wextra"],
     "ar_flags": [],
     "ld_flags": ["-static", "-no-pie"],
@@ -657,6 +663,17 @@ The asm_compiler behave exactly like the [c_compiler](#c_compiler) but the only 
 You can also use one of the [as_compiler](#as_compiler) types if you have to compile a .asm file with a GNU assembler.
 
 
+##### rc_compiler
+```py
+config.rc_compiler: powermake.compilers.Compiler
+```
+
+This compiler is used to compile .rc files (for now exclusively for mingw)
+
+The rc_compiler behave exactly like the [c_compiler](#c_compiler) but the only type currently supported is:
+- `windres`
+
+
 ##### archiver
 ```py
 config.archiver: powermake.archivers.Archiver
@@ -847,6 +864,18 @@ If not, they are simply passed to the compiler.
 - This list is merged from the local and global config
 > [!TIP]  
 > It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_asm_flags](#add_asm_flags), if needed, in a conditional statement like `if config.target_is_windows():`
+
+
+##### rc_flags
+```py
+config.rc_flags: list[str]
+```
+
+A list of flags that will be passed to the RC compiler (only WindRes on MinGW for now).
+
+- This list is merged from the local and global config
+> [!TIP]  
+> It's not recommended to set this in the json file, it makes much more sense to add these flags directly in the makefile with [config.add_rc_flags](#add_asm_flags), if needed, in a conditional statement like `if config.target_is_mingw():`
 
 
 ##### c_cpp_as_asm_flags
@@ -1369,6 +1398,25 @@ Remove flags from [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they exist
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
+##### add_rc_flags()
+```py
+config.add_rc_flags(*rc_flags: str)
+```
+
+Add flags to [config.rc_flags](#rc_flags) if they do not exist.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
+
+##### remove_rc_flags()
+```py
+config.remove_rc_flags(*rc_flags: str)
+```
+
+Remove flags from [config.rc_flags](#rc_flags) if they exists.  
+This method is variadic so you can put as many flags as you want.  
+The list order is preserved.
+
 
 ##### add_ar_flags()
 ```py
@@ -1546,7 +1594,7 @@ powermake.compile_files(config: powermake.Config, files: set, force: bool = None
 
 This function is a wrapper of lower-level powermake functions.
 
-From a set or a list of `.c`, `.cpp`, `.cc`, `.C`, `.s`, `.S` and `.asm` filepaths and a [powermake.Config](#powermakeconfig) object, runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
+From a set or a list of `.c`, `.cpp`, `.cc`, `.C`, `.s`, `.S`, `.rc` and `.asm` filepaths and a [powermake.Config](#powermakeconfig) object, runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
 
 - If `force` is True, all files are recompiled, even if they are up to date.
 - If `force` is False, only the files that are not up to date are recompiled

@@ -43,7 +43,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     except OSError:
         return False
 
-    if not filename.endswith((".c", ".cpp", ".cc", ".C", ".h", ".hpp", ".lex", ".y")):
+    if not filename.endswith((".c", ".cpp", ".cc", ".C", ".h", ".hpp", ".lex", ".y", ".rc")):
         return True
 
     headers_found = []

@@ -25,7 +25,7 @@ from .display import print_debug_info, error_text
 from .tools import load_tool_tuple_from_file, load_tool_from_tuple, find_tool
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture, search_new_toolchain
-from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types
+from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, LinkerGNU, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
@@ -38,7 +38,7 @@ def get_global_config() -> str:
     return global_config
 
 
-def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None]) -> T.Tuple[str, str, str, str, str, str, str]:
+def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler, None], cpp_compiler: T.Union[Compiler, None], as_compiler: T.Union[Compiler, None], asm_compiler: T.Union[Compiler, None], archiver: T.Union[Archiver, None], linker: T.Union[Linker, None], shared_linker: T.Union[SharedLinker, None], rc_compiler: T.Union[Compiler, None]) -> T.Tuple[str, str, str, str, str, str, str, str]:
     all_None = True
     if c_compiler is not None:
         c_compiler_type = c_compiler.type
@@ -82,6 +82,12 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
     else:
         shared_linker_type = None
 
+    if rc_compiler is not None:
+        rc_compiler_type = rc_compiler.type
+        all_None = False
+    else:
+        rc_compiler_type = None
+
     if all_None and preference == "gnu" or c_compiler_type == "gnu" or cpp_compiler_type == "gnu++" or as_compiler_type == "gnu" or linker_type in ("gnu", "gnu++") or shared_linker_type in ("gnu", "gnu++") or archiver_type == "gnu":
         # GNU toolchain
         c_compiler_type = "gnu"
@@ -106,7 +112,7 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
         archiver_type = "llvm-ar"
         linker_type = "clang++"
         shared_linker_type = "clang++"
-    elif all_None and preference == "mingw" or c_compiler_type == "mingw" or cpp_compiler_type == "mingw++" or as_compiler_type == "mingw" or linker_type in ("mingw", "mingw++") or shared_linker_type in ("mingw", "mingw++") or archiver_type == "mingw":
+    elif all_None and preference == "mingw" or c_compiler_type == "mingw" or cpp_compiler_type == "mingw++" or as_compiler_type == "mingw" or linker_type in ("mingw", "mingw++") or shared_linker_type in ("mingw", "mingw++") or archiver_type == "mingw" or rc_compiler_type == "windres":
         # MinGW toolchain
         c_compiler_type = "mingw"
         cpp_compiler_type = "mingw++"
@@ -114,6 +120,7 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
         archiver_type = "mingw"
         linker_type = "mingw++"
         shared_linker_type = "mingw++"
+        rc_compiler_type = "windres"
     elif all_None and preference == "msvc" or c_compiler_type == "msvc" or cpp_compiler_type == "msvc" or linker_type == "msvc" or shared_linker_type == "msvc" or archiver_type == "msvc":
         # MSVC toolchain
         c_compiler_type = "msvc"
@@ -123,7 +130,7 @@ def auto_toolchain(preference: T.Union[str, None], c_compiler: T.Union[Compiler,
         linker_type = "msvc"
         shared_linker_type = "msvc"
 
-    return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type)
+    return (c_compiler_type, cpp_compiler_type, as_compiler_type, asm_compiler_type, archiver_type, linker_type, shared_linker_type, rc_compiler_type)
 
 
 def get_toolchain_tuple(path: T.Union[str, None, bool]) -> T.Union[T.Tuple[str, str], None]:
@@ -135,6 +142,8 @@ def get_toolchain_tuple(path: T.Union[str, None, bool]) -> T.Union[T.Tuple[str, 
         return ("clang", path[:-5])
     if path.endswith("clang++"):
         return ("clang", path[:-7])
+    if path.endswith("windres"):
+        return ("gnu", path[:-7])
     if path.endswith("g++"):
         return ("gcc", path[:-3])
     if path.endswith("ar"):
@@ -183,6 +192,7 @@ class Config:
         self.cpp_compiler: T.Union[Compiler, None] = None
         self.as_compiler: T.Union[Compiler, None] = None
         self.asm_compiler: T.Union[Compiler, None] = None
+        self.rc_compiler: T.Union[Compiler, None] = None
         self.archiver: T.Union[Archiver, None] = None
         self.linker: T.Union[Linker, None] = None
         self.shared_linker: T.Union[SharedLinker, None] = None
@@ -207,6 +217,7 @@ class Config:
         self.cpp_flags: T.List[str] = []
         self.as_flags: T.List[str] = []
         self.asm_flags: T.List[str] = []
+        self.rc_flags: T.List[str] = []
         self.ar_flags: T.List[str] = []
         self.ld_flags: T.List[str] = []
         self.shared_linker_flags: T.List[str] = []
@@ -217,6 +228,7 @@ class Config:
         cpp_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
         as_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
         asm_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
+        rc_compiler_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None] = None
         archiver_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver], bool], None] = None
         linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Linker], bool], None] = None
         shared_linker_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], SharedLinker], bool], None] = None
@@ -243,6 +255,9 @@ class Config:
 
                     if asm_compiler_tuple is None:
                         asm_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None], load_tool_tuple_from_file(conf, "asm_compiler", GenericCompiler, get_all_asm_compiler_types))
+
+                    if rc_compiler_tuple is None:
+                        rc_compiler_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Compiler], bool], None], load_tool_tuple_from_file(conf, "rc_compiler", GenericCompiler, get_all_rc_compiler_types))
 
                     if archiver_tuple is None:
                         archiver_tuple = T.cast(T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Archiver], bool], None], load_tool_tuple_from_file(conf, "archiver", GenericArchiver, get_all_archiver_types))
@@ -349,6 +364,11 @@ class Config:
                             if isinstance(asm_flag, str) and asm_flag not in self.asm_flags:
                                 self.asm_flags.append(asm_flag)
 
+                    if "rc_flags" in conf and isinstance(conf["rc_flags"], list):
+                        for rc_flag in conf["rc_flags"]:
+                            if isinstance(rc_flag, str) and rc_flag not in self.rc_flags:
+                                self.rc_flags.append(rc_flag)
+
                     if "ar_flags" in conf and isinstance(conf["ar_flags"], list):
                         for ar_flag in conf["ar_flags"]:
                             if isinstance(ar_flag, str) and ar_flag not in self.ar_flags:
@@ -398,6 +418,8 @@ class Config:
         self.cpp_compiler_type_specified = cpp_compiler_tuple is not None and cpp_compiler_tuple[2]
         self.as_compiler_path_specified = as_compiler_tuple is not None and as_compiler_tuple[0] is not None
         self.as_compiler_type_specified = as_compiler_tuple is not None and as_compiler_tuple[2]
+        self.rc_compiler_path_specified = rc_compiler_tuple is not None and rc_compiler_tuple[0] is not None
+        self.rc_compiler_type_specified = rc_compiler_tuple is not None and rc_compiler_tuple[2]
         self.archiver_path_specified = archiver_tuple is not None and archiver_tuple[0] is not None
         self.archiver_type_specified = archiver_tuple is not None and archiver_tuple[2]
         self.linker_path_specified = linker_tuple is not None and linker_tuple[0] is not None
@@ -411,6 +433,7 @@ class Config:
         self.cpp_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(cpp_compiler_tuple, "compiler"))
         self.as_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(as_compiler_tuple, "compiler"))
         self.asm_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(asm_compiler_tuple, "compiler"))
+        self.rc_compiler = T.cast(T.Union[Compiler, None], load_tool_from_tuple(rc_compiler_tuple, "compiler"))
         self.archiver = T.cast(T.Union[Archiver, None], load_tool_from_tuple(archiver_tuple, "archiver"))
         self.linker = T.cast(T.Union[Linker, None], load_tool_from_tuple(linker_tuple, "linker"))
         self.shared_linker = T.cast(T.Union[SharedLinker, None], load_tool_from_tuple(shared_linker_tuple, "shared_linker"))
@@ -432,7 +455,7 @@ class Config:
                 elif "cl" in compiler_path:
                     preference = "msvc"
 
-        toolchain = auto_toolchain(preference, self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker)
+        toolchain = auto_toolchain(preference, self.c_compiler, self.cpp_compiler, self.as_compiler, self.asm_compiler, self.archiver, self.linker, self.shared_linker, self.rc_compiler)
 
         if self.c_compiler is None:
             if self.target_is_windows():
@@ -472,6 +495,9 @@ class Config:
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
             else:
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], find_tool(GenericSharedLinker, toolchain[6], "g++", "clang++", "gcc", "clang"))
+
+        if self.rc_compiler is None:
+            self.rc_compiler = T.cast(T.Union[Compiler, None], find_tool(GenericCompiler, toolchain[7], "windres"))
 
         cc_env = os.getenv("CC")
         if cc_env is not None:
@@ -515,6 +541,7 @@ class Config:
             or self.linker_path_specified and self.linker is not None and self.linker.path
             or self.shared_linker_path_specified and self.shared_linker is not None and self.shared_linker.path
             or self.archiver_path_specified and self.archiver is not None and self.archiver.path
+            or self.rc_compiler_path_specified and self.rc_compiler is not None and self.rc_compiler.path
         )
         if toolchain_tuple is not None:
             t, toolchain_prefix = toolchain_tuple
@@ -566,6 +593,15 @@ class Config:
                 if compiler.is_available():
                     self.as_compiler_path_specified = True
                     self.as_compiler = compiler
+            if not self.rc_compiler_type_specified:
+                if self.rc_compiler_path_specified and self.rc_compiler is not None:
+                    path = self.rc_compiler.path
+                else:
+                    path = None
+                compiler = T.cast(T.Callable[[str], Compiler], GenericCompiler("windres"))(path or toolchain_prefix + "windres")
+                if compiler.is_available():
+                    self.rc_compiler_path_specified = True
+                    self.rc_compiler = compiler
             if not self.linker_type_specified:
                 if self.linker_path_specified and self.linker is not None:
                     path = self.linker.path
@@ -657,7 +693,7 @@ class Config:
 
     def reload_tools(self) -> None:
         self.reload_env()
-        for tool, specified in ((self.c_compiler, self.c_compiler_path_specified), (self.cpp_compiler, self.cpp_compiler_path_specified), (self.as_compiler, self.as_compiler_path_specified), (self.archiver, self.archiver_path_specified), (self.linker, self.linker_path_specified), (self.shared_linker, self.shared_linker_path_specified)):
+        for tool, specified in ((self.c_compiler, self.c_compiler_path_specified), (self.cpp_compiler, self.cpp_compiler_path_specified), (self.as_compiler, self.as_compiler_path_specified), (self.rc_compiler, self.rc_compiler_path_specified), (self.archiver, self.archiver_path_specified), (self.linker, self.linker_path_specified), (self.shared_linker, self.shared_linker_path_specified)):
             if tool is not None:
                 if not specified:
                     tool_name = os.path.basename(tool.path)
@@ -678,6 +714,8 @@ class Config:
             self.cpp_compiler = None
         if self.as_compiler is not None and not self.as_compiler.is_available():
             self.as_compiler = None
+        if self.rc_compiler is not None and not self.rc_compiler.is_available():
+            self.rc_compiler = None
         if self.archiver is not None and not self.archiver.is_available():
             self.archiver = None
         if self.linker is not None and not self.linker.is_available():
@@ -933,6 +971,19 @@ class Config:
             if self.asm_compiler is None:
                 continue
             self.asm_compiler.remove_flag(asm_flag)
+
+    def add_rc_flags(self, *rc_flags: str) -> None:
+        for rc_flag in rc_flags:
+            if rc_flag not in self.rc_flags:
+                self.rc_flags.append(rc_flag)
+
+    def remove_rc_flags(self, *rc_flags: str) -> None:
+        for rc_flag in rc_flags:
+            if rc_flag in self.rc_flags:
+                self.rc_flags.remove(rc_flag)
+            if self.rc_compiler is None:
+                continue
+            self.rc_compiler.remove_flag(rc_flag)
 
     def add_ar_flags(self, *ar_flags: str) -> None:
         for ar_flag in ar_flags:
