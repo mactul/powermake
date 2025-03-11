@@ -22,7 +22,7 @@ class Compiler(Tool, abc.ABC):
     type: T.ClassVar = ""
     obj_extension: T.ClassVar = ""
 
-    def __init__(self, path: str):
+    def __init__(self, path: T.Union[str, T.List[str]]):
         Tool.__init__(self, path)
 
     @abc.abstractmethod

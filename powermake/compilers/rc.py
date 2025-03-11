@@ -21,7 +21,7 @@ class CompilerWindRes(Compiler):
     type: T.ClassVar = "windres"
     obj_extension: T.ClassVar = ".res"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-windres"):
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-windres", "windres"]):
         super().__init__(path)
 
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:

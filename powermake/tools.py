@@ -40,11 +40,18 @@ class Tool(abc.ABC):
     type: T.ClassVar = ""
     translation_dict: T.ClassVar[T.Dict[str, T.List[str]]] = _powermake_flags_to_gnu_flags
 
-    def __init__(self, path: str) -> None:
-        self._name = path
+    def __init__(self, path: T.Union[str, T.List[str]]) -> None:
         self.verified_translation_dict: T.Dict[str, T.List[str]] = {}
         self.cache: T.Dict[str, T.Any] = {}
-        self.reload()
+        if isinstance(path, str):
+            self._name = path
+            self.reload()
+        else:
+            for p in path:
+                self._name = p
+                self.reload()
+                if self.is_available():
+                    return
 
     def is_available(self) -> bool:
         return self.path != ""

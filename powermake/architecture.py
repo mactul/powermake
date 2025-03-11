@@ -62,7 +62,7 @@ def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, No
 
 
 def get_toolchain_tool(path: str) -> T.Union[str, None]:
-    for tool in ("gcc", "clang", "clang++", "g++", "ar", "ld", "cc", "cpp", "cpp"):
+    for tool in ("gcc", "clang", "clang++", "g++", "ar", "ld", "cc", "cpp", "cpp", "windres"):
         if path.endswith(tool):
             return tool
 
