@@ -20,6 +20,7 @@ from .msvc import LinkerMSVC, LinkerClang_CL
 
 
 _linker_types: T.Dict[str, T.Callable[[], Linker]] = {
+    "default": LinkerGNU,
     "gnu": LinkerGNU,
     "ld": LinkerLD,
     "gcc": LinkerGCC,

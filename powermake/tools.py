@@ -138,53 +138,10 @@ class Tool(abc.ABC):
 
 
 
-def load_tool_tuple_from_file(conf: T.Dict[str, T.Any], tool_name: str, object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]) -> T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool], bool], None]:
-    if tool_name not in conf:
-        return None
-
-    if "path" in conf[tool_name] or "type" in conf[tool_name]:
-        if "type" in conf[tool_name]:
-            tool_type = conf[tool_name]["type"].lower()
-            type_specified = True
-        else:
-            tool_type = "gnu"
-            type_specified = False
-
-        ObjectConstructor = object_getter(tool_type)
-        if ObjectConstructor is None:
-            raise ValueError(error_text("Unsupported %s type: %s\n\nShould be one of them: %s" % (tool_name, tool_type, " ".join(tool_list_getter()))))
-
-        if "path" in conf[tool_name]:
-            tool_path = conf[tool_name]["path"]
-        else:
-            tool_path = None
-
-        return (tool_path, ObjectConstructor, type_specified)
-
-    return None
-
-
-def load_tool_from_tuple(tool_tuple: T.Union[T.Tuple[T.Union[str, None], T.Callable[[], Tool], bool], None], tool_name: str) -> T.Union[Tool, None]:
-    if tool_tuple is not None:
-        tool: Tool
-        if tool_tuple[0] is None:
-            tool = tool_tuple[1]()
-        else:
-            tool = T.cast(T.Callable[[str], Tool], tool_tuple[1])(tool_tuple[0])
-
-        if not tool.is_available():
-            if tool_tuple[0] is None:
-                tool_path = tool.type
-            else:
-                tool_path = tool_tuple[0]
-            raise ValueError(error_text("The %s %s could not be found on your machine" % (tool_name, tool_path)))
-
-        return tool
-    return None
-
-
-def find_tool(object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], *tool_types: str) -> T.Union[Tool, None]:
+def find_tool(object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
     for tool_type in tool_types:
+        if tool_type is None:
+            continue
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:
             continue
@@ -192,3 +149,68 @@ def find_tool(object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], Non
         if tool is not None and tool.is_available():
             return tool
     return None
+
+
+class ToolPrimer:
+    def __init__(self, tool_name: str, tool_env_var: T.Union[str, None], object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]):
+        self.tool_name = tool_name
+        self.tool_env_var = tool_env_var
+        self.object_getter = object_getter
+        self.tool_list_getter = tool_list_getter
+        self.tool_type: T.Union[str, None] = None
+        self.tool_path: T.Union[str, None] = None
+        self.tool_path_specified = False
+        self.tool_type_specified = False
+
+    def load_conf(self, conf: T.Dict[str, T.Any]) -> None:
+        if self.tool_name not in conf:
+            return
+
+        if self.tool_path is None and "path" in conf[self.tool_name]:
+            self.tool_path = conf[self.tool_name]["path"]
+            self.tool_path_specified = True
+
+        if self.tool_type is None and "type" in conf[self.tool_name]:
+            self.tool_type = conf[self.tool_name]["type"]
+            self.tool_type_specified = True
+
+
+    def get_tool(self, *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
+        if self.tool_type is None:
+            tool = find_tool(self.object_getter, *tool_types)
+
+        if self.tool_env_var is not None:
+            env_var = os.getenv(self.tool_env_var)
+            if env_var is not None:
+                if tool is not None:
+                    self.tool_type = tool.type
+                self.tool_path = env_var
+                self.tool_path_specified = True
+
+        if self.tool_type is None and self.tool_path is None:
+            if tool is not None:
+                self.tool_path = tool.path
+            return tool
+
+        if self.tool_type is None:
+            self.tool_type = "default"
+
+        ObjectConstructor = self.object_getter(self.tool_type)
+        if ObjectConstructor is None:
+            raise ValueError(error_text("Unsupported %s type: %s\n\nShould be one of them: %s" % (self.tool_name, self.tool_type, " ".join(self.tool_list_getter()))))
+
+        if self.tool_path is None:
+            tool = ObjectConstructor()
+        else:
+            tool = T.cast(T.Callable[[str], Tool], ObjectConstructor)(self.tool_path)
+
+        if not tool.is_available():
+            if self.tool_path is None:
+                tool_path = tool.type
+            else:
+                tool_path = self.tool_path
+            raise ValueError(error_text("The %s %s could not be found on your machine" % (self.tool_name, tool_path)))
+
+        return tool
+
+

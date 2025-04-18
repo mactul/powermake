@@ -20,6 +20,7 @@ from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
 
 
 _shared_linker_types: T.Dict[str, T.Callable[[], SharedLinker]] = {
+    "default": SharedLinkerGNU,
     "gnu": SharedLinkerGNU,
     "gcc": SharedLinkerGCC,
     "g++": SharedLinkerGPlusPlus,

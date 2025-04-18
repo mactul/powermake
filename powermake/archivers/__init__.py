@@ -20,6 +20,7 @@ from .msvc import ArchiverMSVC
 
 
 _archiver_types: T.Dict[str, T.Callable[[], Archiver]] = {
+    "default": ArchiverGNU,
     "gnu": ArchiverGNU,
     "ar": ArchiverAR,
     "llvm-ar": ArchiverLLVM_AR,

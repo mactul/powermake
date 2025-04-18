@@ -58,6 +58,7 @@ _rc_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
 
 
 _compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
+    "default": CompilerGNU,
     **_c_compiler_types,
     **_cpp_compiler_types,
     **_as_compiler_types,
