@@ -211,14 +211,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         asm_args = []
 
     for file in files:
-        if config.c_compiler is not None:
-            obj_extension = config.c_compiler.obj_extension
-        elif config.cpp_compiler is not None:
-            obj_extension = config.cpp_compiler.obj_extension
-        else:
-            raise RuntimeError(display.error_text("No C/C++ compiler has been specified and the default config didn't find any"))
-
-        output_file = utils.join_absolute_paths(config.obj_build_directory, file + obj_extension)
+        output_file = utils.join_absolute_paths(config.obj_build_directory, file)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
         if _use_absolute_path:
@@ -228,26 +221,31 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         if file.endswith(".c"):
             if config.c_compiler is None:
                 raise RuntimeError(display.error_text("No C compiler has been specified and the default config didn't find any"))
+            output_file += config.c_compiler.obj_extension
             command = config.c_compiler.basic_compile_command(output_file, file, c_args)
             tool = "CC"
         elif file.endswith((".cpp", ".cc", ".C")):
             if config.cpp_compiler is None:
                 raise RuntimeError(display.error_text("No C++ compiler has been specified and the default config didn't find any"))
+            output_file += config.cpp_compiler.obj_extension
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
             tool = "CXX"
         elif file.endswith((".s", ".S")):
             if config.as_compiler is None:
                 raise RuntimeError(display.error_text("No AS compiler has been specified and the default config didn't find any"))
+            output_file += config.as_compiler.obj_extension
             command = config.as_compiler.basic_compile_command(output_file, file, as_args)
             tool = "AS"
         elif file.endswith(".asm"):
             if config.asm_compiler is None:
                 raise RuntimeError(display.error_text("No ASM compiler has been specified and the default config didn't find any"))
+            output_file += config.asm_compiler.obj_extension
             command = config.asm_compiler.basic_compile_command(output_file, file, asm_args)
             tool = "ASM"
         elif file.endswith(".rc"):
             if config.rc_compiler is None:
                 raise RuntimeError(display.error_text("No RC compiler has been specified and the default config didn't find any"))
+            output_file += config.rc_compiler.obj_extension
             command = config.rc_compiler.basic_compile_command(output_file, file, rc_args)
             tool = "RC"
         else:
