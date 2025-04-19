@@ -18,7 +18,7 @@ import abc
 import shutil
 import typing as T
 
-from .display import error_text
+from .display import error_text, print_debug_info
 from .utils import join_absolute_paths
 from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
@@ -159,7 +159,7 @@ def find_tool(toolchain_prefix: T.Union[str, None], object_getter: T.Callable[[s
 
 
 class ToolPrimer:
-    def __init__(self, tool_name: str, tool_env_var: T.Union[str, None], object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]]):
+    def __init__(self, tool_name: str, tool_env_var: T.Union[str, None], object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], tool_list_getter: T.Callable[[], T.Set[str]], verbosity: int):
         self.tool_name = tool_name
         self.tool_env_var = tool_env_var
         self.object_getter = object_getter
@@ -172,6 +172,7 @@ class ToolPrimer:
         if self.tool_env_var is not None:
             env_var = os.getenv(self.tool_env_var)
             if env_var is not None:
+                print_debug_info(f"Using {self.tool_env_var} environment variable instead of the config", verbosity)
                 self.tool_path = env_var
                 self.tool_path_specified = True
 

@@ -21,13 +21,13 @@ import platform
 import typing as T
 
 from .cache import get_cache_dir
-from .display import print_debug_info, error_text
-from .tools import ToolPrimer, find_tool
+from .display import error_text
+from .tools import ToolPrimer
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture, search_new_toolchain
-from .compilers import Compiler, CompilerGNU, CompilerGNUPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
+from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
-from .linkers import Linker, LinkerGNU, GenericLinker, get_all_linker_types
+from .linkers import Linker, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 
 
@@ -176,14 +176,14 @@ class Config:
 
         self.exported_headers: T.List[T.Tuple[str, T.Union[str, None]]] = []
 
-        c_compiler_primer: ToolPrimer = ToolPrimer("c_compiler", "CC", GenericCompiler, get_all_c_compiler_types)
-        cpp_compiler_primer: ToolPrimer = ToolPrimer("cpp_compiler", "CXX", GenericCompiler, get_all_cpp_compiler_types)
-        as_compiler_primer: ToolPrimer = ToolPrimer("as_compiler", "AS", GenericCompiler, get_all_as_compiler_types)
-        asm_compiler_primer: ToolPrimer = ToolPrimer("asm_compiler", "ASM", GenericCompiler, get_all_asm_compiler_types)
-        rc_compiler_primer: ToolPrimer = ToolPrimer("rc_compiler", "RC", GenericCompiler, get_all_rc_compiler_types)
-        archiver_primer: ToolPrimer = ToolPrimer("archiver", "AR", GenericArchiver, get_all_archiver_types)
-        linker_primer: ToolPrimer = ToolPrimer("linker", "LD", GenericLinker, get_all_linker_types)
-        shared_linker_primer: ToolPrimer = ToolPrimer("shared_linker", "SHLD", GenericSharedLinker, get_all_shared_linker_types)
+        c_compiler_primer: ToolPrimer = ToolPrimer("c_compiler", "CC", GenericCompiler, get_all_c_compiler_types, verbosity)
+        cpp_compiler_primer: ToolPrimer = ToolPrimer("cpp_compiler", "CXX", GenericCompiler, get_all_cpp_compiler_types, verbosity)
+        as_compiler_primer: ToolPrimer = ToolPrimer("as_compiler", "AS", GenericCompiler, get_all_as_compiler_types, verbosity)
+        asm_compiler_primer: ToolPrimer = ToolPrimer("asm_compiler", "ASM", GenericCompiler, get_all_asm_compiler_types, verbosity)
+        rc_compiler_primer: ToolPrimer = ToolPrimer("rc_compiler", "RC", GenericCompiler, get_all_rc_compiler_types, verbosity)
+        archiver_primer: ToolPrimer = ToolPrimer("archiver", "AR", GenericArchiver, get_all_archiver_types, verbosity)
+        linker_primer: ToolPrimer = ToolPrimer("linker", "LD", GenericLinker, get_all_linker_types, verbosity)
+        shared_linker_primer: ToolPrimer = ToolPrimer("shared_linker", "SHLD", GenericSharedLinker, get_all_shared_linker_types, verbosity)
 
         primers_list = [c_compiler_primer, cpp_compiler_primer, as_compiler_primer, asm_compiler_primer, rc_compiler_primer, archiver_primer, linker_primer, shared_linker_primer]
 
