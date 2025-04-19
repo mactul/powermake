@@ -136,17 +136,24 @@ class Tool(abc.ABC):
             if flag in self.verified_translation_dict[k]:
                 self.verified_translation_dict[k].remove(flag)
 
+def construct_tool(toolchain_prefix: T.Union[str, None], ObjectConstructor: T.Callable[[], Tool]) -> Tool:
+    tool = ObjectConstructor()
+    if toolchain_prefix is not None:
+        tool_prefixed = T.cast(T.Callable[[str], Tool], ObjectConstructor)(toolchain_prefix + os.path.basename(tool._name))
+        if tool_prefixed.is_available():
+            return tool_prefixed
+    return tool
 
 
-def find_tool(object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
+def find_tool(toolchain_prefix: T.Union[str, None], object_getter: T.Callable[[str], T.Union[T.Callable[[], Tool], None]], *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
     for tool_type in tool_types:
         if tool_type is None:
             continue
         ObjectConstructor = object_getter(tool_type)
         if ObjectConstructor is None:
             continue
-        tool: Tool = ObjectConstructor()
-        if tool is not None and tool.is_available():
+        tool = construct_tool(toolchain_prefix, ObjectConstructor)
+        if tool.is_available():
             return tool
     return None
 
@@ -162,6 +169,12 @@ class ToolPrimer:
         self.tool_path_specified = False
         self.tool_type_specified = False
 
+        if self.tool_env_var is not None:
+            env_var = os.getenv(self.tool_env_var)
+            if env_var is not None:
+                self.tool_path = env_var
+                self.tool_path_specified = True
+
     def load_conf(self, conf: T.Dict[str, T.Any]) -> None:
         if self.tool_name not in conf:
             return
@@ -174,23 +187,39 @@ class ToolPrimer:
             self.tool_type = conf[self.tool_name]["type"]
             self.tool_type_specified = True
 
+    def get_pref(self) -> T.Union[str, None]:
+        if "CCC_ANALYZER_ANALYSIS" in os.environ:
+            # This is the signature of scan-build
+            # if no toolchain is specified, the auto toolchain should prefer clang
+            return "clang"
 
-    def get_tool(self, *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
-        if self.tool_type is None:
-            tool = find_tool(self.object_getter, *tool_types)
+        if not self.tool_path:
+            return None
+        if "clang-cl" in self.tool_path:
+            return "clang-cl"
+        if "clang" in self.tool_path:
+            return "clang"
+        if "mingw" in self.tool_path:
+            return "mingw"
+        if "gcc" in self.tool_path or "g++" in self.tool_path:
+            return "gcc"
+        if "cl" in self.tool_path:
+            return"msvc"
+        return None
 
-        if self.tool_env_var is not None:
-            env_var = os.getenv(self.tool_env_var)
-            if env_var is not None:
-                if tool is not None:
-                    self.tool_type = tool.type
-                self.tool_path = env_var
-                self.tool_path_specified = True
 
+    def get_tool(self, toolchain_prefix: T.Union[str, None] = None, *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
         if self.tool_type is None and self.tool_path is None:
+            tool = find_tool(toolchain_prefix, self.object_getter, *tool_types)
             if tool is not None:
                 self.tool_path = tool.path
+                self.tool_type = tool.type
             return tool
+
+        for t in tool_types:
+            if t is not None:
+                self.tool_type = t
+                break
 
         if self.tool_type is None:
             self.tool_type = "default"
@@ -200,11 +229,11 @@ class ToolPrimer:
             raise ValueError(error_text("Unsupported %s type: %s\n\nShould be one of them: %s" % (self.tool_name, self.tool_type, " ".join(self.tool_list_getter()))))
 
         if self.tool_path is None:
-            tool = ObjectConstructor()
+            tool = construct_tool(toolchain_prefix, ObjectConstructor)
         else:
             tool = T.cast(T.Callable[[str], Tool], ObjectConstructor)(self.tool_path)
 
-        if not tool.is_available():
+        if tool is None or not tool.is_available():
             if self.tool_path is None:
                 tool_path = tool.type
             else:
