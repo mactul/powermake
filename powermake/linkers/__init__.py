@@ -15,7 +15,7 @@
 import typing as T
 
 from .common import Linker
-from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus, LinkerMinGW, LinkerMinGWPlusPlus
+from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus, LinkerMinGW, LinkerMinGWPlusPlus, LinkerMinGWLD
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 
@@ -30,7 +30,8 @@ _linker_types: T.Dict[str, T.Callable[[], Linker]] = {
     "msvc": LinkerMSVC,
     "clang-cl": LinkerClang_CL,
     "mingw": LinkerMinGW,
-    "mingw++": LinkerMinGWPlusPlus
+    "mingw++": LinkerMinGWPlusPlus,
+    "mingw-ld": LinkerMinGWLD
 }
 
 

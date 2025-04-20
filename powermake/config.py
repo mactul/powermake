@@ -38,7 +38,7 @@ def get_global_config() -> str:
     return global_config
 
 
-def auto_toolchain(preference: T.Union[str, None], tools_type: T.List[T.Union[str, None]]) -> T.Tuple[T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None]]:
+def auto_toolchain(preference: T.Union[str, None], tools_type: T.List[T.Union[str, None]]) -> T.Tuple[T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None]]:
     all_None = True
     for t in tools_type:
         if t is not None:
@@ -48,41 +48,64 @@ def auto_toolchain(preference: T.Union[str, None], tools_type: T.List[T.Union[st
     c_compiler_type: T.Union[str, None] = None
     cpp_compiler_type: T.Union[str, None] = None
     archiver_type: T.Union[str, None] = None
+    linker_type: T.Union[str, None] = None
     rc_compiler_type: T.Union[str, None] = None
 
-    if all_None and preference == "clang" or "clang" in tools_type or "clang++" in tools_type or "llvm-ar" in tools_type:
+    if all_None and preference == "mingw-ld" or "mingw-ld" in tools_type:
+        # Clang-CL toolchain
+        c_compiler_type = "mingw"
+        cpp_compiler_type = "mingw++"
+        archiver_type = "mingw"
+        linker_type = "mingw-ld"
+    elif (all_None and preference == "ld" or "ld" in tools_type) and ("clang" in tools_type or "clang++" in tools_type):
+        c_compiler_type = "clang"
+        cpp_compiler_type = "clang++"
+        archiver_type = "llvm-ar"
+        linker_type = "ld"
+    elif all_None and preference == "ld" or "ld" in tools_type:
+        c_compiler_type = "gcc"
+        cpp_compiler_type = "g++"
+        archiver_type = "ar"
+        linker_type = "ld"
+    elif all_None and preference == "clang" or "clang" in tools_type or "clang++" in tools_type or "llvm-ar" in tools_type:
         # clang toolchain
         c_compiler_type = "clang"
         cpp_compiler_type = "clang++"
         archiver_type = "llvm-ar"
+        linker_type = "clang++"
     elif all_None and preference == "gcc" or "gcc" in tools_type or "g++" in tools_type or "ar" in tools_type:
         # GCC toolchain
         c_compiler_type = "gcc"
         cpp_compiler_type = "g++"
         archiver_type = "ar"
+        linker_type = "g++"
     elif all_None and preference == "gnu" or "gnu" in tools_type or "gnu++" in tools_type:
         # GNU toolchain
         c_compiler_type = "gnu"
         cpp_compiler_type = "gnu++"
         archiver_type = "gnu"
+        linker_type = "gnu++"
     elif all_None and preference == "mingw" or "mingw" in tools_type or "mingw++" in tools_type or "windres" in tools_type:
         # MinGW toolchain
         c_compiler_type = "mingw"
         cpp_compiler_type = "mingw++"
         archiver_type = "mingw"
+        linker_type = "mingw++"
         rc_compiler_type = "windres"
     elif all_None and preference == "msvc" or "msvc" in tools_type:
         # MSVC toolchain
         c_compiler_type = "msvc"
         cpp_compiler_type = "msvc"
+        linker_type = "msvc"
         archiver_type = "msvc"
     elif all_None and preference == "clang-cl" or "clang-cl" in tools_type:
-        # MSVC toolchain
+        # Clang-CL toolchain
         c_compiler_type = "clang-cl"
         cpp_compiler_type = "clang-cl"
+        linker_type = "clang-cl"
         archiver_type = "llvm-ar"
 
-    return (c_compiler_type, cpp_compiler_type, archiver_type, rc_compiler_type)
+    return (c_compiler_type, cpp_compiler_type, archiver_type, linker_type, rc_compiler_type)
 
 def get_toolchain_prefix(path: T.Union[str, None]) -> T.Union[str, None]:
     if not path:
@@ -358,25 +381,25 @@ class Config:
             preference = preference or primer.get_pref()
 
         types = [p.tool_type for p in primers_list]
-        pref: T.Callable[[ToolPrimer], T.Tuple[T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None]]] = lambda primer: auto_toolchain(primer.get_pref() or preference, types)
+        pref: T.Callable[[ToolPrimer], T.Tuple[T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None]]] = lambda primer: auto_toolchain(primer.get_pref() or preference, types)
 
         if self.target_is_windows():
             self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, pref(c_compiler_primer)[0], "mingw", "msvc", "gcc", "clang-cl", "clang"))
             self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, pref(cpp_compiler_primer)[1], "mingw++", "msvc", "g++", "clang-cl", "clang++"))
             self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, pref(as_compiler_primer)[0], "mingw", "gcc", "clang"))
             self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, pref(archiver_primer)[2], "mingw", "msvc", "ar", "llvm-ar"))
-            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, pref(linker_primer)[1], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
-            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, pref(shared_linker_primer)[1], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, pref(linker_primer)[3], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, pref(shared_linker_primer)[3], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
         else:
             self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, pref(c_compiler_primer)[0], "gcc", "clang"))
             self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, pref(cpp_compiler_primer)[1], "g++", "clang++"))
             self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, pref(as_compiler_primer)[0], "gcc", "clang"))
             self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, pref(archiver_primer)[2], "ar", "llvm-ar"))
-            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, pref(linker_primer)[1], "g++", "clang++", "gcc", "clang"))
-            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, pref(shared_linker_primer)[1], "g++", "clang++", "gcc", "clang"))
+            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, pref(linker_primer)[3], "g++", "clang++", "gcc", "clang"))
+            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, pref(shared_linker_primer)[3], "g++", "clang++", "gcc", "clang"))
 
         self.asm_compiler = T.cast(T.Union[Compiler, None], asm_compiler_primer.get_tool(toolchain_prefix, "nasm"))
-        self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, pref(rc_compiler_primer)[3], "windres"))
+        self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, pref(rc_compiler_primer)[4], "windres"))
 
         self._disable_architecture_toolchain_discover = False
         for primer in primers_list:

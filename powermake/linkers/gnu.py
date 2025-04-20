@@ -87,3 +87,9 @@ class LinkerMinGWPlusPlus(LinkerGNU):
 
     def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
         super().__init__(path)
+
+class LinkerMinGWLD(LinkerLD):
+    type: T.ClassVar = "mingw-ld"
+
+    def __init__(self, path: str = "x86_64-w64-mingw32-ld"):
+        super().__init__(path)

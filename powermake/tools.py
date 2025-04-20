@@ -200,8 +200,12 @@ class ToolPrimer:
             return "clang-cl"
         if "clang" in self.tool_path:
             return "clang"
+        if "mingw" in self.tool_path and "ld" in self.tool_path:
+            return "mingw-ld"
         if "mingw" in self.tool_path:
             return "mingw"
+        if "ld" in self.tool_path:
+            return "ld"
         if "gcc" in self.tool_path or "g++" in self.tool_path:
             return "gcc"
         if "cl" in self.tool_path:
@@ -218,7 +222,7 @@ class ToolPrimer:
             return tool
 
         for t in tool_types:
-            if t is not None:
+            if t is not None and self.object_getter(t) is not None:
                 self.tool_type = t
                 break
 
