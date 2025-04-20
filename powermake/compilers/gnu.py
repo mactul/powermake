@@ -15,7 +15,6 @@
 import subprocess
 import typing as T
 
-from ..tools import _powermake_flags_to_gnu_flags
 from .common import Compiler
 from ..utils import get_empty_file
 
@@ -39,7 +38,6 @@ class CompilerGNU(Compiler):
 
 class CompilerGNUPlusPlus(CompilerGNU):
     type: T.ClassVar = "gnu++"
-    translation_dict = _powermake_flags_to_gnu_flags
 
     def __init__(self, path: str = "c++"):
         super().__init__(path)

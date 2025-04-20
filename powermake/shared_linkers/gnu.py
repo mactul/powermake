@@ -17,6 +17,7 @@ import typing as T
 
 from ..utils import get_empty_file
 from .common import SharedLinker
+from ..linkers.gnu import _powermake_flags_to_ld_flags
 
 
 class SharedLinkerGNU(SharedLinker):
@@ -38,6 +39,7 @@ class SharedLinkerGNU(SharedLinker):
 
 class SharedLinkerLD(SharedLinkerGNU):
     type: T.ClassVar = "ld"
+    translation_dict = _powermake_flags_to_ld_flags
 
     def __init__(self, path: str = "ld"):
         super().__init__(path)

@@ -19,6 +19,59 @@ from ..utils import get_empty_file
 from .common import Linker
 
 
+_powermake_warning_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
+    "-w": [],
+    "-Wall": [],
+    "-Wextra": [],
+    "-Weverything": [],
+    "-Wsecurity": [],
+    "-Werror": ["--fatal-warnings"],
+    "-Wpedantic": [],
+    "-pedantic": [],
+    "-Wswitch": [],
+    "-Wswitch-enum": [],
+    "-fanalyzer": [],
+    "-ffuzzer": []
+}
+
+_powermake_optimization_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
+    "-O0": [],
+    "-Og": [],
+    "-O": ["-O"],
+    "-O1": ["-O"],
+    "-O2": ["-O"],
+    "-O3": ["-O"],
+    "-Os": ["-O"],
+    "-Oz": ["-O"],
+    "-Ofast": ["-O"],
+    "-fomit-frame-pointer": [],
+}
+
+_powermake_machine_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
+    "-m32": [],
+    "-m64": [],
+    "-march=native": [],
+    "-mtune=native": [],
+    "-mmmx": [],
+    "-msse": [],
+    "-msse2": [],
+    "-msse3": [],
+    "-mavx": [],
+    "-mavx2": []
+}
+
+_powermake_flags_to_ld_flags: T.Dict[str, T.List[str]] = {
+    **_powermake_warning_flags_to_ld_flags,
+    **_powermake_optimization_flags_to_ld_flags,
+    **_powermake_machine_flags_to_ld_flags,
+    "-g": [],
+    "-fPIC": [],
+    "-fdiagnostics-color": [],
+    "-fsecurity=1": [],
+    "-fsecurity=2": [],
+    "-fsecurity": []
+}
+
 
 class LinkerGNU(Linker):
     type: T.ClassVar = "gnu"
@@ -39,6 +92,7 @@ class LinkerGNU(Linker):
 
 class LinkerLD(LinkerGNU):
     type: T.ClassVar = "ld"
+    translation_dict = _powermake_flags_to_ld_flags
 
     def __init__(self, path: str = "ld"):
         super().__init__(path)
