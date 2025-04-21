@@ -90,7 +90,7 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
 
     if os.path.isdir(config.lib_build_directory):
         lib_files = os.listdir(config.lib_build_directory)
-        if lib_files != []:
+        if len(lib_files) > 0:
             makedirs(lib_folder, exist_ok=True)
             for file in lib_files:
                 src = os.path.join(config.lib_build_directory, file)
@@ -101,7 +101,7 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
 
     if os.path.isdir(config.exe_build_directory):
         bin_files = os.listdir(config.exe_build_directory)
-        if bin_files != []:
+        if len(bin_files) > 0:
             makedirs(bin_folder, exist_ok=True)
             for file in bin_files:
                 src = os.path.join(config.exe_build_directory, file)
@@ -112,15 +112,15 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
 
     if len(config.exported_headers) != 0:
         makedirs(include_folder, exist_ok=True)
-    for (src, subfolder) in config.exported_headers:
-        if subfolder is None:
-            dest = os.path.join(include_folder, os.path.basename(src))
-        else:
-            makedirs(os.path.join(include_folder, subfolder), exist_ok=True)
-            dest = os.path.join(include_folder, subfolder, os.path.basename(src))
-        print_debug_info(f"copying {src} to {dest}", config.verbosity)
-        nb_files_installed += 1
-        shutil.copy(src, dest)
+        for (src, subfolder) in config.exported_headers:
+            if subfolder is None:
+                dest = os.path.join(include_folder, os.path.basename(src))
+            else:
+                makedirs(os.path.join(include_folder, subfolder), exist_ok=True)
+                dest = os.path.join(include_folder, subfolder, os.path.basename(src))
+            print_debug_info(f"copying {src} to {dest}", config.verbosity)
+            nb_files_installed += 1
+            shutil.copy(src, dest)
 
     print_info(f"{nb_files_installed} files successfully copied", config.verbosity)
 

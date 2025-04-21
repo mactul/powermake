@@ -33,13 +33,12 @@ def load_cache_from_file(filepath: str) -> T.Dict[str, T.Any]:
     try:
         with open(filepath, "r") as file:
             cache = dict(json.load(file))
-        if "control" in cache:
-            control_filepath = shutil.which(cache["control"][0])
-            if control_filepath is None or max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) > cache["control"][1]:
-                return {}
-            return cache
-        else:
+        if "control" not in cache:
             return {}
+        control_filepath = shutil.which(cache["control"][0])
+        if control_filepath is None or max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) > cache["control"][1]:
+            return {}
+        return cache
     except OSError:
         return {}
 

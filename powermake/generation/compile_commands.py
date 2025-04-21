@@ -42,6 +42,6 @@ def generate_compile_commands(config: Config) -> None:
                 json_command["file"] = deps[0]
 
             json_commands.append(json_command)
-    
+
     with open(os.path.join(config.compile_commands_dir, "compile_commands.json"), "w") as fd:
         json.dump(json_commands, fd, indent=4)

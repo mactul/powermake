@@ -175,15 +175,15 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         force = config.rebuild
 
     if config.single_file is not None:
-        if _file_in_files_set(config.single_file, files):
-            if isinstance(files, set):
-                files = {config.single_file}
-            else:
-                files = [config.single_file]
-        else:
+        if not _file_in_files_set(config.single_file, files):
             if isinstance(files, set):
                 return set()
             return []
+        if isinstance(files, set):
+            files = {config.single_file}
+        else:
+            files = [config.single_file]
+
 
     if config.c_compiler is not None:
         c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags)
