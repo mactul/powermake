@@ -67,7 +67,7 @@ __default_tasks = """{
 }
 """
 
-def format_json_string(js_str: str, powermake_program: str, vscode_path: str):
+def format_json_string(js_str: str, powermake_program: str, vscode_path: str) -> str:
     js_str = js_str.replace("${powermakeProgram}", json.dumps(powermake_program)[1:-1])
     js_str = js_str.replace("${powermakePythonPath}", json.dumps(sys.executable)[1:-1])
     js_str = js_str.replace("${powermakeMakefilePath}", json.dumps(os.path.realpath(__makefile__.__file__))[1:-1])

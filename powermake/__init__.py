@@ -30,7 +30,7 @@ from .__version__ import __version__
 from . import utils, display, generation
 from .display import print_info, print_debug_info
 from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
-from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed
+from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed, CompilationStopper
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
 
@@ -267,8 +267,9 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         generation._makefile_targets.append([(False, op.outputfile, op.dependencies, op.command, op.tool) for op in operations])
         generation._makefile_targets_mutex.release()
 
+    stopper = CompilationStopper()
     with ThreadPoolExecutor(max_workers=config.nb_jobs) as executor:
-        output = executor.map(lambda op: op.execute(force, _generate_makefile=False), operations)
+        output = executor.map(lambda op: op.execute(force, _generate_makefile=False, stopper=stopper), operations)
         if isinstance(files, set):
             generated_objects = set(output)
         else:

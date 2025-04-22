@@ -16,7 +16,7 @@ class PowerMakeRuntimeError(PowerMakeException):
 class PowerMakeCommandError(PowerMakeRuntimeError):
     exc_type: str = "Command Error"
 
-def print_powermake_traceback(e: PowerMakeException):
+def print_powermake_traceback(e: PowerMakeException) -> None:
     print(error_text(e.exc_type), ":", e)
     tab = 0
     tb_list = traceback.extract_tb(e.__traceback__)

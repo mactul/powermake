@@ -25,6 +25,9 @@ from .utils import print_bytes
 from .exceptions import PowerMakeCommandError
 from .display import print_info, print_debug_info, error_text
 
+class CompilationStopper:
+    stop = False
+
 
 def resolve_path(current_folder: str, additional_includedirs: T.List[str], filepath: str) -> T.Union[str, None]:
     path = os.path.join(current_folder, filepath)
@@ -148,7 +151,7 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 
 _print_lock = Lock()
 _commands_counter = 0
-def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, **kwargs: T.Any) -> T.Tuple[int, bytes]:
+def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> T.Tuple[int, bytes]:
     global _commands_counter
 
     returncode = 0
@@ -160,6 +163,9 @@ def run_command_get_output(config: Config, command: T.Union[T.List[str], str], s
 
     if output_filter is not None:
         output = output_filter(output)
+
+    if stopper is not None and stopper.stop:
+        return 0, output
 
     _print_lock.acquire()
 
@@ -184,10 +190,10 @@ def run_command_get_output(config: Config, command: T.Union[T.List[str], str], s
 
     return returncode, output
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> int:
-    return run_command_get_output(config, command, shell, target, output_filter, _dependencies, _generate_makefile, _tool, **kwargs)[0]
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> int:
+    return run_command_get_output(config, command, shell, target, output_filter, _dependencies, _generate_makefile, _tool, stopper=stopper, **kwargs)[0]
 
-def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Iterable[str], command: T.Union[T.List[str], str], shell: bool = False, force: T.Union[bool, None] = None, _generate_makefile: bool = True, _tool: str = "", **kwargs: T.Any) -> str:
+def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Iterable[str], command: T.Union[T.List[str], str], shell: bool = False, force: T.Union[bool, None] = None, _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> str:
     """
     Run a command generating a file only if this file needs to be re-generated.
 
@@ -223,12 +229,14 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
     if force is None:
         force = config.rebuild
     if force or needs_update(outputfile, dependencies, additional_includedirs=config.additional_includedirs):
-        if run_command(config, command, shell=shell, target=outputfile, _dependencies=dependencies, _generate_makefile=_generate_makefile, _tool=_tool, **kwargs) != 0:
+        if run_command(config, command, shell=shell, target=outputfile, _dependencies=dependencies, _generate_makefile=_generate_makefile, _tool=_tool, stopper=stopper, **kwargs) != 0:
             command_ex = ""
             if isinstance(command, list) and len(command) > 0:
                 command_ex = command[0]
             else:
-                command_ex = command
+                command_ex = T.cast(str, command)
+            if stopper is not None:
+                stopper.stop = True
             raise PowerMakeCommandError(error_text(f"Unable to generate {os.path.basename(outputfile)}, {command_ex} returned a non-zero status (see above)"))
     else:
         _print_lock.acquire()
@@ -263,7 +271,7 @@ class Operation:
         self.config = config
         self.tool = tool
 
-    def execute(self, force: T.Union[bool, None] = None, _generate_makefile: bool = True) -> str:
+    def execute(self, force: T.Union[bool, None] = None, _generate_makefile: bool = True, stopper: T.Union[CompilationStopper, None] = None) -> str:
         """
         Verify if the outputfile is up to date with his dependencies and if not, execute the command.
 
@@ -283,4 +291,4 @@ class Operation:
             If the command fails.
         """
 
-        return run_command_if_needed(self.config, self.outputfile, self.dependencies, self.command, force=force, _generate_makefile=_generate_makefile, _tool=self.tool)
+        return run_command_if_needed(self.config, self.outputfile, self.dependencies, self.command, force=force, _generate_makefile=_generate_makefile, _tool=self.tool, stopper=stopper)
