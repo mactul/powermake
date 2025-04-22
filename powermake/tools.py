@@ -18,8 +18,9 @@ import abc
 import shutil
 import typing as T
 
-from .display import error_text, print_debug_info
 from .utils import join_absolute_paths
+from .exceptions import PowerMakeValueError
+from .display import error_text, print_debug_info
 from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
 
@@ -231,7 +232,7 @@ class ToolPrimer:
 
         ObjectConstructor = self.object_getter(self.tool_type)
         if ObjectConstructor is None:
-            raise ValueError(error_text("Unsupported %s type: %s\n\nShould be one of them: %s" % (self.tool_name, self.tool_type, " ".join(self.tool_list_getter()))))
+            raise PowerMakeValueError(error_text("Unsupported %s type: %s\n\nShould be one of them: %s" % (self.tool_name, self.tool_type, " ".join(self.tool_list_getter()))))
 
         if self.tool_path is None:
             tool = construct_tool(toolchain_prefix, ObjectConstructor)
@@ -243,7 +244,7 @@ class ToolPrimer:
                 tool_path = tool.type
             else:
                 tool_path = self.tool_path
-            raise ValueError(error_text("The %s %s could not be found on your machine" % (self.tool_name, tool_path)))
+            raise PowerMakeValueError(error_text("The %s %s could not be found on your machine" % (self.tool_name, tool_path)))
 
         return tool
 

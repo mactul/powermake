@@ -22,6 +22,7 @@ from threading import Lock
 from . import generation
 from .config import Config
 from .utils import print_bytes
+from .exceptions import PowerMakeCommandError
 from .display import print_info, print_debug_info, error_text
 
 
@@ -214,7 +215,7 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
 
     Raises
     ------
-    RuntimeError
+    PowerMakeRuntimeError
         When the command exit with a non-zero status code.
     """
     global _commands_counter
@@ -223,7 +224,12 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
         force = config.rebuild
     if force or needs_update(outputfile, dependencies, additional_includedirs=config.additional_includedirs):
         if run_command(config, command, shell=shell, target=outputfile, _dependencies=dependencies, _generate_makefile=_generate_makefile, _tool=_tool, **kwargs) != 0:
-            raise RuntimeError(error_text(f"Unable to generate {os.path.basename(outputfile)}"))
+            command_ex = ""
+            if isinstance(command, list) and len(command) > 0:
+                command_ex = command[0]
+            else:
+                command_ex = command
+            raise PowerMakeCommandError(error_text(f"Unable to generate {os.path.basename(outputfile)}, {command_ex} returned a non-zero status (see above)"))
     else:
         _print_lock.acquire()
         _commands_counter += 1
@@ -273,7 +279,7 @@ class Operation:
 
         Raises
         ------
-        RuntimeError
+        PowerMakeRuntimeError
             If the command fails.
         """
 

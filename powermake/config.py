@@ -20,9 +20,10 @@ import argparse
 import platform
 import typing as T
 
+from .tools import ToolPrimer
 from .cache import get_cache_dir
 from .display import error_text
-from .tools import ToolPrimer
+from .exceptions import PowerMakeRuntimeError
 from .search_visual_studio import load_msvc_environment
 from .architecture import simplify_architecture, search_new_toolchain
 from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
@@ -430,7 +431,7 @@ class Config:
 
     def reload_env(self) -> None:
         if self.target_architecture == "" or self.host_architecture == "":
-            raise RuntimeError(error_text("Unable to load environment because architecture is undetermined"))
+            raise PowerMakeRuntimeError(error_text("Unable to load environment because architecture is undetermined"))
 
         self.target_simplified_architecture = simplify_architecture(self.target_architecture)
         self.host_simplified_architecture = simplify_architecture(self.host_architecture)
@@ -461,7 +462,7 @@ class Config:
                     tool.reload(path)
 
                 if not tool.is_available():
-                    raise RuntimeError(error_text(f"PowerMake has changed its environment and is unable to find {tool._name}"))
+                    raise PowerMakeRuntimeError(error_text(f"PowerMake has changed its environment and is unable to find {tool._name}"))
 
         if self.c_compiler is not None and not self.c_compiler.is_available():
             self.c_compiler = None
@@ -481,7 +482,7 @@ class Config:
         if self.asm_compiler is not None:
             self.asm_compiler.reload()
             if not self.asm_compiler.is_available():
-                raise RuntimeError(error_text(f"PowerMake has changed its environment and is unable to find {self.asm_compiler._name}"))
+                raise PowerMakeRuntimeError(error_text(f"PowerMake has changed its environment and is unable to find {self.asm_compiler._name}"))
 
     def reset_build_directories(self) -> None:
         if self.debug:

@@ -62,3 +62,9 @@ def print_debug_info(string: T.Any, verbosity: int) -> None:
 
 def error_text(string: str) -> str:
     return colorama.Style.BRIGHT + colorama.Fore.RED + string + colorama.Style.RESET_ALL
+
+def bold_text(string: T.Any) -> str:
+    return colorama.Style.BRIGHT + str(string) + colorama.Style.RESET_ALL
+
+def dim_text(string: T.Any) -> str:
+    return colorama.Style.DIM + str(string) + colorama.Style.RESET_ALL

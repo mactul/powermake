@@ -29,6 +29,7 @@ from .utils import makedirs
 from .__version__ import __version__
 from . import utils, display, generation
 from .display import print_info, print_debug_info
+from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
 from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed
 from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
 
@@ -157,9 +158,9 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
     Raises
     ------
-    RuntimeError
+    PowerMakeRuntimeError
         If no compiler is found.
-    ValueError
+    PowerMakeValueError
         if `files` contains a file that doesn't ends with .c, .cpp, .cc, .C, .s, .S, .rc or .asm.
     """
     generated_objects: T.Union[T.Set[str], T.List[str]] = set()
@@ -220,36 +221,36 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
         if file.endswith(".c"):
             if config.c_compiler is None:
-                raise RuntimeError(display.error_text("No C compiler has been specified and the default config didn't find any"))
+                raise PowerMakeRuntimeError(display.error_text("No C compiler has been specified and the default config didn't find any"))
             output_file += config.c_compiler.obj_extension
             command = config.c_compiler.basic_compile_command(output_file, file, c_args)
             tool = "CC"
         elif file.endswith((".cpp", ".cc", ".C")):
             if config.cpp_compiler is None:
-                raise RuntimeError(display.error_text("No C++ compiler has been specified and the default config didn't find any"))
+                raise PowerMakeRuntimeError(display.error_text("No C++ compiler has been specified and the default config didn't find any"))
             output_file += config.cpp_compiler.obj_extension
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
             tool = "CXX"
         elif file.endswith((".s", ".S")):
             if config.as_compiler is None:
-                raise RuntimeError(display.error_text("No AS compiler has been specified and the default config didn't find any"))
+                raise PowerMakeRuntimeError(display.error_text("No AS compiler has been specified and the default config didn't find any"))
             output_file += config.as_compiler.obj_extension
             command = config.as_compiler.basic_compile_command(output_file, file, as_args)
             tool = "AS"
         elif file.endswith(".asm"):
             if config.asm_compiler is None:
-                raise RuntimeError(display.error_text("No ASM compiler has been specified and the default config didn't find any"))
+                raise PowerMakeRuntimeError(display.error_text("No ASM compiler has been specified and the default config didn't find any"))
             output_file += config.asm_compiler.obj_extension
             command = config.asm_compiler.basic_compile_command(output_file, file, asm_args)
             tool = "ASM"
         elif file.endswith(".rc"):
             if config.rc_compiler is None:
-                raise RuntimeError(display.error_text("No RC compiler has been specified and the default config didn't find any"))
+                raise PowerMakeRuntimeError(display.error_text("No RC compiler has been specified and the default config didn't find any"))
             output_file += config.rc_compiler.obj_extension
             command = config.rc_compiler.basic_compile_command(output_file, file, rc_args)
             tool = "RC"
         else:
-            raise ValueError(display.error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
+            raise PowerMakeValueError(display.error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
         op = Operation(output_file, {file}, config, command, tool)
         if isinstance(files, set):
             T.cast(T.Set[Operation], operations).add(op)
@@ -261,17 +262,17 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         op.execute(force)
         exit(0)
 
+    if config._args_parsed is not None and config._args_parsed.makefile or config.compile_commands_dir is not None:
+        generation._makefile_targets_mutex.acquire()
+        generation._makefile_targets.append([(False, op.outputfile, op.dependencies, op.command, op.tool) for op in operations])
+        generation._makefile_targets_mutex.release()
+
     with ThreadPoolExecutor(max_workers=config.nb_jobs) as executor:
         output = executor.map(lambda op: op.execute(force, _generate_makefile=False), operations)
         if isinstance(files, set):
             generated_objects = set(output)
         else:
             generated_objects = list(output)
-
-    if config._args_parsed is not None and config._args_parsed.makefile or config.compile_commands_dir is not None:
-        generation._makefile_targets_mutex.acquire()
-        generation._makefile_targets.append([(False, op.outputfile, op.dependencies, op.command, op.tool) for op in operations])
-        generation._makefile_targets_mutex.release()
 
     return generated_objects
 
@@ -299,7 +300,7 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
 
     Raises
     ------
-    RuntimeError
+    PowerMakeRuntimeError
         If no archiver is found.
     """
     if force is None:
@@ -309,7 +310,7 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         archive_name = "lib" + config.target_name
 
     if config.archiver is None:
-        raise RuntimeError(display.error_text("No archiver has been specified and the default config didn't find any"))
+        raise PowerMakeRuntimeError(display.error_text("No archiver has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, archive_name + config.archiver.static_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
@@ -341,7 +342,7 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     Raises
     ------
-    RuntimeError
+    PowerMakeRuntimeError
         If no linker is found.
     """
     if force is None:
@@ -351,7 +352,7 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
         executable_name = config.target_name
 
     if config.linker is None:
-        raise RuntimeError(display.error_text("No linker has been specified and the default config didn't find any"))
+        raise PowerMakeRuntimeError(display.error_text("No linker has been specified and the default config didn't find any"))
     extension = ""
     if config.target_is_windows():
         extension = ".exe"
@@ -387,7 +388,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
 
     Raises
     ------
-    RuntimeError
+    PowerMakeRuntimeError
         If no shared linker is found.
     """
     if force is None:
@@ -397,7 +398,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         lib_name = "lib" + config.target_name
 
     if config.shared_linker is None:
-        raise RuntimeError(display.error_text("No shared linker has been specified and the default config didn't find any"))
+        raise PowerMakeRuntimeError(display.error_text("No shared linker has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, lib_name + config.shared_linker.shared_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.shared_linker_flags)
@@ -450,7 +451,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     Raises
     ------
-    RuntimeError
+    PowerMakeRuntimeError
         If the other powermake fails.
     """
     if debug is None:
@@ -483,7 +484,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
         output: bytes = subprocess.check_output(command, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         utils.print_bytes(e.output)
-        raise RuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
+        raise PowerMakeRuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
 
     last_line_offset = output[:-1].rfind(ord('\n'))
     if last_line_offset == -1:
