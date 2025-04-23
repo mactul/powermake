@@ -2010,5 +2010,10 @@ Here is an example of a functional `.vscode/launch.json`:
 > [!NOTE]  
 > You need the Microsoft C/C++ Extension Pack for this to work
 
+> [!IMPORTANT]  
+> Once you have run `python makefile.py --generate-vscode` at least once, you can edit the default vscode template in `~/.powermake/vscode_templates/`.
+> 
+> If you want to regenerate one of these templates from the default, just delete the file dans run `python makefile.py --generate-vscode`
+
 
 **documentation in progress...**
