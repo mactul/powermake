@@ -20,12 +20,12 @@ import argparse
 import platform
 import typing as T
 
-from .tools import ToolPrimer
+from .tools import ToolPrimer, split_toolchain_prefix
 from .cache import get_cache_dir
 from .display import error_text
 from .exceptions import PowerMakeRuntimeError
 from .search_visual_studio import load_msvc_environment
-from .architecture import simplify_architecture, search_new_toolchain
+from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture
 from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
@@ -107,32 +107,6 @@ def auto_toolchain(preference: T.Union[str, None], tools_type: T.List[T.Union[st
         archiver_type = "llvm-ar"
 
     return (c_compiler_type, cpp_compiler_type, archiver_type, linker_type, rc_compiler_type)
-
-def get_toolchain_prefix(path: T.Union[str, None]) -> T.Union[str, None]:
-    if not path:
-        return None
-    if path.endswith("gcc"):
-        return path[:-3]
-    if path.endswith("clang"):
-        return path[:-5]
-    if path.endswith("clang++"):
-        return path[:-7]
-    if path.endswith("windres"):
-        return path[:-7]
-    if path.endswith("g++"):
-        return path[:-3]
-    if path.endswith("ar"):
-        return path[:-2]
-    if path.endswith("ld"):
-        return path[:-2]
-    if path.endswith("cc"):
-        return path[:-2]
-    if path.endswith("cpp"):
-        return path[:-3]
-    if path.endswith("c++"):
-        return path[:-3]
-
-    return None
 
 
 def replace_architecture(string: str, new_arch: str) -> str:
@@ -361,7 +335,9 @@ class Config:
         if self.host_operating_system == "":
             self.host_operating_system = platform.system()
 
+        target_arch_detected = False
         if self.target_architecture == "":
+            target_arch_detected = True
             self.target_architecture = platform.machine()
         if self.host_architecture == "":
             self.host_architecture = platform.machine()
@@ -375,7 +351,13 @@ class Config:
         for primer in primers_list:
             if primer.tool_path_specified:
                 path = path or primer.tool_path
-        toolchain_prefix = get_toolchain_prefix(path)
+        toolchain_prefix = split_toolchain_prefix(path)[0]
+
+        if target_arch_detected and path is not None:
+            arch = split_toolchain_architecture(path)[0]
+            if arch is not None:
+                self.target_architecture = arch
+                self.target_simplified_architecture = arch
 
         preference = None
         for primer in primers_list:

@@ -37,6 +37,32 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
 }
 
 
+def split_toolchain_prefix(path: T.Tuple[T.Union[str, None], T.Union[str, None]]) -> T.Union[str, None]:
+    if not path:
+        return (None, None)
+    if path.endswith("gcc"):
+        return (path[:-3], "gcc")
+    if path.endswith("clang"):
+        return (path[:-5], "clang")
+    if path.endswith("clang++"):
+        return (path[:-7], "clang++")
+    if path.endswith("windres"):
+        return (path[:-7], "windres")
+    if path.endswith("g++"):
+        return (path[:-3], "g++")
+    if path.endswith("ar"):
+        return (path[:-2], "ar")
+    if path.endswith("ld"):
+        return (path[:-2], "ld")
+    if path.endswith("cc"):
+        return (path[:-2], "cc")
+    if path.endswith("cpp"):
+        return (path[:-3], "cpp")
+    if path.endswith("c++"):
+        return (path[:-3], "c++")
+
+    return (None, path)
+
 class Tool(abc.ABC):
     type: T.ClassVar = ""
     translation_dict: T.ClassVar[T.Dict[str, T.List[str]]] = _powermake_flags_to_gnu_flags
@@ -140,7 +166,7 @@ class Tool(abc.ABC):
 def construct_tool(toolchain_prefix: T.Union[str, None], ObjectConstructor: T.Callable[[], Tool]) -> Tool:
     tool = ObjectConstructor()
     if toolchain_prefix is not None:
-        tool_prefixed = T.cast(T.Callable[[str], Tool], ObjectConstructor)(toolchain_prefix + os.path.basename(tool._name))
+        tool_prefixed = T.cast(T.Callable[[str], Tool], ObjectConstructor)(toolchain_prefix + split_toolchain_prefix(os.path.basename(tool._name))[1])
         if tool_prefixed.is_available():
             return tool_prefixed
     return tool
