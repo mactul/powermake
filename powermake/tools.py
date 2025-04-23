@@ -37,9 +37,9 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
 }
 
 
-def split_toolchain_prefix(path: T.Tuple[T.Union[str, None], T.Union[str, None]]) -> T.Union[str, None]:
+def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, None], str]:
     if not path:
-        return (None, None)
+        return (None, "")
     if path.endswith("gcc"):
         return (path[:-3], "gcc")
     if path.endswith("clang"):
