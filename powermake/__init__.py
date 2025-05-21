@@ -16,6 +16,7 @@
 import os
 import sys
 import glob
+import json
 import shutil
 import fnmatch
 import subprocess
@@ -421,6 +422,11 @@ def delete_files_from_disk(*patterns: str) -> None:
             else:
                 os.remove(filepath)
 
+def _get_libs_from_folder(lib_build_folder: str) -> T.Union[T.List[str], None]:
+    if lib_build_folder != "" and os.path.exists(lib_build_folder):
+        return [os.path.join(lib_build_folder, file) for file in os.listdir(lib_build_folder)]
+    return None
+
 
 def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = []) -> T.Union[T.List[str], None]:
     """
@@ -464,7 +470,15 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if nb_jobs is None:
         nb_jobs = config.nb_jobs
 
-    command = [sys.executable, path, "--get-lib-build-folder", "--retransmit-colors", "--compilation-unit", config.compilation_unit, "-j", str(nb_jobs)]
+    print_info(f"Running {path}", config.verbosity)
+
+    inode_nb = str(os.stat(path).st_ino)
+
+    if inode_nb in config._cumulated_launched_powermakes:
+        print_debug_info(f"PowerMake already run during this compilation unit - skip", config.verbosity)
+        return _get_libs_from_folder(config._cumulated_launched_powermakes[inode_nb])
+
+    command = [sys.executable, path, "--get-compilation-metadata", "--retransmit-colors", "-j", str(nb_jobs)]
     if verbosity == 0:
         command.append("-q")
     elif verbosity >= 2:
@@ -478,7 +492,6 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     command.extend(command_line_args)
 
-    print_info(f"Running {path}", config.verbosity)
     print_debug_info(command, config.verbosity)
 
     try:
@@ -489,11 +502,15 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     last_line_offset = output[:-1].rfind(ord('\n'))
     if last_line_offset == -1:
-        return None
+        raise RuntimeError("PowerMake corrupted; please verify your installation")
 
     utils.print_bytes(output[:last_line_offset])
 
-    path = output[last_line_offset+1:].decode("utf-8").strip()
-    if path != "":
-        return [os.path.join(path, file) for file in os.listdir(path)]
-    return None
+    last_line = output[last_line_offset+1:].decode("utf-8").strip()
+    if last_line != "":
+        metadata = json.loads(last_line)
+        if not isinstance(metadata, dict):
+            raise RuntimeError("PowerMake corrupted; please verify your installation")
+        config._cumulated_launched_powermakes = {**config._cumulated_launched_powermakes, **metadata["cumulated_launched_powermakes"], inode_nb: metadata["lib_build_directory"]}
+    return _get_libs_from_folder(metadata["lib_build_directory"])
+

@@ -1,4 +1,5 @@
 import os
+import time
 import powermake
 
 prog_test = True
@@ -16,7 +17,13 @@ def on_build(config: powermake.Config):
 
     objects = powermake.compile_files(config, {"main.c"})
 
+    powermake.run_another_powermake(config, "../lib_intermediate/makefile.py")
+
+    start_time = time.time()
     archives = powermake.run_another_powermake(config, "../library/makefile.py")
+    if time.time() - start_time > 0.05:
+        print("run_another_makefile was too long, it should have been instant")
+        exit(1)
 
     exe = powermake.link_files(config, objects, archives=archives)
 
