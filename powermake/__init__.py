@@ -507,10 +507,11 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     utils.print_bytes(output[:last_line_offset])
 
     last_line = output[last_line_offset+1:].decode("utf-8").strip()
-    if last_line != "":
-        metadata = json.loads(last_line)
-        if not isinstance(metadata, dict):
-            raise RuntimeError("PowerMake corrupted; please verify your installation")
-        config._cumulated_launched_powermakes = {**config._cumulated_launched_powermakes, **metadata["cumulated_launched_powermakes"], inode_nb: metadata["lib_build_directory"]}
+    if last_line == "":
+        raise RuntimeError("PowerMake corrupted; --get-compilation-metadata doesn't return anything, if you use powermake.generate_config, make sure to also use powermake.run_callbacks")
+    metadata = json.loads(last_line)
+    if not isinstance(metadata, dict):
+        raise RuntimeError("PowerMake corrupted; please verify your installation")
+    config._cumulated_launched_powermakes = {**config._cumulated_launched_powermakes, **metadata["cumulated_launched_powermakes"], inode_nb: metadata["lib_build_directory"]}
     return _get_libs_from_folder(metadata["lib_build_directory"])
 
