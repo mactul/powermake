@@ -185,7 +185,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal. This option is especially useful in the configuration of an IDE.", action="store_true")
         self.add_argument("--delete-cache", help="Delete the cache, use this if PowerMake act weirdly", action="store_true")
         self.add_argument("--generate-vscode", nargs='?', metavar="VSCODE_FOLDER_PATH", help="Generate a launch.json and a tasks.json for visual studio code.", default=False)
-        self.add_argument("--get-compilation-metadata", help="(Internal option) - Returns a json containing metadata used by run_another_powermake.", action="store_true")
+        self.add_argument("--get-compilation-metadata", nargs='?', metavar="CURRENT_METADATA", help="(Internal option) - Returns a json containing metadata used by run_another_powermake.", default=False)
 
 
 def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, None] = None) -> Config:
@@ -263,8 +263,12 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
     if args_parsed.action == "config" or args_parsed.config:
         InteractiveConfig(global_config=args_parsed.global_config, local_config=args_parsed.local_config)
 
+    if args_parsed.get_compilation_metadata:
+        cumulated_launched_powermakes = json.loads(args_parsed.get_compilation_metadata)
+    else:
+        cumulated_launched_powermakes = {}
 
-    config = Config(target_name, args_parsed=args_parsed, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, pos_args=pos_args)
+    config = Config(target_name, cumulated_launched_powermakes=cumulated_launched_powermakes, args_parsed=args_parsed, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, pos_args=pos_args)
 
     return config
 
@@ -347,7 +351,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
     # After doing all compilation, if the argument get-lib-build-folder was given, we print the absolute path of the directory in which all lib have been built and exit.
     # Like that, the last line of the program output will be the requested folder.
     # This is used by the powermake.run_another_powermake function.
-    if config._args_parsed.get_compilation_metadata:
+    if config._args_parsed.get_compilation_metadata is not False:
         metadata: T.Dict[str, T.Any] = {}
         if config.lib_build_directory is not None and os.path.exists(config.lib_build_directory):
             metadata["lib_build_directory"] = os.path.abspath(config.lib_build_directory)

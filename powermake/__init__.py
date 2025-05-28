@@ -478,7 +478,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
         print_debug_info(f"PowerMake already run during this compilation unit - skip", config.verbosity)
         return _get_libs_from_folder(config._cumulated_launched_powermakes[inode_nb])
 
-    command = [sys.executable, path, "--get-compilation-metadata", "--retransmit-colors", "-j", str(nb_jobs)]
+    command = [sys.executable, path, "--get-compilation-metadata", json.dumps(config._cumulated_launched_powermakes), "--retransmit-colors", "-j", str(nb_jobs)]
     if verbosity == 0:
         command.append("-q")
     elif verbosity >= 2:

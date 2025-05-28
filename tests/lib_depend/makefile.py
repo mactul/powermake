@@ -17,6 +17,8 @@ def on_build(config: powermake.Config):
 
     objects = powermake.compile_files(config, {"main.c"})
 
+    powermake.run_another_powermake(config, "../library/makefile.py")
+
     powermake.run_another_powermake(config, "../lib_intermediate/makefile.py")
 
     start_time = time.time()
