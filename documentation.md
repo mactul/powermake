@@ -1734,7 +1734,7 @@ The `additional_includedirs` list is required to discover hidden dependencies. Y
 
 ### powermake.run_command
 ```py
-run_command(config: powermake.Config, command: list[str] | str, shell: bool = False, target: str | None = None, output_filter: Callable[[bytes], bytes] | None = None, **kwargs) -> int
+run_command(config: powermake.Config, command: list[str] | str, shell: bool = False, target: str | None = None, **kwargs) -> int
 ```
 
 > [!NOTE]  
@@ -1753,7 +1753,6 @@ If `shell` is `False`:
 
 `target` is currently only been used to print the name of the file generated, but in the future, it might be used to generate a Makefile.
 
-`output_filter` is a callback that can be used to edit the output of the command before it's printed to the screen. Warning, the output of the command is in bytes with no encoding determined. Let this to `None` to just print the output of the command.
 
 `**kwargs` is passed to `powermake.run`
 

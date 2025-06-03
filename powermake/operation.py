@@ -14,6 +14,7 @@
 
 
 import os
+import time
 import subprocess
 import typing as T
 import __main__ as __makefile__
@@ -151,31 +152,38 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 
 _print_lock = Lock()
 _commands_counter = 0
-def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> T.Tuple[int, bytes]:
+def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> T.Iterable[T.Union[bytes, int]]:
     global _commands_counter
 
     returncode = 0
-    try:
-        output = subprocess.check_output(command, shell=shell, stderr=stderr, **kwargs)
-    except subprocess.CalledProcessError as e:
-        output = e.output
-        returncode = e.returncode
-
-    if output_filter is not None:
-        output = output_filter(output)
-
-    if stopper is not None and stopper.stop:
-        return 0, output
+    pipe = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=stderr, **kwargs)
 
     _print_lock.acquire()
 
     _commands_counter += 1
 
+    if stopper is not None and stopper.stop:
+        _print_lock.release()
+        yield 0
+        return
+
     print_info(f"Generating {os.path.basename(target)}" if target is not None else "", config.verbosity, _commands_counter, config.nb_total_operations)
 
     print_debug_info(command, config.verbosity)
 
-    print_bytes(output)
+    while pipe.stdout is not None:
+        line = pipe.stdout.readline()
+
+        if not line: break
+
+        yield line
+
+    ret = pipe.poll()
+    if ret is not None:
+        returncode = ret
+
+    if returncode != 0 and stopper is not None:
+        stopper.stop = True
 
     phony = False
     if target is None:
@@ -188,10 +196,30 @@ def run_command_get_output(config: Config, command: T.Union[T.List[str], str], s
         generation._makefile_targets.append([(phony, target, _dependencies, command, _tool)])
         generation._makefile_targets_mutex.release()
 
-    return returncode, output
+    yield returncode
 
-def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, output_filter: T.Union[T.Callable[[bytes], bytes], None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> int:
-    return run_command_get_output(config, command, shell, target, output_filter, _dependencies, _generate_makefile, _tool, stopper=stopper, **kwargs)[0]
+
+def run_command_get_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> T.Tuple[int, bytes]:
+    x = _run_command_yield_output(config, command, shell=shell, target=target, _dependencies=_dependencies, _generate_makefile=_generate_makefile, _tool=_tool, stderr=stderr, stopper=stopper, **kwargs)
+    returncode = 0
+    output = b""
+    for line in x:
+        if isinstance(line, int):
+            returncode = line
+        else:
+            output += line
+    return (returncode, output)
+
+
+def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> int:
+    x = _run_command_yield_output(config, command, shell=shell, target=target, _dependencies=_dependencies, _generate_makefile=_generate_makefile, _tool=_tool, stopper=stopper, **kwargs)
+    returncode = 0
+    for line in x:
+        if isinstance(line, int):
+            returncode = line
+        else:
+            print_bytes(line)
+    return returncode
 
 def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Iterable[str], command: T.Union[T.List[str], str], shell: bool = False, force: T.Union[bool, None] = None, _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> str:
     """
@@ -235,8 +263,6 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
                 command_ex = command[0]
             else:
                 command_ex = T.cast(str, command)
-            if stopper is not None:
-                stopper.stop = True
             raise PowerMakeCommandError(error_text(f"Unable to generate {os.path.basename(outputfile)}, {command_ex} returned a non-zero status (see above)"))
     else:
         _print_lock.acquire()

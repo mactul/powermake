@@ -330,21 +330,21 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
     if config._args_parsed.action == "test" or config._args_parsed.test:
         test = True
 
-    if clean:
-        clean_callback(config)
-    if build or (not clean and not install and not interactive_config and not test):
-        try:
+    try:
+        if clean:
+            clean_callback(config)
+        if build or (not clean and not install and not interactive_config and not test):
             build_callback(config)
-        except PowerMakeException as e:
-            print_powermake_traceback(e)
-            exit(1)
-    if install:
-        if config._args_parsed.action == "install":
-            install_callback(config, config._args_parsed.install_location or None)
-        else:
-            install_callback(config, config._args_parsed.install or None)
-    if test:
-        test_callback(config, config._pos_args)
+        if install:
+            if config._args_parsed.action == "install":
+                install_callback(config, config._args_parsed.install_location or None)
+            else:
+                install_callback(config, config._args_parsed.install or None)
+        if test:
+            test_callback(config, config._pos_args)
+    except PowerMakeException as e:
+        print_powermake_traceback(e)
+        exit(1)
 
 
 
