@@ -32,7 +32,7 @@ from . import utils, display, generation
 from .display import print_info, print_debug_info
 from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
 from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed, CompilationStopper
-from .args_parser import run, default_on_clean, default_on_install, ArgumentParser, generate_config, run_callbacks
+from .args_parser import run, default_on_clean, default_on_install, default_on_test, ArgumentParser, generate_config, run_callbacks
 
 
 if hasattr(__makefile__, '__file__'):
