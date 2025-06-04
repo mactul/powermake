@@ -152,7 +152,7 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 
 _print_lock = Lock()
 _commands_counter = 0
-def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> T.Iterable[T.Union[bytes, int]]:
+def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, custom_info_msg: T.Union[str, None] = None, **kwargs: T.Any) -> T.Iterable[T.Union[bytes, int]]:
     global _commands_counter
 
     returncode = 0
@@ -167,7 +167,7 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
         yield 0
         return
 
-    print_info(f"Generating {os.path.basename(target)}" if target is not None else "", config.verbosity, _commands_counter, config.nb_total_operations)
+    print_info(custom_info_msg or (f"Generating {os.path.basename(target)}" if target is not None else ""), config.verbosity, _commands_counter, config.nb_total_operations)
 
     print_debug_info(command, config.verbosity)
 

@@ -31,7 +31,7 @@ from .__version__ import __version__
 from . import utils, display, generation
 from .display import print_info, print_debug_info
 from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
-from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed, CompilationStopper
+from .operation import Operation, needs_update, run_command, run_command_get_output, _run_command_yield_output, run_command_if_needed, CompilationStopper
 from .args_parser import run, default_on_clean, default_on_install, default_on_test, ArgumentParser, generate_config, run_callbacks
 
 
@@ -470,12 +470,10 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if nb_jobs is None:
         nb_jobs = config.nb_jobs
 
-    print_info(f"Running {path}", config.verbosity)
-
     inode_nb = str(os.stat(path).st_ino)
 
     if inode_nb in config._cumulated_launched_powermakes:
-        print_debug_info(f"PowerMake already run during this compilation unit - skip", config.verbosity)
+        print_debug_info(f"PowerMake {path} already run during this compilation unit - skip", config.verbosity)
         return _get_libs_from_folder(config._cumulated_launched_powermakes[inode_nb])
 
     command = [sys.executable, path, "--get-compilation-metadata", json.dumps(config._cumulated_launched_powermakes), "--retransmit-colors", "-j", str(nb_jobs)]
@@ -492,24 +490,28 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     command.extend(command_line_args)
 
-    print_debug_info(command, config.verbosity)
+    lines = _run_command_yield_output(config, command, custom_info_msg=f"Running {path}")
 
-    try:
-        output: bytes = subprocess.check_output(command, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        utils.print_bytes(e.output)
-        raise PowerMakeRuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
+    last_line = None
 
-    last_line_offset = output[:-1].rfind(ord('\n'))
-    if last_line_offset == -1:
+    for line in lines:
+        if isinstance(line, int):
+            if line != 0:
+                raise PowerMakeRuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
+            break
+        if last_line is not None:
+            utils.print_bytes(last_line)
+        last_line = line
+
+    if last_line is None:
         raise RuntimeError("PowerMake corrupted; please verify your installation")
 
-    utils.print_bytes(output[:last_line_offset])
+    decoded_last_line = last_line.decode("utf-8").strip()
 
-    last_line = output[last_line_offset+1:].decode("utf-8").strip()
-    if last_line == "":
+    if decoded_last_line == "":
         raise RuntimeError("PowerMake corrupted; --get-compilation-metadata doesn't return anything, if you use powermake.generate_config, make sure to also use powermake.run_callbacks")
-    metadata = json.loads(last_line)
+
+    metadata = json.loads(decoded_last_line)
     if not isinstance(metadata, dict):
         raise RuntimeError("PowerMake corrupted; please verify your installation")
     config._cumulated_launched_powermakes = {**config._cumulated_launched_powermakes, **metadata["cumulated_launched_powermakes"], inode_nb: metadata["lib_build_directory"]}
