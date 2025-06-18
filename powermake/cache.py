@@ -34,16 +34,13 @@ def load_cache_from_file(filepath: str) -> T.Dict[str, T.Any]:
         with open(filepath, "r") as file:
             cache = dict(json.load(file))
         if "controls" not in cache:
-            print("cache error 3")
             return {}
         for control in cache["controls"]:
             control_filepath = control["filepath"]
             if control_filepath is None or max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) > control["date"]:
-                print("cache error 2", control)
                 return {}
         return cache
     except OSError:
-        print("cache error 1")
         return {}
 
 

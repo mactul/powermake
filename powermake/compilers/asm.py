@@ -79,4 +79,4 @@ class CompilerNASM(Compiler):
         return [self.path, "-o", outputfile, inputfile, *args]
 
     def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, get_empty_file(), "-o/dev/stdout"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        return subprocess.run([self.path, arg, get_empty_file(), "-e"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
