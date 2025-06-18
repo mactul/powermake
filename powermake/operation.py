@@ -153,6 +153,47 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
 _print_lock = Lock()
 _commands_counter = 0
 def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stderr: T.Union[int, T.IO[T.Any], None] = subprocess.STDOUT, stopper: T.Union[CompilationStopper, None] = None, custom_info_msg: T.Union[str, None] = None, **kwargs: T.Any) -> T.Iterable[T.Union[bytes, int]]:
+    """
+    **/!\\ WARNING /!\\  
+    THIS COMMAND IS DANGEROUS**  
+    You **MUST** iterate over every line of the result, without raising exceptions.
+    If you don't do so, you will experience a dead lock.
+
+    doc TODO
+
+    Parameters
+    ----------
+    config : Config
+        _description_
+    command : T.Union[T.List[str], str]
+        _description_
+    shell : bool, optional
+        _description_, by default False
+    target : T.Union[str, None], optional
+        _description_, by default None
+    _dependencies : T.Iterable[str], optional
+        _description_, by default []
+    _generate_makefile : bool, optional
+        _description_, by default True
+    _tool : str, optional
+        _description_, by default ""
+    stderr : T.Union[int, T.IO[T.Any], None], optional
+        _description_, by default subprocess.STDOUT
+    stopper : T.Union[CompilationStopper, None], optional
+        _description_, by default None
+    custom_info_msg : T.Union[str, None], optional
+        _description_, by default None
+
+    Returns
+    -------
+    T.Iterable[T.Union[bytes, int]]
+        _description_
+
+    Yields
+    ------
+    Iterator[T.Iterable[T.Union[bytes, int]]]
+        _description_
+    """
     global _commands_counter
 
     returncode = 0

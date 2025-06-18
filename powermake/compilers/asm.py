@@ -16,6 +16,7 @@ import subprocess
 import typing as T
 
 from .common import Compiler
+from ..utils import get_empty_file
 
 
 _powermake_warning_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
@@ -78,4 +79,4 @@ class CompilerNASM(Compiler):
         return [self.path, "-o", outputfile, inputfile, *args]
 
     def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "-E", "-x", "assemble", "/dev/null"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        return subprocess.run([self.path, arg, get_empty_file(), "-o/dev/stdout"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0

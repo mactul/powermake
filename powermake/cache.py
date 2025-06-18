@@ -33,18 +33,25 @@ def load_cache_from_file(filepath: str) -> T.Dict[str, T.Any]:
     try:
         with open(filepath, "r") as file:
             cache = dict(json.load(file))
-        if "control" not in cache:
+        if "controls" not in cache:
+            print("cache error 3")
             return {}
-        control_filepath = shutil.which(cache["control"][0])
-        if control_filepath is None or max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) > cache["control"][1]:
-            return {}
+        for control in cache["controls"]:
+            control_filepath = control["filepath"]
+            if control_filepath is None or max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) > control["date"]:
+                print("cache error 2", control)
+                return {}
         return cache
     except OSError:
+        print("cache error 1")
         return {}
 
 
-def store_cache_to_file(filepath: str, cache: T.Dict[str, T.Any], control_filepath: str) -> None:
-    cache["control"] = [control_filepath, 0.0 if not os.path.exists(control_filepath) else max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath))]
+def store_cache_to_file(filepath: str, cache: T.Dict[str, T.Any], *controls_filepath: str) -> None:
+    controls = []
+    for control_filepath in controls_filepath:
+        controls.append({"filepath": control_filepath, "date": 0.0 if not os.path.exists(control_filepath) else max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath))})
+    cache["controls"] = controls
     makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(cache, file, indent=4)

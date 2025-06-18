@@ -15,12 +15,13 @@
 
 import os
 import abc
+import time
 import shutil
 import typing as T
 
 from .utils import join_absolute_paths
 from .exceptions import PowerMakeValueError
-from .display import error_text, print_debug_info
+from .display import error_text, warning_text, print_debug_info
 from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
 
@@ -29,9 +30,8 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
     "-fsecurity=1": ["-Wsecurity", "-fstrict-flex-arrays=2", "-fcf-protection=full", "-mbranch-protection=standard", "-Wl,-z,nodlopen", "-Wl,-z,noexecstack", "-Wl,-z,relro", "-fPIE", "-pie", "-fPIC", "-fno-delete-null-pointer-checks", "-fno-strict-overflow", "-fno-strict-aliasing", "-fexceptions", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"],
     "-fsecurity=2": ["-fsecurity=1", "-D_FORTIFY_SOURCE=3", "-D_GLIBCXX_ASSERTIONS", "-fstack-clash-protection", "-fstack-protector-strong", "-Wl,-z,now", "-ftrivial-auto-var-init=zero"],
     "-fsecurity": ["-fsecurity=2"],
-    "-Weverything": ["-Weverything", "-Wsecurity", "-pedantic", "-Wsuggest-attribute=pure", "-Wsuggest-attribute=const", "-Wsuggest-attribute=noreturn", "-Wsuggest-attribute=malloc", "-Wsuggest-attribute=returns_nonnull", "-Wsuggest-attribute=format", "-Wmissing-format-attribute", "-Wsuggest-attribute=cold", "-Waggregate-return", "-Wduplicated-branches", "-Wduplicated-cond", "-Wflex-array-member-not-at-end", "-Wfloat-equal", "-Wformat-nonliteral", "-Wformat-signedness", "-Wformat-y2k", "-Winit-self", "-Winvalid-utf8", "-Wjump-misses-init", "-Wlogical-op", "-Wmissing-declarations", "-Wmissing-include-dirs", "-Wmissing-prototypes", "-Wmissing-variable-declarations", "-Wmultichar", "-Wnested-externs", "-Wnull-dereference", "-Wopenacc-parallelism", "-Wredundant-decls", "-Wshadow", "-Wstack-protector", "-Wstrict-flex-arrays=3", "-Wstrict-prototypes", "-Wsuggest-final-methods", "-Wsuggest-final-types", "-Wswitch-default", "-Wundef", "-Wunsuffixed-float-constants", "-Wunused-macros", "-Wuseless-cast", "-Wvector-operation-performance", "-Wwrite-strings"],
+    "-Weverything": ["-Wsecurity", "-pedantic", "-Wsuggest-attribute=pure", "-Wsuggest-attribute=const", "-Wsuggest-attribute=noreturn", "-Wsuggest-attribute=malloc", "-Wsuggest-attribute=returns_nonnull", "-Wsuggest-attribute=format", "-Wmissing-format-attribute", "-Wsuggest-attribute=cold", "-Waggregate-return", "-Wduplicated-branches", "-Wduplicated-cond", "-Wflex-array-member-not-at-end", "-Wfloat-equal", "-Wformat-nonliteral", "-Wformat-signedness", "-Wformat-y2k", "-Winit-self", "-Winvalid-utf8", "-Wjump-misses-init", "-Wlogical-op", "-Wmissing-declarations", "-Wmissing-include-dirs", "-Wmissing-prototypes", "-Wmissing-variable-declarations", "-Wmultichar", "-Wnested-externs", "-Wnull-dereference", "-Wopenacc-parallelism", "-Wredundant-decls", "-Wshadow", "-Wstack-protector", "-Wstrict-flex-arrays=3", "-Wstrict-prototypes", "-Wsuggest-final-methods", "-Wsuggest-final-types", "-Wswitch-default", "-Wundef", "-Wunsuffixed-float-constants", "-Wunused-macros", "-Wuseless-cast", "-Wvector-operation-performance", "-Wwrite-strings"],
     "-ffuzzer": ["-fsanitize=address,fuzzer"],
-    "-fanalyzer": ["-fanalyzer"],
     "-m32": ["-m32"],
     "-m64": ["-m64"]
 }
@@ -62,6 +62,21 @@ def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, Non
         return (path[:-3], "c++")
 
     return (None, path)
+
+class EnforcedFlag(str):
+    """
+    This should be used with config.add_flags or config.add_XXXX_flags
+    It ensure that a flag will not be translated by PowerMake and will be kept even if PowerMake think the compiler doesn't supports it
+    Exemple:
+    ```
+    config.add_flags("-Weverything") # This will be translated on GCC
+    config.add_flags(powermake.EnforcedFlag("-Weverything")) # the flag will be kept no matter what
+
+    config.add_flags("-fegrhfevgfter") # This flag will be automatically removed with a warning, so the compilation will not fail entirely
+    config.add_flags(powermake.EnforcedFlag("-fegrhfevgfter")) # make sure the flag is given to the compiler (will crash obviously)
+    ```
+    """
+    ...
 
 class Tool(abc.ABC):
     type: T.ClassVar = ""
@@ -103,38 +118,54 @@ class Tool(abc.ABC):
     def check_if_arg_exists(self, arg: str) -> bool:
         return False
 
+    def _flag_exists(self, f: str) -> T.Tuple[bool, bool]:
+        if f in self.cache["unsupported_flags"]:
+            return (False, False)
+        if f in self.cache["supported_flags"]:
+            return (True, False)
+        if self.check_if_arg_exists(f):
+            self.cache["supported_flags"].append(f)
+            return (True, True)
+        self.cache["unsupported_flags"].append(f)
+        return (False, True)
+
     def _translate_flag(self, flag: str, output_list: T.List[str], already_translated_flags: T.List[str]) -> bool:
+        if isinstance(flag, EnforcedFlag):
+            output_list.append(flag)
+            return False
+
+        cache_modified = False
         already_translated_flags.append(flag)
+
+
 
         if flag in self.verified_translation_dict:
             output_list.extend([f for f in self.verified_translation_dict[flag] if f not in output_list])
             return False
 
-        if flag not in self.translation_dict:
+        valid, cache_modified = self._flag_exists(flag)
+        if valid:
+            output_list.append(flag)
+            return cache_modified
+        elif flag not in self.translation_dict:
             # This flag is not in any translation table, we left it untouched.
             # We don't check if flag is in output_list, that should have been done before and if it's not the case, it's probably that the user enforced that
-            output_list.append(flag)
-            return False
+            self.verified_translation_dict[flag] = []
+            print(warning_text(f"Warning: the flag {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as powermake.EnforcedFlag(\"{flag}\") instead of \"{flag}\""))
+            return cache_modified
 
         self.verified_translation_dict[flag] = []
 
-        cache_modified = False
         for f in self.translation_dict[flag]:
             if f not in already_translated_flags and f in self.translation_dict:
-                self._translate_flag(f, output_list, already_translated_flags)
+                cache_modified = self._translate_flag(f, output_list, already_translated_flags) or cache_modified
                 # after this call, self.verified_translation_dict will contain an entry for the key f, containing all flags flattened.
                 self.verified_translation_dict[flag].extend(self.verified_translation_dict[f])
             else:
-                if f in self.cache["unsupported_flags"]:
+                valid, _cache_modified = self._flag_exists(f)
+                cache_modified = _cache_modified or cache_modified
+                if not valid:
                     continue
-                if f not in self.cache["supported_flags"]:
-                    if self.check_if_arg_exists(f):
-                        self.cache["supported_flags"].append(f)
-                        cache_modified = True
-                    else:
-                        self.cache["unsupported_flags"].append(f)
-                        cache_modified = True
-                        continue
                 # the flag f is valid and is not a combination of flags
                 if f not in self.verified_translation_dict[flag]:
                     self.verified_translation_dict[flag].append(f)
@@ -151,7 +182,7 @@ class Tool(abc.ABC):
             cache_modified = self._translate_flag(flag, translated_flags, already_translated_flags) or cache_modified
 
         if cache_modified:
-            store_cache_to_file(self.cache_file, self.cache, self.path)
+            store_cache_to_file(self.cache_file, self.cache, self.path, os.path.abspath(__file__))
 
         return translated_flags
 

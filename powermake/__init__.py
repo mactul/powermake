@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .config import Config
 from .utils import makedirs
+from .tools import EnforcedFlag
 from .__version__ import __version__
 from . import utils, display, generation
 from .display import print_info, print_debug_info
@@ -186,31 +187,11 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         else:
             files = [config.single_file]
 
-
-    if config.c_compiler is not None:
-        c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags)
-    else:
-        c_args = []
-
-    if config.cpp_compiler is not None:
-        cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags)
-    else:
-        cpp_args = []
-
-    if config.as_compiler is not None:
-        as_args = config.as_compiler.format_args(config.defines, config.additional_includedirs, config.as_flags)
-    else:
-        as_args = []
-
-    if config.rc_compiler is not None:
-        rc_args = config.rc_compiler.format_args(config.defines, config.additional_includedirs, config.rc_flags)
-    else:
-        rc_args = []
-
-    if config.asm_compiler is not None:
-        asm_args = config.asm_compiler.format_args(config.defines, config.additional_includedirs, config.asm_flags)
-    else:
-        asm_args = []
+    c_args: T.Union[T.List[str], None] = None
+    cpp_args: T.Union[T.List[str], None] = None
+    as_args: T.Union[T.List[str], None] = None
+    asm_args: T.Union[T.List[str], None] = None
+    rc_args: T.Union[T.List[str], None] = None
 
     for file in files:
         output_file = utils.join_absolute_paths(config.obj_build_directory, file)
@@ -223,30 +204,40 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
         if file.endswith(".c"):
             if config.c_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No C compiler has been specified and the default config didn't find any"))
+            if c_args is None:
+                c_args = config.c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags)
             output_file += config.c_compiler.obj_extension
             command = config.c_compiler.basic_compile_command(output_file, file, c_args)
             tool = "CC"
         elif file.endswith((".cpp", ".cc", ".C")):
             if config.cpp_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No C++ compiler has been specified and the default config didn't find any"))
+            if cpp_args is None:
+                cpp_args = config.cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags)
             output_file += config.cpp_compiler.obj_extension
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
             tool = "CXX"
         elif file.endswith((".s", ".S")):
             if config.as_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No AS compiler has been specified and the default config didn't find any"))
+            if as_args is None:
+                as_args = config.as_compiler.format_args(config.defines, config.additional_includedirs, config.as_flags)
             output_file += config.as_compiler.obj_extension
             command = config.as_compiler.basic_compile_command(output_file, file, as_args)
             tool = "AS"
         elif file.endswith(".asm"):
             if config.asm_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No ASM compiler has been specified and the default config didn't find any"))
+            if asm_args is None:
+                asm_args = config.asm_compiler.format_args(config.defines, config.additional_includedirs, config.asm_flags)
             output_file += config.asm_compiler.obj_extension
             command = config.asm_compiler.basic_compile_command(output_file, file, asm_args)
             tool = "ASM"
         elif file.endswith(".rc"):
             if config.rc_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No RC compiler has been specified and the default config didn't find any"))
+            if rc_args is None:
+                rc_args = config.rc_compiler.format_args(config.defines, config.additional_includedirs, config.rc_flags)
             output_file += config.rc_compiler.obj_extension
             command = config.rc_compiler.basic_compile_command(output_file, file, rc_args)
             tool = "RC"
