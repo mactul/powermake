@@ -143,16 +143,17 @@ class Tool(abc.ABC):
             output_list.extend([f for f in self.verified_translation_dict[flag] if f not in output_list])
             return False
 
-        valid, cache_modified = self._flag_exists(flag)
-        if valid:
-            output_list.append(flag)
-            return cache_modified
-        elif flag not in self.translation_dict:
-            # This flag is not in any translation table, we left it untouched.
-            # We don't check if flag is in output_list, that should have been done before and if it's not the case, it's probably that the user enforced that
-            self.verified_translation_dict[flag] = []
-            print(warning_text(f"Warning: the flag {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as powermake.EnforcedFlag(\"{flag}\") instead of \"{flag}\""))
-            return cache_modified
+        if flag not in self.translation_dict or len(self.translation_dict[flag]) >= 2:
+            valid, cache_modified = self._flag_exists(flag)
+            if valid:
+                output_list.append(flag)
+                return cache_modified
+            elif flag not in self.translation_dict:
+                # This flag is not in any translation table, we left it untouched.
+                # We don't check if flag is in output_list, that should have been done before and if it's not the case, it's probably that the user enforced that
+                self.verified_translation_dict[flag] = []
+                print(warning_text(f"Warning: the flag {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as powermake.EnforcedFlag(\"{flag}\") instead of \"{flag}\""))
+                return cache_modified
 
         self.verified_translation_dict[flag] = []
 
