@@ -24,7 +24,7 @@ echo "checking multiplatform makefile with default, clang and MinGW toolchains"
 
 python3 ./multiplatform/makefile.py -rv || failure
 
-python3 ./multiplatform/makefile.py -m || failure
+python3 ./multiplatform/makefile.py -m --always-overwrite || failure
 pushd ./multiplatform/
 make rebuild || failure
 popd
@@ -43,7 +43,7 @@ else
 NO_PROG_TEST="--no-prog-test"
 fi
 CC=x86_64-w64-mingw32-gcc python3 ./multiplatform/makefile.py -rv --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
-python3 ./multiplatform/makefile.py -mv -l ./windows_config1.json --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
+python3 ./multiplatform/makefile.py --always-overwrite -mv -l ./windows_config1.json --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
 pushd ./multiplatform/
 make rebuild || failure
 popd

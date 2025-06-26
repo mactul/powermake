@@ -17,12 +17,11 @@ import os
 import time
 import subprocess
 import typing as T
-import __main__ as __makefile__
 from threading import Lock
 
 from . import generation
 from .config import Config
-from .utils import print_bytes
+from .utils import print_bytes, _get_makefile_path
 from .exceptions import PowerMakeCommandError
 from .display import print_info, print_debug_info, error_text
 
@@ -138,8 +137,9 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
         output_date = os.path.getmtime(outputfile)
     except OSError:
         return True
-
-    if hasattr(__makefile__, '__file__') and os.path.getmtime(__makefile__.__file__) >= output_date:
+    
+    makefile_path = _get_makefile_path()
+    if makefile_path is not None and os.path.getmtime(makefile_path) >= output_date:
         return True
 
     headers_already_found: T.List[str] = []

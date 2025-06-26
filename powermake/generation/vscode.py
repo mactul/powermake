@@ -1,10 +1,9 @@
 import os
 import sys
 import json
-import __main__ as __makefile__
 
 from .. import Config
-from ..utils import makedirs
+from ..utils import makedirs, _get_makefile_path, handle_filename_conflict
 
 __default_launch = """{
     "configurations": [
@@ -70,7 +69,7 @@ __default_tasks = """{
 def format_json_string(js_str: str, powermake_program: str, vscode_path: str) -> str:
     js_str = js_str.replace("${powermakeProgram}", json.dumps(powermake_program)[1:-1])
     js_str = js_str.replace("${powermakePythonPath}", json.dumps(sys.executable)[1:-1])
-    js_str = js_str.replace("${powermakeMakefilePath}", json.dumps(os.path.realpath(__makefile__.__file__))[1:-1])
+    js_str = js_str.replace("${powermakeMakefilePath}", json.dumps(os.path.realpath(_get_makefile_path() or "."))[1:-1])
     js_str = js_str.replace("${powermakeVscodeFolderPath}", json.dumps(vscode_path)[1:-1])
     return js_str
 
@@ -99,10 +98,14 @@ def generate_vscode(config: Config, vscode_path: str) -> None:
         with open(tasks_template_path, "r") as file:
             tasks_content = file.read()
 
-    with open(os.path.join(vscode_path, "launch.json"), "w") as file:
-        file.write(format_json_string(launch_content, os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), vscode_path))
+    launch_filepath = handle_filename_conflict(os.path.join(vscode_path, "launch.json"), config._args_parsed.always_overwrite)
+    if launch_filepath != "":
+        with open(launch_filepath, "w") as file:
+            file.write(format_json_string(launch_content, os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), vscode_path))
 
-    with open(os.path.join(vscode_path, "tasks.json"), "w") as file:
-        file.write(format_json_string(tasks_content, os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), vscode_path))
+    tasks_filepath = handle_filename_conflict(os.path.join(vscode_path, "tasks.json"), config._args_parsed.always_overwrite)
+    if tasks_filepath != "":
+        with open(tasks_filepath, "w") as file:
+            file.write(format_json_string(tasks_content, os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), vscode_path))
 
     config.set_debug(debug)

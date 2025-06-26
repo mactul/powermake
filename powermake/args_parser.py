@@ -20,7 +20,6 @@ import shutil
 import argparse
 import subprocess
 import typing as T
-import __main__ as __makefile__
 
 from .config import Config
 from .utils import makedirs
@@ -185,6 +184,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal. This option is especially useful in the configuration of an IDE.", action="store_true")
         self.add_argument("--delete-cache", help="Delete the cache, use this if PowerMake act weirdly", action="store_true")
         self.add_argument("--generate-vscode", nargs='?', metavar="VSCODE_FOLDER_PATH", help="Generate a launch.json and a tasks.json for visual studio code.", default=False)
+        self.add_argument("--always-overwrite", help="Remove all prompts asking if a file must be overwritten", action="store_true")
         self.add_argument("--get-compilation-metadata", nargs='?', metavar="CURRENT_METADATA", help="(Internal option) - Returns a json containing metadata used by run_another_powermake.", default=False)
 
 

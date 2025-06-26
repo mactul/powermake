@@ -12,12 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .args_parser import generate_config, get_version_str
+import os
+from .config import Config
+from .display import print_info
+from .args_parser import run
+from .generation import powermake as powermake_gen
+from .utils import _get_run_path, _store_makefile_path
+
+
+def on_build(config: Config) -> None:
+    print_info("Generating default makefile.py", config.verbosity)
+    powermake_gen.generate_default_powermake(config, "makefile.py")
+
 
 def main() -> None:
-    generate_config(target_name="NULL")  # just to read the command line
+    os.chdir(_get_run_path())  # For this specific file, we need to revert the chdir done in __init__
+    _store_makefile_path("makefile.py")
+    run("YOUR_PROGRAM", build_callback=on_build)
 
-    print(get_version_str())
 
 if __name__ == "__main__":
     main()
