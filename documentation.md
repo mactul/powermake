@@ -7,6 +7,7 @@
   - [Quick Example](#quick-example)
   - [More examples](#more-examples)
   - [Documentation](#documentation)
+    - [Generating a PowerMake](#generating-a-powermake)
     - [Command line arguments](#command-line-arguments)
     - [Toolchain detection](#toolchain-detection)
     - [PowerMake flags translation](#powermake-flags-translation)
@@ -116,8 +117,7 @@
     - [GNU Make](#gnu-make)
     - [Visual Studio Code](#visual-studio-code)
 
-
-
+<!-- include:README.md#installation_and_examples -->
 ## Installation
 
 > [!WARNING]  
@@ -176,8 +176,16 @@ def on_build(config: powermake.Config):
 powermake.run("program_test", build_callback=on_build)
 ```
 
+> [!TIP]  
+> You can generate a new makefile for a project by using `python -m powermake` in the project's folder.  
+> If pip's scripts folder (often ~/.local/bin) is in your path, can can also simply run `powermake`  
+> For more details about this, see [Generating a Powermake](./documentation.md#generating_a_powermake)?
+
 
 ## [More examples](./examples.md)
+
+**See more examples [here](./examples.md).**
+<!-- /include-->
 
 
 ## Documentation
@@ -185,6 +193,21 @@ powermake.run("program_test", build_callback=on_build)
 > [!NOTE]  
 > This documentation is not complete, if you struggle to do something, do not hesitate to ask a question in the [discussions section](https://github.com/mactul/powermake/discussions/categories/q-a), it may be that the feature you search for is undocumented.
 
+
+### Generating a PowerMake
+
+PowerMake comes with a shell command: `powermake`.  
+Often pip install scripts in `~/.local/bin`, so if this location is not in your path (usually pip warn you about this), you have to use `python -m powermake` to run the script.
+
+Just run `powermake` (or `python -m powermake`) in a project folder and it will generate a default powermake for you.
+
+You can edit this default powermake to better fit your needs, once you've run `powermake` (or `python -m powermake`) at least one time, a file will appear in `~/.powermake/default_powermake.py`. Just edit this file and to what you want as the default powermake template. To reset the default, just delete the file and run `powermake`
+
+The `powermake` script is no more than a classic powermake script (like the one in [Quick Example](#quick-example)), which instead of compiling a C code, generates a file named `makefile.py`.  
+This means that you have access to all usual command line options.  
+Just type `powermake --help` to see them.
+
+Some options will not make a ton of sense, for example running `powermake -m` will just generate an empty makefile (see [Compatibility with GNU Make](#gnu-make)), but they are still available.
 
 ### Command line arguments
 
@@ -1867,6 +1890,7 @@ powermake.run_callbacks(config, build_callback=on_build)
 ```
 
 
+<!-- include:README.md#compatibility_with_other_tools -->
 ## Compatibility with other tools
 
 ### Scan-Build
@@ -1885,7 +1909,7 @@ We especially recommend gcc and the `-fanalyzer` option, it's one of the most po
 
 Powermake helps you compile with [LLVM libfuzzer](https://llvm.org/docs/LibFuzzer.html).
 
-You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_c_cpp_flags](#add_c_cpp_flags) and [config.add_ld_flags](#add_ld_flags).
+You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_c_cpp_flags](./documentation.md#add_c_cpp_flags) and [config.add_ld_flags](./documentation.md#add_ld_flags).
 
 If you are using clang or MSVC, this will enable the address sanitizer and fuzzer.
 Otherwise, the argument is ignored.
@@ -1905,8 +1929,8 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -md
 ```
 
 > [!WARNING]  
-> PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](./README.md#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
-> To get a good Makefile, you should never use the `subprocess` module but instead use [powermake.run_command](#powermakerun_command) or [powermake.run_command_if_needed](#powermakerun_command_if_needed).
+> PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
+> To get a good Makefile, you should never use the `subprocess` module but instead use [powermake.run_command](./documentation.md#powermakerun_command) or [powermake.run_command_if_needed](./documentation.md#powermakerun_command_if_needed).
 >
 > If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is ran.)
 
@@ -1940,6 +1964,13 @@ VSCode uses 3 important json files:
 
 
 If the tip above isn't enough to setup vscode, here is more details:
+
+
+> [!IMPORTANT]  
+> First thing first, by default vscode doesn't use the `compile_commands.json`.  
+> If you are using `python makefile.py --generate-vscode` that's not a problem, because it generates a local settings.json that tells vscode to use this file.  
+> However, if you are not using the `--generate-vscode` option, we recommend adding `"C_Cpp.default.compileCommands": ".vscode/compile_commands.json"` in your User Settings json file (Ctrl + Shift + P > search "settings" > click on "Preferences: Open User Settings (JSON)")
+
 
 The `compile_commands.json` can easily be generated by powermake with the option `-o` (`--compile-commands-dir`).
 ```sh
@@ -2012,7 +2043,7 @@ Here is an example of a functional `.vscode/launch.json`:
 > [!IMPORTANT]  
 > Once you have run `python makefile.py --generate-vscode` at least once, you can edit the default vscode template in `~/.powermake/vscode_templates/`.
 > 
-> If you want to regenerate one of these templates from the default, just delete the file dans run `python makefile.py --generate-vscode`
-
+> If you want to regenerate one of these templates from the default, just delete the file then run `python makefile.py --generate-vscode`
+<!-- /include -->
 
 **documentation in progress...**

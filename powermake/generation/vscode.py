@@ -3,6 +3,7 @@ import sys
 import json
 
 from .. import Config
+from ..display import print_info
 from ..utils import makedirs, _get_makefile_path, handle_filename_conflict
 
 __default_launch = """{
@@ -66,6 +67,11 @@ __default_tasks = """{
 }
 """
 
+__default_settings = """{
+    "C_Cpp.default.compileCommands": ".vscode/compile_commands.json"
+}
+"""
+
 def format_json_string(js_str: str, powermake_program: str, vscode_path: str) -> str:
     js_str = js_str.replace("${powermakeProgram}", json.dumps(powermake_program)[1:-1])
     js_str = js_str.replace("${powermakePythonPath}", json.dumps(sys.executable)[1:-1])
@@ -80,6 +86,7 @@ def generate_vscode(config: Config, vscode_path: str) -> None:
 
     launch_template_path = os.path.join(config.global_config_dir, "vscode_templates", "launch.json")
     tasks_template_path = os.path.join(config.global_config_dir, "vscode_templates", "tasks.json")
+    settings_template_path = os.path.join(config.global_config_dir, "vscode_templates", "settings.json")
 
     if not os.path.exists(launch_template_path):
         makedirs(os.path.join(config.global_config_dir, "vscode_templates"))
@@ -98,14 +105,43 @@ def generate_vscode(config: Config, vscode_path: str) -> None:
         with open(tasks_template_path, "r") as file:
             tasks_content = file.read()
 
+    if not os.path.exists(settings_template_path):
+        with open(settings_template_path, "w") as file:
+            file.write(__default_settings)
+        settings_content = __default_settings
+    else:
+        with open(settings_template_path, "r") as file:
+            settings_content = file.read()
+
+    powermake_program = os.path.abspath(os.path.join(config.exe_build_directory, config.target_name))
+
     launch_filepath = handle_filename_conflict(os.path.join(vscode_path, "launch.json"), config._args_parsed.always_overwrite)
     if launch_filepath != "":
         with open(launch_filepath, "w") as file:
-            file.write(format_json_string(launch_content, os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), vscode_path))
+            file.write(format_json_string(launch_content, powermake_program, vscode_path))
 
     tasks_filepath = handle_filename_conflict(os.path.join(vscode_path, "tasks.json"), config._args_parsed.always_overwrite)
     if tasks_filepath != "":
         with open(tasks_filepath, "w") as file:
-            file.write(format_json_string(tasks_content, os.path.abspath(os.path.join(config.exe_build_directory, config.target_name)), vscode_path))
+            file.write(format_json_string(tasks_content, powermake_program, vscode_path))
+
+    settings_filepath = handle_filename_conflict(os.path.join(vscode_path, "settings.json"), config._args_parsed.always_overwrite)
+    if settings_filepath != "":
+        with open(settings_filepath, "w") as file:
+            file.write(format_json_string(settings_content, powermake_program, vscode_path))
 
     config.set_debug(debug)
+
+
+def generate_vscode_if_asked(config: Config) -> bool:
+    if config._args_parsed.generate_vscode is not False:
+        print_info("Generating launch.json, tasks.json and settings.json", config.verbosity)
+        vscode_path: str = ""
+        if config._args_parsed.generate_vscode is not None:
+            vscode_path = config._args_parsed.generate_vscode
+        if not vscode_path.endswith(".vscode") and not vscode_path.endswith(".vscode/") and not vscode_path.endswith(".vscode\\"):
+            vscode_path = os.path.join(vscode_path, ".vscode")
+        generate_vscode(config, vscode_path)
+        print_info("done", config.verbosity)
+        return True
+    return False
