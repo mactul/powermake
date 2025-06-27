@@ -179,7 +179,7 @@ powermake.run("program_test", build_callback=on_build)
 > [!TIP]  
 > You can generate a new makefile for a project by using `python -m powermake` in the project's folder.  
 > If pip's scripts folder (often ~/.local/bin) is in your path, can can also simply run `powermake`  
-> For more details about this, see [Generating a Powermake](./documentation.md#generating_a_powermake)?
+> For more details about this, see [Generating a Powermake](./documentation.md#generating-a-powermake)?
 
 
 ## [More examples](./examples.md)
