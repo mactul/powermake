@@ -198,3 +198,92 @@ powermake.run("program", build_callback=on_build)
 
 Run `python makefile.py -rvt` in the `program` subfolder.
 You can see that `../library/makefile.py` is indeed called and the final program should work as expected.
+
+
+## Making a shared lib
+
+If you want to switch to a shared lib, you just need to change the library side, replacing `powermake.archive_files` by `powermake.link_shared_lib`, with the same parameters.
+```py
+powermake.link_shared_lib(config, objects)
+```
+
+### Installing your shared lib
+
+If you do nothing, when you will try to run:
+```sh
+python makefile.py -rvd --install
+```
+in the library directory, an `install` folder will be created, with a subfolder `lib` containing your shared library.
+
+However, you may want to add an `include/` folder in this install directory and probably change the default install location.
+
+Here, exporting the `include/` folder would be easy because we already have separated the headers and the sources, but PowerMake can export public headers even if they are mixed with sources, we just have to specify which header need to be exported.
+
+We do that by overwriting the install callback
+
+```py
+import powermake
+
+def on_build(config: powermake.Config):
+    config.add_flags("-Wall", "-Wextra")
+
+    config.add_includedirs("./include/")
+
+    files = powermake.get_files("**/*.c")
+    if config.target_is_windows():
+        files = powermake.filter_files(files, "**/*linux.c")
+    else:
+        files = powermake.filter_files(files, "**/*windows.c")
+
+    objects = powermake.compile_files(config, files)
+
+    powermake.archive_files(config, objects)
+
+
+def on_install(config: powermake.Config, location: str):
+    if location is None:
+        # No location is explicitly provided so we change the default for our convenance.
+        location = "/usr/local/"
+
+    # This ensure that the file "my_time.h" will be exported into /usr/local/include/my_time/my_time.h
+    # The .so will be copied into /usr/local/lib/my_time.so
+    config.add_exported_headers("my_time.h", subfolder="my_time")
+
+    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending of the verbosity level, etc...
+    powermake.default_on_install(config, location)
+
+# Make sure you register the on_install callback in powermake.run
+powermake.run("my_time", build_callback=on_build, install_callback=on_install)
+```
+
+
+Once your lib is installed under `/usr/local/lib` and `/usr/local/include/my_time/`, you can create a program using it like this:
+
+Assuming that /usr/local/lib/ is not in the LD_LIBRARY_PATH:
+```py
+import powermake
+
+def on_build(config: powermake.Config):
+    config.add_flags("-Wall", "-Wextra", "-L/usr/local/lib/")
+
+    config.add_includedirs("/usr/local/include/my_time/")
+
+    config.add_shared_libs("my_time")
+
+    files = powermake.get_files("**/*.c")
+
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+
+powermake.run("program", build_callback=on_build)
+```
+
+
+And to run the program:
+
+```sh
+LD_LIBRARY_PATH=/usr/local/lib python makefile.py -t
+```
+
+### [-> Next tutorial (Multiple Targets)](../03-multiple-targets/README.md)
