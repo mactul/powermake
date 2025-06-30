@@ -113,6 +113,7 @@
       - [powermake.run\_callbacks](#powermakerun_callbacks)
   - [Compatibility with other tools](#compatibility-with-other-tools)
     - [Scan-Build](#scan-build)
+    - [LLVM CodeChecker](#llvm-codechecker)
     - [LLVM libfuzzer](#llvm-libfuzzer)
     - [GNU Make](#gnu-make)
     - [Visual Studio Code](#visual-studio-code)
@@ -203,7 +204,7 @@ Just run `powermake` (or `python -m powermake`) in a project folder and it will 
 
 You can edit this default powermake to better fit your needs, once you've run `powermake` (or `python -m powermake`) at least one time, a file will appear in `~/.powermake/default_powermake.py`. Just edit this file and to what you want as the default powermake template. To reset the default, just delete the file and run `powermake`
 
-The `powermake` script is no more than a classic powermake script (like the one in [Quick Example](#quick-example)), which instead of compiling a C code, generates a file named `makefile.py`.  
+The `powermake` script is no more than a classic powermake makefile (like the one in [Quick Example](#quick-example)), which instead of compiling a C code, generates a file named `makefile.py`.  
 This means that you have access to all usual command line options.  
 Just type `powermake --help` to see them.
 
@@ -225,6 +226,9 @@ This alternative has a great advantage: you can combine multiple tasks. For exam
 > The order will always be config -> clean -> build -> install -> test.
 
 You can also replace the `-b` argument with `-r` (using `-br` does the same as `-r`) and this will force the makefile to recompile everything, without trying to figure out which file needs to be recompiled.
+
+> [!NOTE]  
+> Writing `-r` is not the same as writing `-cb`. If you write `-cb` and your clean callback doesn't really clean everything, your project will not be recompiled. `-r` doesn't even call the clean callback and don't delete any file, it just bypass all tests verifying if a file needs to be recompiled. You can call `-rc` do delete old unused compilation files and make sure every compile command is ran.
 
 There are many more options you can add such as `-d` (`--debug`), `-q` (`--quiet`), `-v` (`--verbose`), etc...
 
@@ -258,55 +262,62 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -rvd
 
 When this is possible, PowerMake tries to translate C/C++/AS/ASM/LD flags.
 
-Most flags are unknown to PowerMake, in this case they are simply transmitted to the compiler and it's your job to ensure the compatibility with the different targets through the use of if/else blocks.
+Only the most common flags are known and therefore translated by PowerMake.
+For all flags that PowerMake is enable to translate, PowerMake will check at runtime if the flag is compatible with your compiler and if not, the flag will be removed, a warning will be displayed, but the compilation will not be aborted.
 
-However, the most common flags are automatically translated by PowerMake.  
+> [!TIP]  
+> You can disable translation and automatic flag removal for a specific flag by using `powermake.EnforcedFlag`.
+> Example:
+> ```py
+> config.add_flags("-fanalyzer", powermake.EnforcedFlag("-S"))
+> ```
+> In this example, the `-fanalyzer` flag will be removed if unsupported (for example if you are using clang), but the `-S` will be kept untouched no matter what.
+
+
 Their is also some flags that PowerMake defines that doesn't exist in any compiler, these are set of useful flags for a situation.
 
-Here is the list of flags translated by PowerMake:  
-> [!NOTE]  
-> Only compiler flags are listed, they are also translated for the linker but most of the time this ends up being just the removal of the flag.
+Here is the list of flags translated by PowerMake:
 
 
-| PowerMake Flag |  Description                   |
-| :------------: | :----------------------------: |
-| -w             | Inhibit all warning messages.  |
-| -Werror        | Make all warnings into errors. |
-| -Wall          | Activate warnings about all constructs that are unlikely to be intended. |
-| -Wextra        | Enable flags that are likely to catch bugs even though they may warn on perfectly valid code. |
-| -Wpedantic     | Warn when the code isn't ISO (typically when C/C++ extension are used). |
-| -pedantic      | Same a -Wpedantic |
-| -Wswitch       | Warn when a switch on an enum lacks a case (enabled by -Wall) |
-| -Wswitch-enum  | Like -Wswitch but warns even if their is a default case |
-| -fanalyzer     | When supported by the compiler, run the code into a static analyzer to detect some bugs. |
-| -Weverything   | Enable as most warning as possible, even the noisy and irrelevant ones. |
-| -Wsecurity     | Enable all warnings that have a little chance to catch a security issue. |
-| -O0            | Disable all optimizations. |
-| -Og            | Enable optimizations that don't interfere with the debugger. This is better than -O0 for debugging because some warnings and analysis require some optimization. |
-| -O1            | Enable optimization but try to mitigate compile time. |
-| -O             | Same as -O1. |
-| -O2            | Performs nearly all supported optimizations. |
-| -O3            | Optimize aggressively for speed. |
-| -Ofast         | Enable all -O3 optimizations + some some optimization that can brake the program. |
-| -Os            | Optimize for size. |
-| -Oz            | Optimize aggressively for size rather than speed. |
-| -fomit-frame-pointer | Omit the frame pointer in functions that don’t need one. |
-| -m32           | If supported, switch to x86 architecture (you should prefer using [config.set_target_architecture](#set_target_architecture)). |
-| -m64           | If supported, switch to x64 architecture (you should prefer using [config.set_target_architecture](#set_target_architecture)). |
-| -march=native  | Generate a program optimized for CPUs that have the same capabilities of the host. |
-| -mtune=native  | Optimize a program for the specific CPU of the host, even if this program will run slower or not at all on any other machine. |
-| -mmx           | Enable mmx vectorization. |
-| -msse          | Enable sse vectorization. |
-| -msse2         | Enable sse2 vectorization. |
-| -msse3         | Enable sse3 vectorization. |
-| -mavx          | Enable avx vectorization. |
-| -mavx2         | Enable avx2 vectorization. |
-| -g             | Compile with debug symbols. |
-| -fPIC          | Position Independent Code, required when compiling objects that will be bundled in a shared library. |
-| -fsecurity=1   | Enable all flags that can mitigate security issues with negligible impact on performance. Warnings included. |
-| -fsecurity=2   | Enable all flags that can mitigate security issues. |
-| -fsecurity     | same as -fsecurity=2. |
-| -ffuzzer       | Enable the address sanitizer and the fuzzer. |
+| PowerMake Specific | PowerMake Flag |  Description                   |
+| :---: | :------------: | :----------------------------: |
+|                    | -w             | Inhibit all warning messages.  |
+|                    | -Werror        | Make all warnings into errors. |
+|                    | -Wall          | Activate warnings about all constructs that are unlikely to be intended. |
+|                    | -Wextra        | Enable flags that are likely to catch bugs even though they may warn on perfectly valid code. |
+|                    | -Wpedantic     | Warn when the code isn't ISO (typically when C/C++ extension are used). |
+|                    | -pedantic      | Same a -Wpedantic |
+|                    | -Wswitch       | Warn when a switch on an enum lacks a case (enabled by -Wall) |
+|                    | -Wswitch-enum  | Like -Wswitch but warns even if their is a default case |
+|                    | -fanalyzer     | When supported by the compiler, run the code into a static analyzer to detect some bugs. |
+|                    | -Weverything   | Enable as most warning as possible, even the noisy and irrelevant ones. |
+| :white_check_mark: | -Wsecurity     | Enable all warnings that have a little chance to catch a security issue. |
+|                    | -O0            | Disable all optimizations. |
+|                    | -Og            | Enable optimizations that don't interfere with the debugger. This is better than -O0 for debugging because some warnings and analysis require some optimization. |
+|                    | -O1            | Enable optimization but try to mitigate compile time. |
+|                    | -O             | Same as -O1. |
+|                    | -O2            | Performs nearly all supported optimizations. |
+|                    | -O3            | Optimize aggressively for speed. |
+|                    | -Ofast         | Enable all -O3 optimizations + some some optimization that can brake the program. |
+|                    | -Os            | Optimize for size. |
+|                    | -Oz            | Optimize aggressively for size rather than speed. |
+|                    | -fomit-frame-pointer | Omit the frame pointer in functions that don’t need one. |
+|                    | -m32           | If supported, switch to x86 architecture (you should prefer using [config.set_target_architecture](#set_target_architecture)). |
+|                    | -m64           | If supported, switch to x64 architecture (you should prefer using [config.set_target_architecture](#set_target_architecture)). |
+|                    | -march=native  | Generate a program optimized for CPUs that have the same capabilities of the host. |
+|                    | -mtune=native  | Optimize a program for the specific CPU of the host, even if this program will run slower or not at all on any other machine. |
+|                    | -mmx           | Enable mmx vectorization. |
+|                    | -msse          | Enable sse vectorization. |
+|                    | -msse2         | Enable sse2 vectorization. |
+|                    | -msse3         | Enable sse3 vectorization. |
+|                    | -mavx          | Enable avx vectorization. |
+|                    | -mavx2         | Enable avx2 vectorization. |
+|                    | -g             | Compile with debug symbols. |
+|                    | -fPIC          | Position Independent Code, required when compiling objects that will be bundled in a shared library. |
+| :white_check_mark: | -fsecurity=1   | Enable all flags that can mitigate security issues with negligible impact on performance. Warnings included. |
+| :white_check_mark: | -fsecurity=2   | Enable all flags that can mitigate security issues. |
+| :white_check_mark: | -fsecurity     | same as -fsecurity=2. |
+| :white_check_mark: | -ffuzzer       | Enable the address sanitizer and the fuzzer. |
 
 
 ### powermake.run
@@ -1904,12 +1915,36 @@ We especially recommend gcc and the `-fanalyzer` option, it's one of the most po
 
 > [!TIP]  
 > You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accros translation units.
+> Simply writing `config.add_flags('-fanalyzer')` in the beginning of your build callback will ensure that.
+
+
+### LLVM CodeChecker
+
+`CodeChecker` is the big brother of `scan-build`, it can perform analysis using the internal clang static analyzer but unlike `scan-build`, it's able to perform cross translation units analysis.
+
+Just generate a `compile_commands.json` file with PowerMake:
+You should prefer compiling with clang for the analysis with *LLVM tools*, hence the `CC=clang`.
+```sh
+CC=clang python makefile.py -rvd -o .
+```
+
+Then run the analysis with cross translation units enabled:
+```sh
+CodeChecker analyze ./compile_commands.json --enable sensitive --ctu -o ./reports
+```
+
+Finally, visualize the results:
+```sh
+CodeChecker parse ./reports -e html -o ./reports_html
+firefox ./reports_html/index.html
+```
+
 
 ### LLVM libfuzzer
 
 Powermake helps you compile with [LLVM libfuzzer](https://llvm.org/docs/LibFuzzer.html).
 
-You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_c_cpp_flags](./documentation.md#add_c_cpp_flags) and [config.add_ld_flags](./documentation.md#add_ld_flags).
+You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_flags](./documentation.md#add_flags).
 
 If you are using clang or MSVC, this will enable the address sanitizer and fuzzer.
 Otherwise, the argument is ignored.
@@ -1929,7 +1964,7 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -md
 ```
 
 > [!WARNING]  
-> PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
+> PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](./README.md#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
 > To get a good Makefile, you should never use the `subprocess` module but instead use [powermake.run_command](./documentation.md#powermakerun_command) or [powermake.run_command_if_needed](./documentation.md#powermakerun_command_if_needed).
 >
 > If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is ran.)

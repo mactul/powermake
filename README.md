@@ -22,6 +22,7 @@
   - [Documentation](#documentation)
   - [Compatibility with other tools](#compatibility-with-other-tools)
     - [Scan-Build](#scan-build)
+    - [LLVM CodeChecker](#llvm-codechecker)
     - [LLVM libfuzzer](#llvm-libfuzzer)
     - [GNU Make](#gnu-make)
     - [Visual Studio Code](#visual-studio-code)
@@ -91,7 +92,7 @@ However, today, even for a 5 files project on Linux with GCC, PowerMake is more 
 
 - Very easy to read makefiles
   - If you are tired of huge GNU Makefiles, makefile.am or CMakeLists.txt that are impossible to read, you will love PowerMake
-  - You makefile will just be a small python script that can be read from top to bottom, even for someone that have never used PowerMake.
+  - You makefile will just be a small python script that can be read from top to bottom, even by someone that have never used PowerMake.
 
 - Cross-Platform:
   - PowerMake can detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
@@ -220,12 +221,36 @@ We especially recommend gcc and the `-fanalyzer` option, it's one of the most po
 
 > [!TIP]  
 > You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accros translation units.
+> Simply writing `config.add_flags('-fanalyzer')` in the beginning of your build callback will ensure that.
+
+
+### LLVM CodeChecker
+
+`CodeChecker` is the big brother of `scan-build`, it can perform analysis using the internal clang static analyzer but unlike `scan-build`, it's able to perform cross translation units analysis.
+
+Just generate a `compile_commands.json` file with PowerMake:
+You should prefer compiling with clang for the analysis with *LLVM tools*, hence the `CC=clang`.
+```sh
+CC=clang python makefile.py -rvd -o .
+```
+
+Then run the analysis with cross translation units enabled:
+```sh
+CodeChecker analyze ./compile_commands.json --enable sensitive --ctu -o ./reports
+```
+
+Finally, visualize the results:
+```sh
+CodeChecker parse ./reports -e html -o ./reports_html
+firefox ./reports_html/index.html
+```
+
 
 ### LLVM libfuzzer
 
 Powermake helps you compile with [LLVM libfuzzer](https://llvm.org/docs/LibFuzzer.html).
 
-You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_c_cpp_flags](./documentation.md#add_c_cpp_flags) and [config.add_ld_flags](./documentation.md#add_ld_flags).
+You can add the `-ffuzzer` argument to your compiler and your linker with [config.add_flags](./documentation.md#add_flags).
 
 If you are using clang or MSVC, this will enable the address sanitizer and fuzzer.
 Otherwise, the argument is ignored.
@@ -245,7 +270,7 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -md
 ```
 
 > [!WARNING]  
-> PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
+> PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](./README.md#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
 > To get a good Makefile, you should never use the `subprocess` module but instead use [powermake.run_command](./documentation.md#powermakerun_command) or [powermake.run_command_if_needed](./documentation.md#powermakerun_command_if_needed).
 >
 > If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is ran.)
