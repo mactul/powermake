@@ -292,3 +292,6 @@ You can generate this file with PowerMake like this:
 ```sh
 python makefile.py -rvd -o .
 ```
+
+
+### [-> Next tutorial (Crossplatform library)](../02-crossplatform-library/README.md)
