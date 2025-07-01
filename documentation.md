@@ -376,7 +376,7 @@ The `install_callback` takes 2 arguments: The [powermake.Config](#powermakeconfi
 >     powermake.default_on_install(config, location)
 > 
 > 
-> powermake.run("my_lib", build_callback=on_build, clean_callback=on_clean)
+> powermake.run("my_lib", build_callback=on_build, install_callback=on_clean)
 > ```
 
 
@@ -1059,6 +1059,24 @@ config.set_target_architecture(architecture: str) -> None:
 Reset the target architecture to the one specified.  
 This will reload compilers to produce code for the good architecture.
 
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    config.set_architecture("i686")
+    # Will set config.target_architecture to "i686"
+    # config.simplified_target_architecture will be set to "x86"
+    # All compilers and output path will be configured for x86 target
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
+
 ##### target_is_windows()
 ```py
 config.target_is_windows()
@@ -1302,6 +1320,23 @@ Add flags to [config.flags](#flags) if they do not exist.
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    config.add_flags("-flto", "-fanalyzer")
+    # The lto and fanalyzer flag will be added to every compiler (C/C++/AS/ASM) and to the linker
+    # Here, it's a very good way to have cross-translation-unit static analysis.
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
+
 
 ##### remove_flags()
 ```py
@@ -1523,6 +1558,35 @@ The list order is preserved.
 
 By default, there is no subfolder, but we recommend you use `config.target_name` for the `subfolder` argument.
 
+You should use this method in the install callback before calling [powermake.default_on_install](#powermakedefault_on_install)
+
+<details>
+<summary>Example</summary>
+
+```py
+import powermake
+
+
+def on_build(config: powermake.Config):
+    print("The build callback was called !")
+    print(f"Compiling the lib {config.target_name}...")
+
+def on_install(config: powermake.Config, location: str):
+    if location is None:
+        # No location is explicitly provided so we change the default for our convenience.
+        location = "/usr/local/"
+
+    # This ensures that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
+    # The .so or .a that corresponds will be copied into /usr/local/lib/my_lib.so
+    config.add_exported_headers("my_lib.h", subfolder="my_lib")
+
+    powermake.default_on_install(config, location)
+
+
+powermake.run("my_lib", build_callback=on_build, install_callback=on_clean)
+```
+
+</details>
 
 ##### remove_exported_headers()
 ```py
@@ -1541,6 +1605,34 @@ config.copy()
 
 Returns a new config object which is a deepcopy of the config. It should be used to compile different set of files with different parameters.
 
+<details>
+<summary>Example</summary>
+
+```py
+import powermake
+
+def config_without_libc(config: powermake.Config):
+    config.add_flags("-nostdinc")
+
+    files = powermake.get_files("nolibc/**/*.c")
+
+    return powermake.compile_files(config, files)
+
+def on_build(config: powermake.Config):
+    config.add_flags("-Wall", "-Wextra", "-fanalyzer")
+
+    # Here we make a copy so the config in this function will not be modified
+    objects = compile_without_libc(config.copy())
+
+    files = powermake.get_files("libc/**/*.c")
+    objects.update(powermake.compile_files(config, files))
+
+    powermake.link_files(config, objects)
+
+powermake.run("my_project", build_callback=on_build)
+```
+
+</details>
 
 ##### empty_copy()
 ```py
