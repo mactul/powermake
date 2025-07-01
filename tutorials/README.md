@@ -15,3 +15,4 @@ This section is not meant to show every argument of every function, the idea is 
 
 - [First Powermake](./01-first-powermake/README.md)
 - [Crossplatform Library](./02-crossplatform-library/README.md)
+- [Multiple Targets](./03-multiple-targets/README.md)

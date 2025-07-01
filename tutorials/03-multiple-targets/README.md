@@ -49,7 +49,7 @@ def on_build(config: powermake.Config):
 
 
 parser = powermake.ArgumentParser()
-parser.add_argument("--hello", description="some random argument", action="store_true")
+parser.add_argument("--hello", help="some random argument", action="store_true")
 
 args_parsed = parser.parse_args()
 
@@ -93,3 +93,52 @@ powermake.run("my_project", build_callback=on_build, args_parsed=args_parsed)
 ```
 
 And finally, we can call `powermake.run` with the Namespace of parsed args.
+
+
+Most of the time you will need to use boolean arguments (with `action="store_true"`).  
+Obviously you can also have different type of arguments.  
+You can't really have positional arguments because those are already all used by PowerMake for the test callback but you can do almost anything you want with named arguments.
+
+> [!TIP]  
+> Avoid using single letter arguments for futur-proof makefiles because you have a high risk to have a conflict with a futur version of PowerMake.  
+> To be perfectly futur-proof, a good practice might be to prefix each of your arg with a name of your own. For example if the program you're compiling is called zorglub, a custom argument might be `--zb-enable-something`.
+
+
+If you want to know everything you can do with the command line, please refer to the [argparse documentation](https://docs.python.org/3/library/argparse.html). However this documentation might not be very easy to read so here are some common examples:
+
+
+```py
+import powermake
+
+parser = powermake.ArgumentParser()
+
+# A boolean argument
+parser.add_argument("--zb-version", help="display Zorglub version", action="store_true")
+
+# An optional argument with constraints
+# Will be "disabled" if --zb-enable-gui is not on the command line, None if their is just `--zb-enable-gui` without any argument, "SDL2" if the command line is `--zb-enable-gui=SDL2` or "QT" if the command line is `--zb-enable-gui QT`
+parser.add_argument("--zb-enable-gui", nargs='?', help="enable the GUI, optionally specify which GUI frontend to use" choices=["SDL2", "SDL3", "QT", "GTK"], default="disabled")
+
+# The same as above but this time it can either not be on the command line or have a value but it cannot be on the command line and empty.
+parser.add_argument("--zb-set-gui", help="set the GUI to use if you want one", choices=["SDL2", "SDL3", "QT", "GTK"], default=None)
+
+# A argument with a non-constrained value but which must be on the command line.
+parser.add_argument("--zb-exec-name", metavar="NAME", help="set the name of the executable", required=True)
+
+# An integer, that will be automatically converted.
+parser.add_argument("--zb-buff-size", help="set the default buffer size zorglub will use.", default=0, type=int)
+
+# A list of undefined size
+parser.add_argument("--zb-enable-search-paths", nargs='*', help="Enable search paths, specify every search paths zorglub should use")
+
+# A list that can have one or more items
+parser.add_argument("--zb-search-paths", nargs='+', help="Specify every search paths zorglub should use")
+
+# A list with exactly 3 integers
+parser.add_argument("--zb-color-rgb", nargs=3, help="specify the zorglub main color as 3 int values between 0 and 255", type=int)
+
+
+args_parsed = parser.parse_args()
+
+print(args_parsed)
+```

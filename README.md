@@ -57,7 +57,7 @@ What about this:
 python YOUR_SCRIPT.py -crvt arg1 arg2 arg3
 ```
 
-Explore the documentation to learn about the infinite possibilities of PowerMake !!  
+You can follow the [tutorials](./tutorials/) or explore the [documentation](./documentation.md#documentation) to learn about the infinite possibilities of PowerMake !!
 And if you are too lazy or completely lost, just ask what you are searching for in the [Discussions section](https://github.com/mactul/powermake/discussions).
 
 If you don't exactly understand why PowerMake is different than Make, CMake, XMake, Scons, etc..., you should read the [Philosophy section](#philosophy).
@@ -204,6 +204,10 @@ powermake.run("program_test", build_callback=on_build)
 <!--/snippet-->
 
 ## [Documentation](./documentation.md#documentation)
+
+**Follow step by step tutorials [here](./tutorials/).**
+
+or
 
 **Read the documentation [here](./documentation.md#documentation).**
 
