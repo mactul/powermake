@@ -75,10 +75,9 @@ _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
 class SharedLinkerMSVC(SharedLinker):
     type: T.ClassVar = "msvc"
     shared_lib_extension: T.ClassVar = ".dll"
-    translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "link") -> None:
-        super().__init__(path)
+        super().__init__(path, _powermake_flags_to_msvc_flags)
 
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
         return [(lib if lib.endswith(".lib") else lib + ".lib") for lib in shared_libs] + self.translate_flags(flags)

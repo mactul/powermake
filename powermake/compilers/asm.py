@@ -67,10 +67,9 @@ _powermake_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
 class CompilerNASM(Compiler):
     type: T.ClassVar = "nasm"
     obj_extension: T.ClassVar = ".o"
-    translation_dict: T.ClassVar = _powermake_flags_to_nasm_flags
 
     def __init__(self, path: str = "nasm"):
-        super().__init__(path)
+        super().__init__(path, _powermake_flags_to_nasm_flags)
 
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
         return [f"-d{define}" for define in defines] + [f"-i{includedir}" for includedir in includedirs] + self.translate_flags(flags)

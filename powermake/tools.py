@@ -30,7 +30,7 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
     "-fsecurity=1": ["-Wsecurity", "-fstrict-flex-arrays=2", "-fcf-protection=full", "-mbranch-protection=standard", "-Wl,-z,nodlopen", "-Wl,-z,noexecstack", "-Wl,-z,relro", "-fPIE", "-pie", "-fPIC", "-fno-delete-null-pointer-checks", "-fno-strict-overflow", "-fno-strict-aliasing", "-fexceptions", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"],
     "-fsecurity=2": ["-fsecurity=1", "-D_FORTIFY_SOURCE=3", "-D_GLIBCXX_ASSERTIONS", "-fstack-clash-protection", "-fstack-protector-strong", "-Wl,-z,now", "-ftrivial-auto-var-init=zero"],
     "-fsecurity": ["-fsecurity=2"],
-    "-Weverything": ["-Wsecurity", "-pedantic", "-Wsuggest-attribute=pure", "-Wsuggest-attribute=const", "-Wsuggest-attribute=noreturn", "-Wsuggest-attribute=malloc", "-Wsuggest-attribute=returns_nonnull", "-Wsuggest-attribute=format", "-Wmissing-format-attribute", "-Wsuggest-attribute=cold", "-Waggregate-return", "-Wduplicated-branches", "-Wduplicated-cond", "-Wflex-array-member-not-at-end", "-Wfloat-equal", "-Wformat-nonliteral", "-Wformat-signedness", "-Wformat-y2k", "-Winit-self", "-Winvalid-utf8", "-Wjump-misses-init", "-Wlogical-op", "-Wmissing-declarations", "-Wmissing-include-dirs", "-Wmissing-prototypes", "-Wmissing-variable-declarations", "-Wmultichar", "-Wnested-externs", "-Wnull-dereference", "-Wopenacc-parallelism", "-Wredundant-decls", "-Wshadow", "-Wstack-protector", "-Wstrict-flex-arrays=3", "-Wstrict-prototypes", "-Wsuggest-final-methods", "-Wsuggest-final-types", "-Wswitch-default", "-Wundef", "-Wunsuffixed-float-constants", "-Wunused-macros", "-Wuseless-cast", "-Wvector-operation-performance", "-Wwrite-strings"],
+    "-Weverything": ["-Wsecurity", "-Waggregate-return", "-Walloc-zero", "-Walloca", "-Warith-conversion", "-Wbad-function-cast", "-Wc++-compat", "-Wcast-align=strict", "-Wcast-qual", "-Wdate-time", "-Wdisabled-optimization", "-Wdouble-promotion", "-Wduplicated-branches", "-Wduplicated-cond", "-Wflex-array-member-not-at-end", "-Wfloat-equal", "-Wformat-nonliteral", "-Wformat-signedness", "-Wformat-y2k", "-Winit-self", "-Winline", "-Winvalid-pch", "-Winvalid-utf8", "-Wjump-misses-init", "-Wlogical-op", "-Wmissing-declarations", "-Wmissing-format-attribute", "-Wmissing-include-dirs", "-Wmissing-prototypes", "-Wmissing-variable-declarations", "-Wmultichar", "-Wnested-externs", "-Wnull-dereference", "-Wopenacc-parallelism", "-Wpacked", "-Wpadded", "-Wredundant-decls", "-Wshadow", "-Wstack-protector", "-Wstrict-flex-arrays=3", "-Wstrict-prototypes", "-Wsuggest-attribute=cold", "-Wsuggest-attribute=const", "-Wsuggest-attribute=format", "-Wsuggest-attribute=malloc", "-Wsuggest-attribute=noreturn", "-Wsuggest-attribute=pure", "-Wsuggest-attribute=returns_nonnull", "-Wsuggest-final-methods", "-Wsuggest-final-types", "-Wswitch-default", "-Wswitch-enum", "-Wtrivial-auto-var-init", "-Wundef", "-Wunsuffixed-float-constants", "-Wunused-macros", "-Wuseless-cast", "-Wvector-operation-performance", "-Wwrite-strings", "-Wzero-as-null-pointer-constant", "-pedantic"],
     "-ffuzzer": ["-fsanitize=address,fuzzer"],
     "-m32": ["-m32"],
     "-m64": ["-m64"]
@@ -80,9 +80,12 @@ class EnforcedFlag(str):
 
 class Tool(abc.ABC):
     type: T.ClassVar = ""
-    translation_dict: T.ClassVar[T.Dict[str, T.List[str]]] = _powermake_flags_to_gnu_flags
 
-    def __init__(self, path: T.Union[str, T.List[str]]) -> None:
+    def __init__(self, path: T.Union[str, T.List[str]], translation_dict: T.Union[T.Dict[str, T.List[str]], None] = None) -> None:
+        if translation_dict is None:
+            self.translation_dict = _powermake_flags_to_gnu_flags.copy()
+        else:
+            self.translation_dict = translation_dict.copy()
         self.verified_translation_dict: T.Dict[str, T.List[str]] = {}
         self.cache: T.Dict[str, T.Any] = {}
         if isinstance(path, str):

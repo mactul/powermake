@@ -76,10 +76,9 @@ _powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
 class CompilerMSVC(Compiler):
     type: T.ClassVar = "msvc"
     obj_extension: T.ClassVar = ".obj"
-    translation_dict: T.ClassVar = _powermake_flags_to_msvc_flags
 
     def __init__(self, path: str = "cl") -> None:
-        super().__init__(path)
+        super().__init__(path, _powermake_flags_to_msvc_flags)
 
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
         return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + self.translate_flags(flags)

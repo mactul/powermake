@@ -41,7 +41,7 @@ class CompilerGNUPlusPlus(CompilerGNU):
 
     def __init__(self, path: str = "c++"):
         super().__init__(path)
-        not_supported = {'-Wjump-misses-init', '-Wmissing-prototypes', '-Wmissing-variable-declarations', '-Wnested-externs', '-Wstrict-prototypes', '-Wunsuffixed-float-constants'}
+        not_supported = {'-Wjump-misses-init', '-Wmissing-prototypes', '-Wmissing-variable-declarations', '-Wnested-externs', '-Wstrict-prototypes', '-Wunsuffixed-float-constants', '-Wbad-function-cast', "-Wc++-compat"}
         self.translation_dict["-Weverything"] = list(filter(lambda x: x not in not_supported, self.translation_dict["-Weverything"]))
 
     def check_if_arg_exists(self, arg: str) -> bool:
