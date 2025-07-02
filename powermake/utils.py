@@ -24,16 +24,20 @@ def _store_run_path(run_path: str) -> None:
     global _run_path
     _run_path = run_path
 
+
 def _get_run_path() -> str:
     return _run_path
+
 
 _makefile_path = None
 def _store_makefile_path(makefile_path: str) -> None:
     global _makefile_path
     _makefile_path = makefile_path
 
+
 def _get_makefile_path() -> T.Union[str, None]:
     return _makefile_path or (__makefile__.__file__ if hasattr(__makefile__, '__file__') else None)
+
 
 def handle_filename_conflict(filepath: str, force_overwrite: bool) -> str:
     if force_overwrite:
@@ -65,6 +69,7 @@ def handle_filename_conflict(filepath: str, force_overwrite: bool) -> str:
                 return filepath + "." + str(i)
         return ""
     return filepath
+
 
 def makedirs(path: str, exist_ok: bool = True) -> None:
     """

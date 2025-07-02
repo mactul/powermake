@@ -135,7 +135,7 @@ class Config:
         self.single_file = single_file
         self.compile_commands_dir = compile_commands_dir
         self.nb_total_operations = 0
-        self._cumulated_launched_powermakes: T.Dict[str, str] = cumulated_launched_powermakes # inode_number: lib_build_folder
+        self._cumulated_launched_powermakes: T.Dict[str, str] = cumulated_launched_powermakes  # inode_number: lib_build_folder
 
         self.c_compiler: T.Union[Compiler, None] = None
         self.cpp_compiler: T.Union[Compiler, None] = None
@@ -388,10 +388,8 @@ class Config:
         for primer in primers_list:
             self._disable_architecture_toolchain_discover = self._disable_architecture_toolchain_discover or primer.tool_path_specified
 
-
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
             self.target_operating_system = "Windows"
-
 
         self.set_debug(self.debug, True)
         self.add_flags("-fdiagnostics-color")

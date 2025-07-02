@@ -414,6 +414,7 @@ def delete_files_from_disk(*patterns: str) -> None:
             else:
                 os.remove(filepath)
 
+
 def _get_libs_from_folder(lib_build_folder: str) -> T.Union[T.List[str], None]:
     if lib_build_folder != "" and os.path.exists(lib_build_folder):
         return [os.path.join(lib_build_folder, file) for file in os.listdir(lib_build_folder)]
@@ -508,4 +509,3 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
         raise RuntimeError("PowerMake corrupted; please verify your installation")
     config._cumulated_launched_powermakes = {**config._cumulated_launched_powermakes, **metadata["cumulated_launched_powermakes"], inode_nb: metadata["lib_build_directory"]}
     return _get_libs_from_folder(metadata["lib_build_directory"])
-

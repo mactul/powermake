@@ -7,14 +7,18 @@ from .display import error_text, bold_text, dim_text
 class PowerMakeException(Exception):
     exc_type: str = "Unknown Error"
 
+
 class PowerMakeValueError(PowerMakeException):
     exc_type: str = "Value Error"
+
 
 class PowerMakeRuntimeError(PowerMakeException):
     exc_type: str = "Runtime Error"
 
+
 class PowerMakeCommandError(PowerMakeRuntimeError):
     exc_type: str = "Command Error"
+
 
 def print_powermake_traceback(e: PowerMakeException) -> None:
     print(error_text(e.exc_type), ":", e)

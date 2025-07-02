@@ -14,7 +14,6 @@
 
 
 import os
-import time
 import subprocess
 import typing as T
 from threading import Lock
@@ -24,6 +23,7 @@ from .config import Config
 from .utils import print_bytes, _get_makefile_path
 from .exceptions import PowerMakeCommandError
 from .display import print_info, print_debug_info, error_text
+
 
 class CompilationStopper:
     stop = False
@@ -137,7 +137,7 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
         output_date = os.path.getmtime(outputfile)
     except OSError:
         return True
-    
+
     makefile_path = _get_makefile_path()
     if makefile_path is not None and os.path.getmtime(makefile_path) >= output_date:
         return True
@@ -215,7 +215,8 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
     while pipe.stdout is not None:
         line = pipe.stdout.readline()
 
-        if not line: break
+        if not line:
+            break
 
         yield line
 
@@ -261,6 +262,7 @@ def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool 
         else:
             print_bytes(line)
     return returncode
+
 
 def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Iterable[str], command: T.Union[T.List[str], str], shell: bool = False, force: T.Union[bool, None] = None, _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> str:
     """

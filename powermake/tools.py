@@ -15,7 +15,6 @@
 
 import os
 import abc
-import time
 import shutil
 import typing as T
 
@@ -63,6 +62,7 @@ def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, Non
 
     return (None, path)
 
+
 class EnforcedFlag(str):
     """
     This should be used with config.add_flags or config.add_XXXX_flags
@@ -77,6 +77,7 @@ class EnforcedFlag(str):
     ```
     """
     ...
+
 
 class Tool(abc.ABC):
     type: T.ClassVar = ""
@@ -140,8 +141,6 @@ class Tool(abc.ABC):
         cache_modified = False
         already_translated_flags.append(flag)
 
-
-
         if flag in self.verified_translation_dict:
             output_list.extend([f for f in self.verified_translation_dict[flag] if f not in output_list])
             return False
@@ -197,6 +196,7 @@ class Tool(abc.ABC):
         for k in self.verified_translation_dict:
             if flag in self.verified_translation_dict[k]:
                 self.verified_translation_dict[k].remove(flag)
+
 
 def construct_tool(toolchain_prefix: T.Union[str, None], ObjectConstructor: T.Callable[[], Tool]) -> Tool:
     tool = ObjectConstructor()
@@ -271,9 +271,8 @@ class ToolPrimer:
         if "gcc" in self.tool_path or "g++" in self.tool_path:
             return "gcc"
         if "cl" in self.tool_path:
-            return"msvc"
+            return "msvc"
         return None
-
 
     def get_tool(self, toolchain_prefix: T.Union[str, None] = None, *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
         if self.tool_type is None and self.tool_path is None:
@@ -308,5 +307,3 @@ class ToolPrimer:
             raise PowerMakeValueError(error_text("The %s %s could not be found on your machine" % (self.tool_name, tool_path)))
 
         return tool
-
-

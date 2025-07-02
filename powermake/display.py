@@ -40,7 +40,7 @@ def print_info(string: T.Any, verbosity: int, step_counter: int = 0, step_total:
         if step_counter == 0:
             print(colorama.Fore.LIGHTMAGENTA_EX + str(string) + colorama.Style.RESET_ALL)
         elif step_total != 0:
-            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{step_counter}/{step_total}] {round(100*step_counter/step_total)}% " + str(string) + colorama.Style.RESET_ALL)
+            print(colorama.Fore.LIGHTMAGENTA_EX + f"[{step_counter}/{step_total}] {round(100 * step_counter / step_total)}% " + str(string) + colorama.Style.RESET_ALL)
         else:
             print(colorama.Fore.LIGHTMAGENTA_EX + f"[{step_counter}/-] " + str(string) + colorama.Style.RESET_ALL)
 
@@ -59,14 +59,18 @@ def print_debug_info(string: T.Any, verbosity: int) -> None:
     if verbosity >= 2:
         print(colorama.Fore.LIGHTBLACK_EX + str(string) + colorama.Style.RESET_ALL)
 
+
 def warning_text(string: str) -> str:
     return colorama.Fore.YELLOW + string + colorama.Style.RESET_ALL
+
 
 def error_text(string: str) -> str:
     return colorama.Style.BRIGHT + colorama.Fore.RED + string + colorama.Style.RESET_ALL
 
+
 def bold_text(string: T.Any) -> str:
     return colorama.Style.BRIGHT + str(string) + colorama.Style.RESET_ALL
+
 
 def dim_text(string: T.Any) -> str:
     return colorama.Style.DIM + str(string) + colorama.Style.RESET_ALL

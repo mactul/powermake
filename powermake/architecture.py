@@ -45,6 +45,7 @@ def simplify_architecture(architecture: str) -> str:
 
     return ""
 
+
 def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, None], str]:
     if toolchain_name.startswith("x86_64-"):
         return ("x64", toolchain_name[len("x86_64-"):])
@@ -67,6 +68,7 @@ def get_toolchain_tool(path: str) -> T.Union[str, None]:
             return tool
 
     return None
+
 
 def search_new_toolchain(toolchain_name: str, host_architecture: str, required_architecture: str) -> T.Union[str, None]:
     """

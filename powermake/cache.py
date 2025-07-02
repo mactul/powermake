@@ -14,7 +14,6 @@
 
 import os
 import json
-import shutil
 import platform
 import typing as T
 
