@@ -30,7 +30,7 @@ from .utils import makedirs
 from .tools import EnforcedFlag
 from .__version__ import __version__
 from . import utils, display, generation
-from .display import print_info, print_debug_info
+from .display import print_info, print_debug_info, warning_text
 from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
 from .operation import Operation, needs_update, run_command, run_command_get_output, _run_command_yield_output, run_command_if_needed, CompilationStopper
 from .args_parser import run, default_on_clean, default_on_install, default_on_test, ArgumentParser, generate_config, run_callbacks
@@ -465,7 +465,10 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     inode_nb = str(os.stat(path).st_ino)
 
-    if inode_nb in config._cumulated_launched_powermakes:
+    if inode_nb == "0":
+        print(warning_text("stat error, PowerMake will not cache already run powermakes."))
+
+    if inode_nb != "0" and inode_nb in config._cumulated_launched_powermakes:
         print_debug_info(f"PowerMake {path} already run during this compilation unit - skip", config.verbosity)
         return _get_libs_from_folder(config._cumulated_launched_powermakes[inode_nb])
 
