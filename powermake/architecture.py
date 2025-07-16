@@ -12,8 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#--------------------------------------------------------------------------#
+
+# This file is here to manipulate architectures and architecture toolchains.
+# This file has little knowledge of what are the names and names format of
+# the supported tools (compilers, linkers, etc...).
+
 import shutil
 import typing as T
+
+
+def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, None], str]:
+    if not path:
+        return (None, "")
+    if path.endswith("gcc"):
+        return (path[:-3], "gcc")
+    if path.endswith("clang"):
+        return (path[:-5], "clang")
+    if path.endswith("clang++"):
+        return (path[:-7], "clang++")
+    if path.endswith("clang-cl"):
+        return (path[:-8], "clang-cl")
+    if path.endswith("windres"):
+        return (path[:-7], "windres")
+    if path.endswith("masm"):
+        return (path[:-4], "masm")
+    if path.endswith("nasm"):
+        return (path[:-4], "nasm")
+    if path.endswith("g++"):
+        return (path[:-3], "g++")
+    if path.endswith("ar"):
+        return (path[:-2], "ar")
+    if path.endswith("ld"):
+        return (path[:-2], "ld")
+    if path.endswith("cc"):
+        return (path[:-2], "cc")
+    if path.endswith("cpp"):
+        return (path[:-3], "cpp")
+    if path.endswith("c++"):
+        return (path[:-3], "c++")
+
+    return (None, path)
 
 
 def simplify_architecture(architecture: str) -> str:
@@ -44,33 +83,6 @@ def simplify_architecture(architecture: str) -> str:
         return "arm64"
 
     return ""
-
-
-def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, None], str]:
-    if not path:
-        return (None, "")
-    if path.endswith("gcc"):
-        return (path[:-3], "gcc")
-    if path.endswith("clang"):
-        return (path[:-5], "clang")
-    if path.endswith("clang++"):
-        return (path[:-7], "clang++")
-    if path.endswith("windres"):
-        return (path[:-7], "windres")
-    if path.endswith("g++"):
-        return (path[:-3], "g++")
-    if path.endswith("ar"):
-        return (path[:-2], "ar")
-    if path.endswith("ld"):
-        return (path[:-2], "ld")
-    if path.endswith("cc"):
-        return (path[:-2], "cc")
-    if path.endswith("cpp"):
-        return (path[:-3], "cpp")
-    if path.endswith("c++"):
-        return (path[:-3], "c++")
-
-    return (None, path)
 
 
 def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, None], str]:
@@ -108,6 +120,7 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
         A new toolchain or None if none is found.
     """
 
+    # MASM is an exception here, the tool name changes instead of a toolchain prefix
     if toolchain_name in ("ml", "ml64") and required_architecture in ("x64", "x86"):
         if required_architecture == "x64":
             return "ml64"

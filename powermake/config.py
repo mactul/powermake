@@ -39,7 +39,12 @@ def get_global_config() -> str:
     return global_config
 
 
-def get_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
+def get_type_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
+    """
+    Returns the prefered type of the tool based on the tool_name.  
+    If the type is already specified, returns EnforcedType(type)
+    to make sure to use the specified type.
+    """
     if tool_primer.tool_type is not None:
         return EnforcedType(tool_primer.tool_type)
 
@@ -77,6 +82,10 @@ def get_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
     return None
 
 def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, T.Union[str, None]]:
+    """
+    From all the individual preferences returned by `get_type_pref`,
+    cross all of them and settle on the most appropriate type for each tool.
+    """
     to_c = {
         "gcc": "gcc",
         "g++": "gcc",
@@ -570,8 +579,12 @@ class Config:
                 self.target_architecture = arch
                 self.target_simplified_architecture = arch
 
-        preferences = auto_toolchain({key: get_pref(primers_dict[key]) for key in primers_dict})
+        preferences = auto_toolchain({key: get_type_pref(primers_dict[key]) for key in primers_dict})
 
+        ## For each tool, we try to load many types of the tool, until we found one that is installed on the host.
+        ## We start by trying to load the ideal tool (the preference calculated) and if not found, we continue with the list in order.
+        ## The first tool on the last will be loaded often, the last on the list will only be loaded if no other tool is disponible.
+        ## New tools should be added at the end to avoid changing the default powermake behavior.
         if self.target_is_windows():
             self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "mingw", "msvc", "gcc", "clang-cl", "clang"))
             self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "mingw++", "msvc", "g++", "clang-cl", "clang++"))
@@ -589,6 +602,8 @@ class Config:
 
         self.asm_compiler = T.cast(T.Union[Compiler, None], asm_compiler_primer.get_tool(toolchain_prefix, preferences["asm_compiler"], "nasm", "masm"))
         self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, "windres"))
+
+        ## Here, all tools should be loaded or be equal to None if no installed tool was found.
 
         self._disable_architecture_toolchain_discover = False
         for key in primers_dict:

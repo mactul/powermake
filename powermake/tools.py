@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#------------------------------------------------------------------------#
+
+# This file is the common base of all tools (compilers, linkers, etc...).
+# Defaults flags translation have been put here, but appart from that,
+# this file should be independent of any tool. Words like "gcc" or "clang"
+# should never appear in this file.
+
 
 import os
 import abc
@@ -33,8 +40,6 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
     "-fsecurity": ["-fsecurity=2"],
     "-Weverything": ["-Wsecurity", "-Waggregate-return", "-Walloc-zero", "-Walloca", "-Warith-conversion", "-Wbad-function-cast", "-Wc++-compat", "-Wcast-align=strict", "-Wcast-qual", "-Wdate-time", "-Wdisabled-optimization", "-Wdouble-promotion", "-Wduplicated-branches", "-Wduplicated-cond", "-Wflex-array-member-not-at-end", "-Wfloat-equal", "-Wformat-nonliteral", "-Wformat-signedness", "-Wformat-y2k", "-Winit-self", "-Winline", "-Winvalid-pch", "-Winvalid-utf8", "-Wjump-misses-init", "-Wlogical-op", "-Wmissing-declarations", "-Wmissing-format-attribute", "-Wmissing-include-dirs", "-Wmissing-prototypes", "-Wmissing-variable-declarations", "-Wmultichar", "-Wnested-externs", "-Wnull-dereference", "-Wopenacc-parallelism", "-Wpacked", "-Wpadded", "-Wredundant-decls", "-Wshadow", "-Wstack-protector", "-Wstrict-flex-arrays=3", "-Wstrict-prototypes", "-Wsuggest-attribute=cold", "-Wsuggest-attribute=const", "-Wsuggest-attribute=format", "-Wsuggest-attribute=malloc", "-Wsuggest-attribute=noreturn", "-Wsuggest-attribute=pure", "-Wsuggest-attribute=returns_nonnull", "-Wsuggest-final-methods", "-Wsuggest-final-types", "-Wswitch-default", "-Wswitch-enum", "-Wtrivial-auto-var-init", "-Wundef", "-Wunsuffixed-float-constants", "-Wunused-macros", "-Wuseless-cast", "-Wvector-operation-performance", "-Wwrite-strings", "-Wzero-as-null-pointer-constant", "-pedantic"],
     "-ffuzzer": ["-fsanitize=address,fuzzer"],
-    "-m32": ["-m32"],
-    "-m64": ["-m64"]
 }
 
 
