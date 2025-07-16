@@ -24,8 +24,8 @@ class SharedLinkerGNU(SharedLinker):
     type: T.ClassVar = "gnu"
     shared_lib_extension: T.ClassVar = ".so"
 
-    def __init__(self, path: str = "c++"):
-        super().__init__(path)
+    def __init__(self, path: str = "c++", translation_dict: T.Union[T.Dict[str, T.List[str]], None] = None):
+        super().__init__(path, translation_dict)
 
     def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
         return ["-l" + lib for lib in shared_libs] + self.translate_flags(flags)
@@ -39,10 +39,9 @@ class SharedLinkerGNU(SharedLinker):
 
 class SharedLinkerLD(SharedLinkerGNU):
     type: T.ClassVar = "ld"
-    translation_dict = _powermake_flags_to_ld_flags
 
     def __init__(self, path: str = "ld"):
-        super().__init__(path)
+        super().__init__(path, _powermake_flags_to_ld_flags)
 
     def check_if_arg_exists(self, arg: str) -> bool:
         return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
