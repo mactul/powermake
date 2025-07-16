@@ -20,7 +20,7 @@ import argparse
 import platform
 import typing as T
 
-from .tools import ToolPrimer, split_toolchain_prefix
+from .tools import ToolPrimer, split_toolchain_prefix, EnforcedType
 from .cache import get_cache_dir
 from .display import error_text
 from .exceptions import PowerMakeRuntimeError
@@ -39,74 +39,275 @@ def get_global_config() -> str:
     return global_config
 
 
-def auto_toolchain(preference: T.Union[str, None], tools_type: T.List[T.Union[str, None]]) -> T.Tuple[T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None]]:
-    all_None = True
-    for t in tools_type:
-        if t is not None:
-            all_None = False
-            break
+def get_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
+    if tool_primer.tool_type is not None:
+        return EnforcedType(tool_primer.tool_type)
 
-    c_compiler_type: T.Union[str, None] = None
-    cpp_compiler_type: T.Union[str, None] = None
-    archiver_type: T.Union[str, None] = None
-    linker_type: T.Union[str, None] = None
-    rc_compiler_type: T.Union[str, None] = None
+    if not tool_primer.tool_path:
+        if "CCC_ANALYZER_ANALYSIS" in os.environ:
+            # This is the signature of scan-build
+            # if no toolchain is specified, the auto toolchain should prefer clang
+            return "clang"
+        return None
+    if "clang-cl" in tool_primer.tool_path:
+        return "clang-cl"
+    if "clang" in tool_primer.tool_path:
+        return "clang"
+    if "mingw" in tool_primer.tool_path and "ld" in tool_primer.tool_path:
+        return "mingw-ld"
+    if "mingw" in tool_primer.tool_path:
+        return "mingw"
+    if "nasm" in tool_primer.tool_path:
+        return "nasm"
+    if "llvm" in tool_primer.tool_path:
+        return "clang"
+    if "gcc" in tool_primer.tool_path or "g++" in tool_primer.tool_path:
+        return "gcc"
+    if "ld" in tool_primer.tool_path:
+        return "ld"
+    if "cl" in tool_primer.tool_path:
+        return "msvc"
+    if "ml" in tool_primer.tool_path:
+        return "masm"
 
-    if all_None and preference == "mingw-ld" or "mingw-ld" in tools_type:
-        # Clang-CL toolchain
-        c_compiler_type = "mingw"
-        cpp_compiler_type = "mingw++"
-        archiver_type = "mingw"
-        linker_type = "mingw-ld"
-    elif (all_None and preference == "ld" or "ld" in tools_type) and ("clang" in tools_type or "clang++" in tools_type):
-        c_compiler_type = "clang"
-        cpp_compiler_type = "clang++"
-        archiver_type = "llvm-ar"
-        linker_type = "ld"
-    elif all_None and preference == "ld" or "ld" in tools_type:
-        c_compiler_type = "gcc"
-        cpp_compiler_type = "g++"
-        archiver_type = "ar"
-        linker_type = "ld"
-    elif all_None and preference == "clang" or "clang" in tools_type or "clang++" in tools_type or "llvm-ar" in tools_type:
-        # clang toolchain
-        c_compiler_type = "clang"
-        cpp_compiler_type = "clang++"
-        archiver_type = "llvm-ar"
-        linker_type = "clang++"
-    elif all_None and preference == "gcc" or "gcc" in tools_type or "g++" in tools_type or "ar" in tools_type:
-        # GCC toolchain
-        c_compiler_type = "gcc"
-        cpp_compiler_type = "g++"
-        archiver_type = "ar"
-        linker_type = "g++"
-    elif all_None and preference == "gnu" or "gnu" in tools_type or "gnu++" in tools_type:
-        # GNU toolchain
-        c_compiler_type = "gnu"
-        cpp_compiler_type = "gnu++"
-        archiver_type = "gnu"
-        linker_type = "gnu++"
-    elif all_None and preference == "mingw" or "mingw" in tools_type or "mingw++" in tools_type or "windres" in tools_type:
-        # MinGW toolchain
-        c_compiler_type = "mingw"
-        cpp_compiler_type = "mingw++"
-        archiver_type = "mingw"
-        linker_type = "mingw++"
-        rc_compiler_type = "windres"
-    elif all_None and preference == "msvc" or "msvc" in tools_type:
-        # MSVC toolchain
-        c_compiler_type = "msvc"
-        cpp_compiler_type = "msvc"
-        linker_type = "msvc"
-        archiver_type = "msvc"
-    elif all_None and preference == "clang-cl" or "clang-cl" in tools_type:
-        # Clang-CL toolchain
-        c_compiler_type = "clang-cl"
-        cpp_compiler_type = "clang-cl"
-        linker_type = "clang-cl"
-        archiver_type = "llvm-ar"
+    if "CCC_ANALYZER_ANALYSIS" in os.environ:
+        # This is the signature of scan-build
+        # if no toolchain is specified, the auto toolchain should prefer clang
+        return "clang"
+    return None
 
-    return (c_compiler_type, cpp_compiler_type, archiver_type, linker_type, rc_compiler_type)
+def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, T.Union[str, None]]:
+    to_c = {
+        "gcc": "gcc",
+        "g++": "gcc",
+        "gnu": "gnu",
+        "gnu++": "gnu",
+        "clang": "clang",
+        "clang++": "clang",
+        "mingw": "mingw",
+        "mingw++": "mingw",
+        "msvc": "msvc",
+        "clang-cl": "clang-cl",
+        "llvm-ar": "clang",
+        "mingw-ld": "mingw"
+    }
+
+    to_cpp = {
+        "gcc": "g++",
+        "g++": "g++",
+        "gnu": "gnu++",
+        "gnu++": "gnu++",
+        "clang": "clang++",
+        "clang++": "clang++",
+        "mingw": "mingw++",
+        "mingw++": "mingw++",
+        "msvc": "msvc",
+        "clang-cl": "clang-cl",
+        "llvm-ar": "clang++",
+        "mingw-ld": "mingw++"
+    }
+
+    to_as = {
+        "gcc": "gcc",
+        "g++": "gcc",
+        "gnu": "gnu",
+        "gnu++": "gnu",
+        "clang": "clang",
+        "clang++": "clang",
+        "mingw": "mingw",
+        "mingw++": "mingw",
+        "llvm-ar": "clang",
+        "mingw-ld": "mingw"
+    }
+
+    to_asm = {
+        "nasm": "nasm",
+        "masm": "masm",
+        "gcc": "nasm",
+        "g++": "nasm",
+        "gnu": "nasm",
+        "gnu++": "nasm",
+        "clang": "nasm",
+        "clang++": "nasm",
+        "mingw": "nasm",
+        "mingw++": "nasm",
+        "msvc": "masm",
+        "clang-cl": "masm",
+        "llvm-ar": "nasm",
+        "ld": "nasm",
+        "mingw-ld": "nasm"
+    }
+
+    to_ld = {
+        "gcc": "g++",
+        "g++": "g++",
+        "gnu": "gnu",
+        "gnu++": "gnu",
+        "clang": "clang++",
+        "clang++": "clang++",
+        "mingw": "mingw++",
+        "mingw++": "mingw++",
+        "msvc": "msvc",
+        "clang-cl": "clang-cl",
+        "llvm-ar": "clang++",
+        "ld": "ld",
+        "mingw-ld": "mingw-ld"
+    }
+
+    to_ar = {
+        "ar": "ar",
+        "llvm-ar": "ar",
+        "gcc": "ar",
+        "g++": "ar",
+        "gnu": "gnu",
+        "gnu++": "gnu",
+        "clang": "llvm-ar",
+        "clang++": "llvm-ar",
+        "mingw": "mingw",
+        "mingw++": "mingw",
+        "msvc": "msvc",
+        "clang-cl": "llvm-ar",
+        "ld": "ar",
+        "mingw-ld": "mingw"
+    }
+
+    if not isinstance(preferences["c_compiler"], EnforcedType):
+        if preferences["c_compiler"] in to_c:
+            preferences["c_compiler"] = to_c[preferences["c_compiler"]]
+
+        elif preferences["cpp_compiler"] in to_c:
+            preferences["c_compiler"] = to_c[preferences["cpp_compiler"]]
+
+        elif preferences["linker"] in to_c:
+            preferences["c_compiler"] = to_c[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_c:
+            preferences["c_compiler"] = to_c[preferences["shared_linker"]]
+
+        elif preferences["as_compiler"] in to_c:
+            preferences["c_compiler"] = to_c[preferences["as_compiler"]]
+
+        elif preferences["archiver"] in to_c:
+            preferences["c_compiler"] = to_c[preferences["archiver"]]
+
+    if not isinstance(preferences["cpp_compiler"], EnforcedType):
+        if preferences["cpp_compiler"] in to_cpp:
+            preferences["cpp_compiler"] = to_cpp[preferences["cpp_compiler"]]
+
+        elif preferences["c_compiler"] in to_cpp:
+            preferences["cpp_compiler"] = to_cpp[preferences["c_compiler"]]
+
+        elif preferences["linker"] in to_cpp:
+            preferences["cpp_compiler"] = to_cpp[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_cpp:
+            preferences["cpp_compiler"] = to_cpp[preferences["shared_linker"]]
+
+        elif preferences["as_compiler"] in to_cpp:
+            preferences["cpp_compiler"] = to_cpp[preferences["as_compiler"]]
+
+        elif preferences["archiver"] in to_cpp:
+            preferences["cpp_compiler"] = to_cpp[preferences["archiver"]]
+
+    if not isinstance(preferences["as_compiler"], EnforcedType):
+        if preferences["as_compiler"] in to_as:
+            preferences["as_compiler"] = to_as[preferences["as_compiler"]]
+
+        elif preferences["c_compiler"] in to_as:
+            preferences["as_compiler"] = to_as[preferences["c_compiler"]]
+
+        elif preferences["cpp_compiler"] in to_as:
+            preferences["as_compiler"] = to_as[preferences["cpp_compiler"]]
+
+        elif preferences["linker"] in to_as:
+            preferences["as_compiler"] = to_as[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_as:
+            preferences["as_compiler"] = to_as[preferences["shared_linker"]]
+
+        elif preferences["archiver"] in to_as:
+            preferences["as_compiler"] = to_as[preferences["archiver"]]
+
+    if not isinstance(preferences["asm_compiler"], EnforcedType):
+        if preferences["asm_compiler"] in to_asm:
+            preferences["asm_compiler"] = to_asm[preferences["asm_compiler"]]
+
+        elif preferences["c_compiler"] in to_asm:
+            preferences["asm_compiler"] = to_asm[preferences["c_compiler"]]
+
+        elif preferences["cpp_compiler"] in to_asm:
+            preferences["asm_compiler"] = to_asm[preferences["cpp_compiler"]]
+
+        elif preferences["linker"] in to_asm:
+            preferences["asm_compiler"] = to_asm[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_asm:
+            preferences["asm_compiler"] = to_asm[preferences["shared_linker"]]
+
+        elif preferences["as_compiler"] in to_ld:
+            preferences["asm_compiler"] = to_ld[preferences["as_compiler"]]
+
+        elif preferences["archiver"] in to_asm:
+            preferences["asm_compiler"] = to_asm[preferences["archiver"]]
+
+    if not isinstance(preferences["linker"], EnforcedType):
+        if preferences["linker"] in to_ld:
+            preferences["linker"] = to_ld[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_ld:
+            preferences["linker"] = to_ld[preferences["shared_linker"]]
+
+        elif preferences["cpp_compiler"] in to_ld:
+            preferences["linker"] = to_ld[preferences["cpp_compiler"]]
+
+        elif preferences["c_compiler"] in to_ld:
+            preferences["linker"] = to_ld[preferences["c_compiler"]]
+
+        elif preferences["as_compiler"] in to_ld:
+            preferences["linker"] = to_ld[preferences["as_compiler"]]
+
+        elif preferences["archiver"] in to_ld:
+            preferences["linker"] = to_ld[preferences["archiver"]]
+
+    if not isinstance(preferences["shared_linker"], EnforcedType):
+        if preferences["shared_linker"] in to_ld:
+            preferences["shared_linker"] = to_ld[preferences["shared_linker"]]
+
+        elif preferences["linker"] in to_ld:
+            preferences["shared_linker"] = to_ld[preferences["linker"]]
+
+        elif preferences["cpp_compiler"] in to_ld:
+            preferences["shared_linker"] = to_ld[preferences["cpp_compiler"]]
+
+        elif preferences["c_compiler"] in to_ld:
+            preferences["shared_linker"] = to_ld[preferences["c_compiler"]]
+
+        elif preferences["as_compiler"] in to_ld:
+            preferences["shared_linker"] = to_ld[preferences["as_compiler"]]
+
+        elif preferences["archiver"] in to_ld:
+            preferences["shared_linker"] = to_ld[preferences["archiver"]]
+
+    if not isinstance(preferences["archiver"], EnforcedType):
+        if preferences["archiver"] in to_ar:
+            preferences["archiver"] = to_ar[preferences["archiver"]]
+
+        elif preferences["c_compiler"] in to_ar:
+            preferences["archiver"] = to_ar[preferences["c_compiler"]]
+
+        elif preferences["cpp_compiler"] in to_ar:
+            preferences["archiver"] = to_ar[preferences["cpp_compiler"]]
+
+        elif preferences["linker"] in to_ar:
+            preferences["archiver"] = to_ar[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_ar:
+            preferences["archiver"] = to_ar[preferences["shared_linker"]]
+
+        elif preferences["as_compiler"] in to_ar:
+            preferences["archiver"] = to_ar[preferences["as_compiler"]]
+
+    return preferences
 
 
 def replace_architecture(string: str, new_arch: str) -> str:
@@ -182,7 +383,16 @@ class Config:
         linker_primer: ToolPrimer = ToolPrimer("linker", "LD", GenericLinker, get_all_linker_types, verbosity)
         shared_linker_primer: ToolPrimer = ToolPrimer("shared_linker", "SHLD", GenericSharedLinker, get_all_shared_linker_types, verbosity)
 
-        primers_list = [c_compiler_primer, cpp_compiler_primer, as_compiler_primer, asm_compiler_primer, rc_compiler_primer, archiver_primer, linker_primer, shared_linker_primer]
+        primers_dict = {
+            "c_compiler": c_compiler_primer,
+            "cpp_compiler": cpp_compiler_primer,
+            "as_compiler": as_compiler_primer,
+            "asm_compiler": asm_compiler_primer,
+            "rc_compiler": rc_compiler_primer,
+            "archiver": archiver_primer,
+            "linker": linker_primer,
+            "shared_linker": shared_linker_primer
+        }
 
         if global_config is None:
             global_config = get_global_config()
@@ -196,8 +406,8 @@ class Config:
                 with open(path, "r") as file:
                     conf: T.Dict[str, T.Any] = json.load(file)
 
-                    for primer in primers_list:
-                        primer.load_conf(conf)
+                    for key in primers_dict:
+                        primers_dict[key].load_conf(conf)
 
                     if self.target_operating_system == "" and "target_operating_system" in conf:
                         self.target_operating_system = conf["target_operating_system"]
@@ -348,7 +558,8 @@ class Config:
         self.set_target_architecture(self.target_architecture, reload_tools_and_build_dir=False)
 
         path = None
-        for primer in primers_list:
+        for key in primers_dict:
+            primer = primers_dict[key]
             if primer.tool_path_specified:
                 path = path or primer.tool_path
         toolchain_prefix = split_toolchain_prefix(path)[0]
@@ -359,34 +570,29 @@ class Config:
                 self.target_architecture = arch
                 self.target_simplified_architecture = arch
 
-        preference = None
-        for primer in primers_list:
-            preference = preference or primer.get_pref()
-
-        types = [p.tool_type for p in primers_list]
-        pref: T.Callable[[ToolPrimer], T.Tuple[T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None], T.Union[str, None]]] = lambda primer: auto_toolchain(primer.get_pref() or preference, types)
+        preferences = auto_toolchain({key: get_pref(primers_dict[key]) for key in primers_dict})
 
         if self.target_is_windows():
-            self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, pref(c_compiler_primer)[0], "mingw", "msvc", "gcc", "clang-cl", "clang"))
-            self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, pref(cpp_compiler_primer)[1], "mingw++", "msvc", "g++", "clang-cl", "clang++"))
-            self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, pref(as_compiler_primer)[0], "mingw", "gcc", "clang"))
-            self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, pref(archiver_primer)[2], "mingw", "msvc", "ar", "llvm-ar"))
-            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, pref(linker_primer)[3], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
-            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, pref(shared_linker_primer)[3], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "mingw", "msvc", "gcc", "clang-cl", "clang"))
+            self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "mingw++", "msvc", "g++", "clang-cl", "clang++"))
+            self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "mingw", "gcc", "clang"))
+            self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "mingw", "msvc", "ar", "llvm-ar"))
+            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
         else:
-            self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, pref(c_compiler_primer)[0], "gcc", "clang"))
-            self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, pref(cpp_compiler_primer)[1], "g++", "clang++"))
-            self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, pref(as_compiler_primer)[0], "gcc", "clang"))
-            self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, pref(archiver_primer)[2], "ar", "llvm-ar"))
-            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, pref(linker_primer)[3], "g++", "clang++", "gcc", "clang"))
-            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, pref(shared_linker_primer)[3], "g++", "clang++", "gcc", "clang"))
+            self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "gcc", "clang"))
+            self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "g++", "clang++"))
+            self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "gcc", "clang"))
+            self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "ar", "llvm-ar"))
+            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "g++", "clang++", "gcc", "clang"))
+            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "g++", "clang++", "gcc", "clang"))
 
-        self.asm_compiler = T.cast(T.Union[Compiler, None], asm_compiler_primer.get_tool(toolchain_prefix, "nasm"))
-        self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, pref(rc_compiler_primer)[4], "windres"))
+        self.asm_compiler = T.cast(T.Union[Compiler, None], asm_compiler_primer.get_tool(toolchain_prefix, preferences["asm_compiler"], "nasm", "masm"))
+        self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, "windres"))
 
         self._disable_architecture_toolchain_discover = False
-        for primer in primers_list:
-            self._disable_architecture_toolchain_discover = self._disable_architecture_toolchain_discover or primer.tool_path_specified
+        for key in primers_dict:
+            self._disable_architecture_toolchain_discover = self._disable_architecture_toolchain_discover or primers_dict[key].tool_path_specified
 
         if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
             self.target_operating_system = "Windows"

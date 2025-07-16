@@ -46,6 +46,33 @@ def simplify_architecture(architecture: str) -> str:
     return ""
 
 
+def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, None], str]:
+    if not path:
+        return (None, "")
+    if path.endswith("gcc"):
+        return (path[:-3], "gcc")
+    if path.endswith("clang"):
+        return (path[:-5], "clang")
+    if path.endswith("clang++"):
+        return (path[:-7], "clang++")
+    if path.endswith("windres"):
+        return (path[:-7], "windres")
+    if path.endswith("g++"):
+        return (path[:-3], "g++")
+    if path.endswith("ar"):
+        return (path[:-2], "ar")
+    if path.endswith("ld"):
+        return (path[:-2], "ld")
+    if path.endswith("cc"):
+        return (path[:-2], "cc")
+    if path.endswith("cpp"):
+        return (path[:-3], "cpp")
+    if path.endswith("c++"):
+        return (path[:-3], "c++")
+
+    return (None, path)
+
+
 def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, None], str]:
     if toolchain_name.startswith("x86_64-"):
         return ("x64", toolchain_name[len("x86_64-"):])
@@ -60,14 +87,6 @@ def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, No
     if toolchain_name.startswith("arm-"):
         return ("arm32", toolchain_name[len("arm-"):])
     return (None, toolchain_name)
-
-
-def get_toolchain_tool(path: str) -> T.Union[str, None]:
-    for tool in ("gcc", "clang", "clang++", "g++", "ar", "ld", "cc", "cpp", "cpp", "windres"):
-        if path.endswith(tool):
-            return tool
-
-    return None
 
 
 def search_new_toolchain(toolchain_name: str, host_architecture: str, required_architecture: str) -> T.Union[str, None]:
@@ -88,6 +107,13 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
     str | None
         A new toolchain or None if none is found.
     """
+
+    if toolchain_name in ("ml", "ml64") and required_architecture in ("x64", "x86"):
+        if required_architecture == "x64":
+            return "ml64"
+        else:
+            return "ml"
+
     arch, toolchain_suffix = split_toolchain_architecture(toolchain_name)
     if arch == required_architecture:
         return toolchain_name
@@ -104,8 +130,8 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
         if shutil.which("amd64-" + toolchain_suffix) is not None:
             return "x86_64-" + toolchain_suffix
 
-        tool = get_toolchain_tool(toolchain_suffix)
-        if tool is None:
+        prefix, tool = split_toolchain_prefix(toolchain_suffix)
+        if prefix is None:
             return None
         if shutil.which("x86_64-linux-gnu-" + tool) is not None:
             return "x86_64-linux-gnu-" + tool
@@ -118,8 +144,8 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
         if shutil.which("i386-" + toolchain_suffix) is not None:
             return "i386-" + toolchain_suffix
 
-        tool = get_toolchain_tool(toolchain_suffix)
-        if tool is None:
+        prefix, tool = split_toolchain_prefix(toolchain_suffix)
+        if prefix is None:
             return None
         if shutil.which("i686-linux-gnu-" + tool) is not None:
             return "i686-linux-gnu-" + tool
@@ -130,8 +156,8 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
         if shutil.which("aarch64-" + toolchain_suffix) is not None:
             return "aarch64-" + toolchain_suffix
 
-        tool = get_toolchain_tool(toolchain_suffix)
-        if tool is None:
+        prefix, tool = split_toolchain_prefix(toolchain_suffix)
+        if prefix is None:
             return None
         if shutil.which("aarch64-linux-gnu-" + tool) is not None:
             return "aarch64-linux-gnu-" + tool
@@ -142,8 +168,8 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
         if shutil.which("arm-" + toolchain_suffix) is not None:
             return "arm-" + toolchain_suffix
 
-        tool = get_toolchain_tool(toolchain_suffix)
-        if tool is None:
+        prefix, tool = split_toolchain_prefix(toolchain_suffix)
+        if prefix is None:
             return None
         if shutil.which("arm-linux-gnueabi-" + tool) is not None:
             return "arm-linux-gnueabi-" + tool

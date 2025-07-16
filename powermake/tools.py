@@ -15,11 +15,13 @@
 
 import os
 import abc
+import json
 import shutil
 import typing as T
 
 from .utils import join_absolute_paths
 from .exceptions import PowerMakeValueError
+from .architecture import split_toolchain_prefix
 from .display import error_text, warning_text, print_debug_info
 from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
@@ -36,33 +38,6 @@ _powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
 }
 
 
-def split_toolchain_prefix(path: T.Union[str, None]) -> T.Tuple[T.Union[str, None], str]:
-    if not path:
-        return (None, "")
-    if path.endswith("gcc"):
-        return (path[:-3], "gcc")
-    if path.endswith("clang"):
-        return (path[:-5], "clang")
-    if path.endswith("clang++"):
-        return (path[:-7], "clang++")
-    if path.endswith("windres"):
-        return (path[:-7], "windres")
-    if path.endswith("g++"):
-        return (path[:-3], "g++")
-    if path.endswith("ar"):
-        return (path[:-2], "ar")
-    if path.endswith("ld"):
-        return (path[:-2], "ld")
-    if path.endswith("cc"):
-        return (path[:-2], "cc")
-    if path.endswith("cpp"):
-        return (path[:-3], "cpp")
-    if path.endswith("c++"):
-        return (path[:-3], "c++")
-
-    return (None, path)
-
-
 class EnforcedFlag(str):
     """
     This should be used with config.add_flags or config.add_XXXX_flags
@@ -76,6 +51,10 @@ class EnforcedFlag(str):
     config.add_flags(powermake.EnforcedFlag("-fegrhfevgfter")) # make sure the flag is given to the compiler (will crash obviously)
     ```
     """
+    ...
+
+
+class EnforcedType(str):
     ...
 
 
@@ -197,6 +176,9 @@ class Tool(abc.ABC):
             if flag in self.verified_translation_dict[k]:
                 self.verified_translation_dict[k].remove(flag)
 
+    def __str__(self) -> str:
+        return f"<powermake.compilers.{self.__class__.__name__} type={json.dumps(self.type)} path={json.dumps(self.path)}>"
+
 
 def construct_tool(toolchain_prefix: T.Union[str, None], ObjectConstructor: T.Callable[[], Tool]) -> Tool:
     tool = ObjectConstructor()
@@ -250,29 +232,6 @@ class ToolPrimer:
             self.tool_type = conf[self.tool_name]["type"]
             self.tool_type_specified = True
 
-    def get_pref(self) -> T.Union[str, None]:
-        if "CCC_ANALYZER_ANALYSIS" in os.environ:
-            # This is the signature of scan-build
-            # if no toolchain is specified, the auto toolchain should prefer clang
-            return "clang"
-
-        if not self.tool_path:
-            return None
-        if "clang-cl" in self.tool_path:
-            return "clang-cl"
-        if "clang" in self.tool_path:
-            return "clang"
-        if "mingw" in self.tool_path and "ld" in self.tool_path:
-            return "mingw-ld"
-        if "mingw" in self.tool_path:
-            return "mingw"
-        if "ld" in self.tool_path:
-            return "ld"
-        if "gcc" in self.tool_path or "g++" in self.tool_path:
-            return "gcc"
-        if "cl" in self.tool_path:
-            return "msvc"
-        return None
 
     def get_tool(self, toolchain_prefix: T.Union[str, None] = None, *tool_types: T.Union[str, None]) -> T.Union[Tool, None]:
         if self.tool_type is None and self.tool_path is None:

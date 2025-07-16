@@ -15,8 +15,8 @@
 import typing as T
 
 from .common import Compiler
-from .asm import CompilerNASM
 from .rc import CompilerWindRes
+from .asm import CompilerNASM, CompilerMASM
 from .msvc import CompilerMSVC, CompilerClang_CL
 from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus, CompilerMinGW, CompilerMinGWPlusPlus
 
@@ -48,7 +48,8 @@ _as_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
 }
 
 _asm_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
-    "nasm": CompilerNASM
+    "nasm": CompilerNASM,
+    "masm": CompilerMASM
 }
 
 

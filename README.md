@@ -96,7 +96,7 @@ However, today, even for a 5 files project on Linux with GCC, PowerMake is more 
 
 - Cross-Platform:
   - PowerMake can detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
-    - This currently works well with GCC/G++/Clang/Clang++/Clang-CL/MSVC/NASM, but other compilers will be added.
+    - This currently works well with GCC/G++/Clang/Clang++/Clang-CL/MSVC/NASM/MASM, but other compilers will be added.
   - Because it's written in python it works on almost all machines and you can always write the compilation instructions for your machine and your compiler.
 
 - Gives you complete control of what you are doing. Nothing is hidden and any behavior can be overwritten.

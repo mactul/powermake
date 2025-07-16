@@ -16,6 +16,9 @@ py ./lib_depend/makefile.py -rv || goto :failed
 SET CC=cl
 py ./lib_depend/makefile.py -rv || goto :failed
 SET CC=
+SET ASM=ml64
+py ./lib_depend/makefile.py -rv || goto :failed
+SET ASM=
 
 goto :EOF
 

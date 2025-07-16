@@ -691,8 +691,9 @@ config.asm_compiler: powermake.compilers.Compiler
 
 This compiler is used to compile .asm files (generally Intel asm)
 
-The asm_compiler behave exactly like the [c_compiler](#c_compiler) but the only type currently supported is:
+The asm_compiler behave exactly like the [c_compiler](#c_compiler) but the only types currently supported are:
 - `nasm`
+- `masm`
 
 You can also use one of the [as_compiler](#as_compiler) types if you have to compile a .asm file with a GNU assembler.
 
