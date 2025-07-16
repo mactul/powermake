@@ -4,10 +4,14 @@ def on_build(config: powermake.Config):
     config.add_flags("-Wsecurity")
 
     if config.target_is_windows():
-        if config.target_is_mingw():
-            files = {"my_lib.c", "subtract_windows.asm", "multiply_windows.s"}
+        if config.asm_compiler is not None and config.asm_compiler.type == "masm":
+            asm_file = "subtract_windows_masm.asm"
         else:
-            files = {"my_lib.c", "subtract_windows.asm"}
+            asm_file = "subtract_windows.asm"
+        if config.target_is_mingw():
+            files = {"my_lib.c", asm_file, "multiply_windows.s"}
+        else:
+            files = {"my_lib.c", asm_file}
             config.add_defines("DISABLE_GNU_AS")
     elif config.target_is_macos():
         if config.target_simplified_architecture == "arm64":
