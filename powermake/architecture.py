@@ -141,7 +141,7 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
         if shutil.which("x86_64-" + toolchain_suffix) is not None:
             return "x86_64-" + toolchain_suffix
         if shutil.which("amd64-" + toolchain_suffix) is not None:
-            return "x86_64-" + toolchain_suffix
+            return "amd64-" + toolchain_suffix
 
         prefix, tool = split_toolchain_prefix(toolchain_suffix)
         if prefix is None:
