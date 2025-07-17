@@ -605,6 +605,8 @@ class Config:
 
         ## Here, all tools should be loaded or be equal to None if no installed tool was found.
 
+        # We must disable architecture toolchain discovery for all tool if at least one of them have a path specified
+        # to avoid having i386-elf-gcc transformed into i686-linux-gnu-gcc for example.
         self._disable_architecture_toolchain_discover = False
         for key in primers_dict:
             self._disable_architecture_toolchain_discover = self._disable_architecture_toolchain_discover or primers_dict[key].tool_path_specified
@@ -812,60 +814,40 @@ class Config:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
 
     def add_defines(self, *defines: str) -> None:
-        for define in defines:
-            if define not in self.defines:
-                self.defines.append(define)
+        self.defines.extend(defines)
 
     def remove_defines(self, *defines: str) -> None:
-        for define in defines:
-            if define in self.defines:
-                self.defines.remove(define)
+        self.defines = [define for define in self.defines if define not in defines]
 
     def add_shared_libs(self, *shared_libs: str) -> None:
-        for shared_lib in shared_libs:
-            if shared_lib not in self.shared_libs:
-                self.shared_libs.append(shared_lib)
+        self.shared_libs.extend(shared_libs)
 
     def remove_shared_libs(self, *shared_libs: str) -> None:
-        for shared_lib in shared_libs:
-            if shared_lib in self.shared_libs:
-                self.shared_libs.remove(shared_lib)
+        self.shared_libs = [lib for lib in self.shared_libs if lib not in shared_libs]
 
     def add_includedirs(self, *includedirs: str) -> None:
-        for includedir in includedirs:
-            if includedir not in self.additional_includedirs:
-                self.additional_includedirs.append(includedir)
+        self.additional_includedirs.extend(includedirs)
 
     def remove_includedirs(self, *includedirs: str) -> None:
-        for includedir in includedirs:
-            if includedir in self.additional_includedirs:
-                self.additional_includedirs.remove(includedir)
+        self.additional_includedirs = [dir for dir in self.additional_includedirs if dir not in includedirs]
 
     def add_c_flags(self, *c_flags: str) -> None:
-        for c_flag in c_flags:
-            if c_flag not in self.c_flags:
-                self.c_flags.append(c_flag)
+        self.c_flags.extend(c_flags)
 
     def remove_c_flags(self, *c_flags: str) -> None:
-        for c_flag in c_flags:
-            if c_flag in self.c_flags:
-                self.c_flags.remove(c_flag)
-            if self.c_compiler is None:
-                continue
-            self.c_compiler.remove_flag(c_flag)
+        self.c_flags = [flag for flag in self.c_flags if flag not in c_flags]
+        if self.c_compiler is not None:
+            for flag in c_flags:
+                self.c_compiler.remove_flag(flag)
 
     def add_cpp_flags(self, *cpp_flags: str) -> None:
-        for cpp_flag in cpp_flags:
-            if cpp_flag not in self.cpp_flags:
-                self.cpp_flags.append(cpp_flag)
+        self.cpp_flags.extend(cpp_flags)
 
     def remove_cpp_flags(self, *cpp_flags: str) -> None:
-        for cpp_flag in cpp_flags:
-            if cpp_flag in self.cpp_flags:
-                self.cpp_flags.remove(cpp_flag)
-            if self.cpp_compiler is None:
-                continue
-            self.cpp_compiler.remove_flag(cpp_flag)
+        self.cpp_flags = [flag for flag in self.cpp_flags if flag not in cpp_flags]
+        if self.cpp_compiler is not None:
+            for flag in cpp_flags:
+                self.cpp_compiler.remove_flag(flag)
 
     def add_c_cpp_flags(self, *c_cpp_flags: str) -> None:
         self.add_c_flags(*c_cpp_flags)
@@ -901,85 +883,61 @@ class Config:
         self.remove_as_flags(*flags)
         self.remove_asm_flags(*flags)
         self.remove_ld_flags(*flags)
-        self.add_shared_linker_flags(*flags)
+        self.remove_shared_linker_flags(*flags)
 
     def add_as_flags(self, *as_flags: str) -> None:
-        for as_flag in as_flags:
-            if as_flag not in self.as_flags:
-                self.as_flags.append(as_flag)
+        self.as_flags.extend(as_flags)
 
     def remove_as_flags(self, *as_flags: str) -> None:
-        for as_flag in as_flags:
-            if as_flag in self.as_flags:
-                self.as_flags.remove(as_flag)
-            if self.as_compiler is None:
-                continue
-            self.as_compiler.remove_flag(as_flag)
+        self.as_flags = [flag for flag in self.as_flags if flag not in as_flags]
+        if self.as_compiler is not None:
+            for flag in as_flags:
+                self.as_compiler.remove_flag(flag)
 
     def add_asm_flags(self, *asm_flags: str) -> None:
-        for asm_flag in asm_flags:
-            if asm_flag not in self.asm_flags:
-                self.asm_flags.append(asm_flag)
+        self.asm_flags.extend(asm_flags)
 
     def remove_asm_flags(self, *asm_flags: str) -> None:
-        for asm_flag in asm_flags:
-            if asm_flag in self.asm_flags:
-                self.asm_flags.remove(asm_flag)
-            if self.asm_compiler is None:
-                continue
-            self.asm_compiler.remove_flag(asm_flag)
+        self.asm_flags = [flag for flag in self.asm_flags if flag not in asm_flags]
+        if self.asm_compiler is not None:
+            for flag in asm_flags:
+                self.asm_compiler.remove_flag(flag)
 
     def add_rc_flags(self, *rc_flags: str) -> None:
-        for rc_flag in rc_flags:
-            if rc_flag not in self.rc_flags:
-                self.rc_flags.append(rc_flag)
+        self.rc_flags.extend(rc_flags)
 
     def remove_rc_flags(self, *rc_flags: str) -> None:
-        for rc_flag in rc_flags:
-            if rc_flag in self.rc_flags:
-                self.rc_flags.remove(rc_flag)
-            if self.rc_compiler is None:
-                continue
-            self.rc_compiler.remove_flag(rc_flag)
+        self.rc_flags = [flag for flag in self.rc_flags if flag not in rc_flags]
+        if self.rc_compiler is not None:
+            for flag in rc_flags:
+                self.rc_compiler.remove_flag(flag)
 
     def add_ar_flags(self, *ar_flags: str) -> None:
-        for ar_flag in ar_flags:
-            if ar_flag not in self.ar_flags:
-                self.ar_flags.append(ar_flag)
+        self.ar_flags.extend(ar_flags)
 
     def remove_ar_flags(self, *ar_flags: str) -> None:
-        for ar_flag in ar_flags:
-            if ar_flag in self.ar_flags:
-                self.ar_flags.remove(ar_flag)
-            if self.archiver is None:
-                continue
-            self.archiver.remove_flag(ar_flag)
+        self.ar_flags = [flag for flag in self.ar_flags if flag not in ar_flags]
+        if self.archiver is not None:
+            for flag in ar_flags:
+                self.archiver.remove_flag(flag)
 
     def add_ld_flags(self, *ld_flags: str) -> None:
-        for ld_flag in ld_flags:
-            if ld_flag not in self.ld_flags:
-                self.ld_flags.append(ld_flag)
+        self.ld_flags.extend(ld_flags)
 
     def remove_ld_flags(self, *ld_flags: str) -> None:
-        for ld_flag in ld_flags:
-            if ld_flag in self.ld_flags:
-                self.ld_flags.remove(ld_flag)
-            if self.linker is None:
-                continue
-            self.linker.remove_flag(ld_flag)
+        self.ld_flags = [flag for flag in self.ld_flags if flag not in ld_flags]
+        if self.linker is not None:
+            for flag in ld_flags:
+                self.linker.remove_flag(flag)
 
     def add_shared_linker_flags(self, *shared_linker_flags: str) -> None:
-        for shared_linker_flag in shared_linker_flags:
-            if shared_linker_flag not in self.shared_linker_flags:
-                self.shared_linker_flags.append(shared_linker_flag)
+        self.shared_linker_flags.extend(shared_linker_flags)
 
     def remove_shared_linker_flags(self, *shared_linker_flags: str) -> None:
-        for shared_linker_flag in shared_linker_flags:
-            if shared_linker_flag in self.shared_linker_flags:
-                self.shared_linker_flags.remove(shared_linker_flag)
-            if self.shared_linker is None:
-                continue
-            self.shared_linker.remove_flag(shared_linker_flag)
+        self.shared_linker_flags = [flag for flag in self.shared_linker_flags if flag not in shared_linker_flags]
+        if self.shared_linker is not None:
+            for flag in shared_linker_flags:
+                self.shared_linker.remove_flag(flag)
 
     def add_exported_headers(self, *exported_headers: str, subfolder: T.Union[str, None] = None) -> None:
         for exported_header in exported_headers:

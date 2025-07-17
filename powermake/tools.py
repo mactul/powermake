@@ -126,7 +126,7 @@ class Tool(abc.ABC):
         already_translated_flags.append(flag)
 
         if flag in self.verified_translation_dict:
-            output_list.extend([f for f in self.verified_translation_dict[flag] if f not in output_list])
+            output_list.extend(self.verified_translation_dict[flag])
             return False
 
         if flag not in self.translation_dict or len(self.translation_dict[flag]) >= 2:
