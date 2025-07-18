@@ -37,7 +37,7 @@ def run_tests():
 
     touch("foo") # modify the control filepath
     cache_loaded = powermake.cache.load_cache_from_file(cache_file)
-    assert(cache_loaded == {})
+    assert(cache_loaded == {} or print("cache_loaded:", cache_loaded))
     powermake.delete_files_from_disk("foo")
 
     # Simulate an old cache that is no longer compatible
