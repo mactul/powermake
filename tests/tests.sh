@@ -58,6 +58,7 @@ echo "testing lib compilation and link accross powermake makefiles, in release a
 coverage run -a ./lib_depend/makefile.py -rv || failure
 CC=x86_64-w64-mingw32-gcc coverage run -a ./lib_depend/makefile.py -rvd --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
 
+coverage run -a ./library/makefile.py || failure
 
 coverage run -a ./multiplatform/makefile.py -c || failure
 coverage run -a ./lib_depend/makefile.py -c || failure

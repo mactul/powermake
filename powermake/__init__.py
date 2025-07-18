@@ -420,6 +420,16 @@ def _get_libs_from_folder(lib_build_folder: str) -> T.Union[T.List[str], None]:
         return [os.path.join(lib_build_folder, file) for file in os.listdir(lib_build_folder)]
     return None
 
+def _get_last_compilation_unit(makefile_path: str) -> T.Union[T.Tuple[str, str], None]:
+    try:
+        file = open(os.path.join(os.path.dirname(makefile_path), "build/.info/last_compilation_unit"), "r")
+        lines = file.read().strip().split('\n')
+        file.close()
+        if len(lines) != 2:
+            return None
+        return (lines[0], lines[1])
+    except OSError:
+        return None
 
 def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = []) -> T.Union[T.List[str], None]:
     """
@@ -463,16 +473,12 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if nb_jobs is None:
         nb_jobs = config.nb_jobs
 
-    inode_nb = str(os.stat(path).st_ino)
-
-    if inode_nb == "0":
-        print(warning_text("stat error, PowerMake will not cache already run powermakes."))
-
-    if inode_nb != "0" and inode_nb in config._cumulated_launched_powermakes:
+    last_comp_unit = _get_last_compilation_unit(path)
+    if last_comp_unit is not None and last_comp_unit[0] == config.compilation_unit:
         print_debug_info(f"PowerMake {path} already run during this compilation unit - skip", config.verbosity)
-        return _get_libs_from_folder(config._cumulated_launched_powermakes[inode_nb])
+        return _get_libs_from_folder(last_comp_unit[1])
 
-    command = [sys.executable, path, "--get-compilation-metadata", json.dumps(config._cumulated_launched_powermakes), "--retransmit-colors", "-j", str(nb_jobs)]
+    command = [sys.executable, path, "--compilation-unit", config.compilation_unit, "--get-compilation-metadata", "--retransmit-colors", "-j", str(nb_jobs)]
     if verbosity == 0:
         command.append("-q")
     elif verbosity >= 2:
@@ -505,10 +511,9 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     decoded_last_line = last_line.decode("utf-8").strip()
 
     if decoded_last_line == "":
-        raise RuntimeError("PowerMake corrupted; --get-compilation-metadata doesn't return anything, if you use powermake.generate_config, make sure to also use powermake.run_callbacks")
+        raise RuntimeError("PowerMake corrupted; --get-compilation-metadata didn't return anything, if you use powermake.generate_config, make sure to also use powermake.run_callbacks")
 
     metadata = json.loads(decoded_last_line)
     if not isinstance(metadata, dict):
         raise RuntimeError("PowerMake corrupted; please verify your installation")
-    config._cumulated_launched_powermakes = {**config._cumulated_launched_powermakes, **metadata["cumulated_launched_powermakes"], inode_nb: metadata["lib_build_directory"]}
     return _get_libs_from_folder(metadata["lib_build_directory"])
