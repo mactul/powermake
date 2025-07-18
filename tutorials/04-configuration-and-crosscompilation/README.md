@@ -1,4 +1,4 @@
-# Configuration and Crosscompilation
+# Configuration and Cross-compilation
 
 ### [<- Previous tutorial (Multiple Targets)](../03-multiple-targets/README.md)
 
@@ -24,7 +24,7 @@ CC=clang python makefile.py -rv
 Will ensure that all the compilation is done with the clang toolchain.
 
 > [!TIP]  
-> If you are using Windows (shame on you ?), you cannot set a environment variable on the same line of a command.
+> If you are using Windows (shame on you ?), you cannot set an environment variable on the same line of a command.
 > To do the same thing you have to enter:
 > ```bat
 > SET CC=clang
@@ -39,7 +39,7 @@ Here are all the environment variables you can set.
 - `CXX`: The of the C++ compiler
 - `AS`: The path of the assembler for .s and .S files
 - `ASM` The path of the assembler for .asm files
-- `RC` The path of the Windows ressources compiler
+- `RC` The path of the Windows resources compiler
 - `AR` The path of the static lib archiver
 - `LD`: The path of the linker
 - `SHLD`: The path of the linker used for making shared library
@@ -82,7 +82,7 @@ For example, specifying that you want to compile in 32 bits with clang in the gl
 
 > [!IMPORTANT]  
 > As seen above, PowerMake is able to infers all unspecified fields to find a value coherent with what you specifically specified.  
-> However, it will ***never*** infers a field that you have specified somewhere. For example if you specify in the global config that your C++ compiler is clang++ and then you try to compile with:
+> However, it will ***never*** infer a field that you have specified somewhere. For example if you specify in the global config that your C++ compiler is clang++ and then you try to compile with:
 > ```sh
 > CC=i686-w64-mingw32-gcc python makefile.py -rv
 > ```
@@ -93,7 +93,7 @@ For example, specifying that you want to compile in 32 bits with clang in the gl
 The global config file can be found at `~/.powermake/powermake_config.json` (On Windows this is `C:/Users/YOUR_USERNAME/.powermake/powermake_config.json`)
 
 > [!WARNING]  
-> You will eventually forget that you have put something in the global config and you might be wondering why PowerMake is no longer auto-configuring some values.  
+> You will eventually forget that you have put something in the global config and you might be wondering why PowerMake is no longer autoconfiguring some values.  
 > To avoid having problems, keep the global configuration as small as possible and prefer using local configurations when possible.
 
 
@@ -119,15 +119,15 @@ You will have two choices, the compiler type and the compiler type.
 The compiler type is here to tell PowerMake what does the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
 
 > [!TIP]  
-> On some systems like MacOS, gcc is in fact clang and PowerMake is not able to detect that automatically. That's no big deal because GCC and Clang have very similar syntax, but this might create small inconveniences with advanced flags translation.  
+> On some systems like macOS, gcc is in fact clang and PowerMake is not able to detect that automatically. That's no big deal because GCC and Clang have very similar syntax, but this might create small inconveniences with advanced flags translation.  
 > On these systems, it might be a good idea to set the C compiler type to clang in the global config.  
-> Don't set the compiler path though, just setting the compiler type will give you way less annoyances when you will try to change the compiler.
+> Don't set the compiler path though, just setting the compiler type will give you way fewer annoyances when you will try to change the compiler.
 
 
 Try to change the C Compiler.  
 Once this is done, go all the way back to the main menu by pressing 3 and then 8.
 
-Finally you can save your new configuration.
+Finally, you can save your new configuration.
 
 ### Local configuration file
 

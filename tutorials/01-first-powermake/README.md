@@ -265,7 +265,7 @@ powermake.run("my_project", build_callback=on_build)
 
 Do you feel a little more confortable with the basic makefile ?
 
-You should now play a little bit with the command line, try every option and try to see what they does.
+You should now play a little bit with the command line, try every option and try to see what they do.
 
 Use `python makefile.py --help` to display all available options.  
 Use the `-v` flag to really see what is happening (unless you are testing the verbosity flags of course)
@@ -294,4 +294,4 @@ python makefile.py -rvd -o .
 ```
 
 
-### [-> Next tutorial (Crossplatform library)](../02-crossplatform-library/README.md)
+### [-> Next tutorial (Cross-platform library)](../02-crossplatform-library/README.md)

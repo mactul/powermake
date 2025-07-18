@@ -1,6 +1,6 @@
 # Multiple Targets
 
-### [<- Previous tutorial (Crossplatform Library)](../02-crossplatform-library/README.md)
+### [<- Previous tutorial (Cross-platform Library)](../02-crossplatform-library/README.md)
 
 > [!IMPORTANT]  
 > This tutorial assumes that you have followed at least the first one: [First Powermake](../01-first-powermake/README.md)
@@ -75,7 +75,7 @@ We add a new argument named `--hello`, because we put `action="store_true"`, thi
 args_parsed = parser.parse_args()
 ```
 
-Here we parse the command line, put every parsed arg in a Namespace and `exit(1)` if their is an error.
+Here we parse the command line, put every parsed arg in a Namespace and `exit(1)` if there is an error.
 
 At this time it might be a good idea to `print(args_parsed)` to see what does this object look like.
 
@@ -100,11 +100,11 @@ Obviously you can also have different type of arguments.
 You can't really have positional arguments because those are already all used by PowerMake for the test callback but you can do almost anything you want with named arguments.
 
 > [!TIP]  
-> Avoid using single letter arguments for futur-proof makefiles because you have a high risk to have a conflict with a futur version of PowerMake.  
-> To be perfectly futur-proof, a good practice might be to prefix each of your arg with a name of your own. For example if the program you're compiling is called zorglub, a custom argument might be `--zb-enable-something`.
+> Avoid using single letter arguments for future-proof makefiles because you have a high risk to have a conflict with a future version of PowerMake.  
+> To be perfectly future-proof, a good practice might be to prefix each of your arg with a name of your own. For example if the program you're compiling is called zorglub, a custom argument might be `--zb-enable-something`.
 
 
-If you want to know everything you can do with the command line, please refer to the [argparse documentation](https://docs.python.org/3/library/argparse.html). However this documentation might not be very easy to read so here are some common examples:
+If you want to know everything you can do with the command line, please refer to the [argparse documentation](https://docs.python.org/3/library/argparse.html); however this documentation might not be very easy to read so here are some common examples:
 
 
 ```py
@@ -116,13 +116,13 @@ parser = powermake.ArgumentParser()
 parser.add_argument("--zb-version", help="display Zorglub version", action="store_true")
 
 # An optional argument with constraints
-# Will be "disabled" if --zb-enable-gui is not on the command line, None if their is just `--zb-enable-gui` without any argument, "SDL2" if the command line is `--zb-enable-gui=SDL2` or "QT" if the command line is `--zb-enable-gui QT`
+# Will be "disabled" if --zb-enable-gui is not on the command line, None if there is just `--zb-enable-gui` without any argument, "SDL2" if the command line is `--zb-enable-gui=SDL2` or "QT" if the command line is `--zb-enable-gui QT`
 parser.add_argument("--zb-enable-gui", nargs='?', help="enable the GUI, optionally specify which GUI frontend to use" choices=["SDL2", "SDL3", "QT", "GTK"], default="disabled")
 
 # The same as above but this time it can either not be on the command line or have a value but it cannot be on the command line and empty.
 parser.add_argument("--zb-set-gui", help="set the GUI to use if you want one", choices=["SDL2", "SDL3", "QT", "GTK"], default=None)
 
-# A argument with a non-constrained value but which must be on the command line.
+# An argument with a non-constrained value but which must be on the command line.
 parser.add_argument("--zb-exec-name", metavar="NAME", help="set the name of the executable", required=True)
 
 # An integer, that will be automatically converted.
@@ -143,4 +143,4 @@ args_parsed = parser.parse_args()
 print(args_parsed)
 ```
 
-### [-> Next tutorial (Configuration and Crosscompilation)](../04-configuration-and-crosscompilation/README.md)
+### [-> Next tutorial (Configuration and Cross-compilation)](../04-configuration-and-crosscompilation/README.md)

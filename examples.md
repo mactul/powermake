@@ -32,7 +32,7 @@ def on_build(config: powermake.Config):
     # Search recursively into subfolders.
     files = powermake.get_files("**/*.c", "**/*.cpp")
 
-    # This line is optional. It's purpose is to enable percent elapsed display.
+    # This line is optional. Its purpose is to enable percent elapsed display.
     # The number of operations here is the number of files to compile (len(files))
     # + the operation of linking everything together
     config.nb_total_operations = len(files) + 1
@@ -73,7 +73,7 @@ def on_build(config: powermake.Config):
     # PowerMake already set the optimization to -Og when compiling in debug mode and to -O3 when compiling in release mode.
     config.set_optimization("-Oz")
 
-    # Tell the linker to link with mariadb (typically on GCC this correspond to the -lmariadb option)
+    # Tell the linker to link with mariadb (typically on GCC this corresponds to the -lmariadb option)
     config.add_shared_libs("mariadb")
 
     # Add flags for the linker
@@ -120,16 +120,16 @@ def on_install(config: powermake.Config, location: str):
         # No location is explicitly provided so we change the default for our convenance.
         # We choose this path differently whether we are on Windows or on other platforms (here we assume other platforms are all Unix-Like).
         if config.target_is_windows():
-            # Note that their is no need for this folder to exists, if it doesn't exists and if the program has the right to do so, it will be created.
+            # Note that there is no need for this folder to exists, if it doesn't exist and if the program has the right to do so, it will be created.
             location = "C:/personal_libs/"
         else:
             location = "/usr/local/"
 
-    # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
+    # This ensures that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
     # The .a (or .lib or equivalent) will be copied into /usr/local/lib/my_lib.a
     config.add_exported_headers("my_lib.h", subfolder="my_lib")
 
-    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending of the verbosity level, etc...
+    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending on the verbosity level, etc...
     powermake.default_on_install(config, location)
 
 
@@ -167,16 +167,16 @@ def on_install(config: powermake.Config, location: str):
         # No location is explicitly provided so we change the default for our convenance.
         # We choose this path differently whether we are on Windows or on other platforms (here we assume other platforms are all Unix-Like).
         if config.target_is_windows():
-            # Note that their is no need for this folder to exists, if it doesn't exists and if the program has the right to do so, it will be created.
+            # Note that there is no need for this folder to exists, if it doesn't exist and if the program has the right to do so, it will be created.
             location = "C:/personal_libs/"
         else:
             location = "/usr/local/"
 
-    # This ensure that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
+    # This ensures that the file "my_lib.h" will be exported into /usr/local/include/my_lib/my_lib.h
     # The .so (or .dll and .lib - or equivalent) will be copied into /usr/local/lib/my_lib.so
     config.add_exported_headers("my_lib.h", subfolder="my_lib")
 
-    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending of the verbosity level, etc...
+    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending on the verbosity level, etc...
     powermake.default_on_install(config, location)
 
 
@@ -226,7 +226,7 @@ def on_build(config: powermake.Config):
 
     files = powermake.get_files("**/*.c", "**/*.cpp")
 
-    # In theory, your program will depend on your_library/file6.h else their is no point of including the library so we add ../your_library/ in the include path.
+    # In theory, your program will depend on your_library/file6.h else there is no point of including the library so we add ../your_library/ in the include path.
     config.add_includedirs("../your_library/")
 
     objects = powermake.compile_files(config, files)
@@ -246,7 +246,7 @@ powermake.run("your_program", build_callback=on_build)
 ## Using a tool unsupported by PowerMake
 
 This is a makefile for a compiler which requires bison and flex for the compilation.  
-Flex and Bison doesn't benefit from a special support in PowerMake but they can still be ran as simple commands.
+Flex and Bison doesn't benefit from a special support in PowerMake but they can still be run as simple commands.
 
 ```py
 import powermake
@@ -267,7 +267,7 @@ def on_build(config: powermake.Config):
     # 5 is for link + 2 generations + 2 compilations
     config.nb_total_operations = len(files) + 5
 
-    # The command will be run either if outputfile is not up to date with parser.y or if the makefile is ran with -r (--rebuild)
+    # The command will be run either if outputfile is not up to date with parser.y or if the makefile is run with -r (--rebuild)
     powermake.run_command_if_needed(
         config=config,
         outputfile="src/parser.tab.c",

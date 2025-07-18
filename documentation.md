@@ -179,7 +179,7 @@ powermake.run("program_test", build_callback=on_build)
 
 > [!TIP]  
 > You can generate a new makefile for a project by using `python -m powermake` in the project's folder.  
-> If pip's scripts folder (often ~/.local/bin) is in your path, can can also simply run `powermake`  
+> If pip's scripts folder (often ~/.local/bin) is in your path, you can also simply run `powermake`  
 > For more details about this, see [Generating a Powermake](./documentation.md#generating-a-powermake).
 
 
@@ -228,7 +228,7 @@ This alternative has a great advantage: you can combine multiple tasks. For exam
 You can also replace the `-b` argument with `-r` (using `-br` does the same as `-r`) and this will force the makefile to recompile everything, without trying to figure out which file needs to be recompiled.
 
 > [!NOTE]  
-> Writing `-r` is not the same as writing `-cb`. If you write `-cb` and your clean callback doesn't really clean everything, your project will not be recompiled. `-r` doesn't even call the clean callback and don't delete any file, it just bypass all tests verifying if a file needs to be recompiled. You can call `-rc` do delete old unused compilation files and make sure every compile command is ran.
+> Writing `-r` is not the same as writing `-cb`. If you write `-cb` and your clean callback doesn't really clean everything, your project will not be recompiled. `-r` doesn't even call the clean callback and don't delete any file, it just bypasses all tests verifying if a file needs to be recompiled. You can call `-rc` do delete old unused compilation files and make sure every compile command is ran.
 
 There are many more options you can add such as `-d` (`--debug`), `-q` (`--quiet`), `-v` (`--verbose`), etc...
 
@@ -240,7 +240,7 @@ All these options can be listed by running `python makefile.py -h` or if you hav
 
 ### Toolchain detection
 
-PowerMake infers the various toolchain programs to be used using everything it knows.  
+PowerMake infers the various toolchain programs to be used, using everything it knows.  
 Most of the time, just setting up the C compiler configuration (or the C++ compiler or the linker, etc...) will be sufficient for PowerMake to determinate the whole toolchain.
 
 > [!NOTE]  
@@ -263,7 +263,7 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -rvd
 When this is possible, PowerMake tries to translate C/C++/AS/ASM/LD flags.
 
 Only the most common flags are known and therefore translated by PowerMake.
-For all flags that PowerMake is enable to translate, PowerMake will check at runtime if the flag is compatible with your compiler and if not, the flag will be removed, a warning will be displayed, but the compilation will not be aborted.
+For all flags that PowerMake is able to translate, PowerMake will check at runtime if the flag is compatible with your compiler and if not, the flag will be removed, a warning will be displayed, but the compilation will not be aborted.
 
 > [!TIP]  
 > You can disable translation and automatic flag removal for a specific flag by using `powermake.EnforcedFlag`.
@@ -274,7 +274,7 @@ For all flags that PowerMake is enable to translate, PowerMake will check at run
 > In this example, the `-fanalyzer` flag will be removed if unsupported (for example if you are using clang), but the `-S` will be kept untouched no matter what.
 
 
-Their is also some flags that PowerMake defines that doesn't exist in any compiler, these are set of useful flags for a situation.
+There is also some flags that PowerMake defines that doesn't exist in any compiler, these are set of useful flags for a situation.
 
 Here is the list of flags translated by PowerMake:
 
@@ -498,7 +498,7 @@ Most of the `powermake.Config` members can be set in the json configuration but 
 ```py
 config.debug: bool
 ```
-This member is `True` if the the makefile is ran in debug mode (with the flag -d or the flag --debug).  
+This member is `True` if the makefile is run in debug mode (with the flag -d or the flag --debug).  
 Changing this at runtime will not do anything useful, please use [powermake.set_debug](#set_debug).
 
 > [!IMPORTANT]  
@@ -509,7 +509,7 @@ Changing this at runtime will not do anything useful, please use [powermake.set_
 ```py
 config.rebuild: bool
 ```
-This member is `True` if the the makefile is ran in rebuild mode (with the flag -r or the flag --rebuild).  
+This member is `True` if the makefile is run in rebuild mode (with the flag -r or the flag --rebuild).  
 If you change its value at runtime, the following steps will change their behavior.
 
 > [!IMPORTANT]  
@@ -968,7 +968,7 @@ This behaves exactly like [config.ld_flags](#c_cpp_flags), with the same limitat
 config.flags: list[str]
 ```
 
-A list of flags that will be passed to the C AND the C++ compiler AND the AS compiler AND the ASM compiler AND the shared linker AND the the linker
+A list of flags that will be passed to the C AND the C++ compiler AND the AS compiler AND the ASM compiler AND the shared linker AND the linker
 
 This behaves exactly like [config.c_cpp_flags](#c_cpp_flags), with the same limitations.
 
@@ -1175,7 +1175,7 @@ def on_build(config: powermake.Config):
 config.target_is_macos()
 ```
 
-Returns `True` if the target operating system is MacOS.
+Returns `True` if the target operating system is macOS.
 This uses the [config.target_operating_system](#target_operating_system) member.
 
 <details>
@@ -1231,7 +1231,7 @@ def on_build(config: powermake.Config):
 config.remove_defines(*defines: str)
 ```
 
-Remove defines from [config.defines](#defines) if they exists.  
+Remove defines from [config.defines](#defines) if they exist.  
 This method is variadic so you can put as many defines as you want.
 
 <details>
@@ -1288,7 +1288,7 @@ def on_build(config: powermake.Config):
 config.remove_shared_libs(*shared_libs: str)
 ```
 
-Remove shared libraries from [config.shared_libs](#shared_libs) if they exists.  
+Remove shared libraries from [config.shared_libs](#shared_libs) if they exist.  
 This method is variadic so you can put as many libs as you want.
 
 
@@ -1307,7 +1307,7 @@ The list order is preserved.
 config.remove_includedirs(*includedirs: str)
 ```
 
-Remove additional includedirs from [config.additional_includedirs](#additional_includedirs) if they exists.  
+Remove additional includedirs from [config.additional_includedirs](#additional_includedirs) if they exist.  
 This method is variadic so you can put as many includedirs as you want.  
 The list order is preserved.
 
@@ -1344,7 +1344,7 @@ def on_build(config: powermake.Config):
 config.remove_flags(*c_flags: str)
 ```
 
-Remove flags from [config.flags](#flags) if they exists.  
+Remove flags from [config.flags](#flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1364,7 +1364,7 @@ The list order is preserved.
 config.remove_c_flags(*c_flags: str)
 ```
 
-Remove flags from [config.c_flags](#c_flags) if they exists.  
+Remove flags from [config.c_flags](#c_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1384,7 +1384,7 @@ The list order is preserved.
 config.remove_cpp_flags(*cpp_flags: str)
 ```
 
-Remove flags from [config.cpp_flags](#cpp_flags) if they exists.  
+Remove flags from [config.cpp_flags](#cpp_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1404,7 +1404,7 @@ The list order is preserved.
 config.remove_c_cpp_flags(*c_cpp_flags: str)
 ```
 
-Remove flags from [config.c_cpp_flags](#c_cpp_flags) if they exists.  
+Remove flags from [config.c_cpp_flags](#c_cpp_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1424,7 +1424,7 @@ The list order is preserved.
 config.remove_as_flags(*as_flags: str)
 ```
 
-Remove flags from [config.as_flags](#as_flags) if they exists.  
+Remove flags from [config.as_flags](#as_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1444,7 +1444,7 @@ The list order is preserved.
 config.remove_asm_flags(*asm_flags: str)
 ```
 
-Remove flags from [config.asm_flags](#asm_flags) if they exists.  
+Remove flags from [config.asm_flags](#asm_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1464,7 +1464,7 @@ The list order is preserved.
 config.remove_c_cpp_as_asm_flags(*c_cpp_as_asm_flags: str)
 ```
 
-Remove flags from [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they exists.  
+Remove flags from [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1483,7 +1483,7 @@ The list order is preserved.
 config.remove_rc_flags(*rc_flags: str)
 ```
 
-Remove flags from [config.rc_flags](#rc_flags) if they exists.  
+Remove flags from [config.rc_flags](#rc_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1503,7 +1503,7 @@ The list order is preserved.
 config.remove_ar_flags(*ar_flags: str)
 ```
 
-Remove flags from [config.ar_flags](#ar_flags) if they exists.  
+Remove flags from [config.ar_flags](#ar_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1523,7 +1523,7 @@ The list order is preserved.
 config.remove_ld_flags(*ld_flags: str)
 ```
 
-Remove flags from [config.ld_flags](#ld_flags) if they exists.  
+Remove flags from [config.ld_flags](#ld_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1543,7 +1543,7 @@ The list order is preserved.
 config.remove_shared_linker_flags(*shared_linker_flags: str)
 ```
 
-Remove flags from [config.shared_linker_flags](#shared_linker_flags) if they exists.  
+Remove flags from [config.shared_linker_flags](#shared_linker_flags) if they exist.  
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
@@ -1594,7 +1594,7 @@ powermake.run("my_lib", build_callback=on_build, install_callback=on_clean)
 config.remove_exported_headers(*exported_headers: str, subfolder: str = None)
 ```
 
-Remove exported headers from [config.exported_headers](#exported_headers) if they exists.  
+Remove exported headers from [config.exported_headers](#exported_headers) if they exist.  
 This method is variadic so you can put as many headers as you want.  
 The list order is preserved.
 
@@ -1641,7 +1641,7 @@ config.empty_copy(local_config: str = None) -> powermake.Config
 ```
 
 Generate a new fresh config object without anything inside. By default, even the local config file isn't loaded.  
-It can be very helpful if you have a local config file specifying a cross compiler but you want to have the default compiler at some point during the compilation step.
+It can be very helpful if you have a local config file specifying a cross-compiler but you want to have the default compiler at some point during the compilation step.
 
 
 ### powermake.default_on_clean
@@ -1843,7 +1843,7 @@ powermake.link_files(config: powermake.Config, object_files: set, archives: list
 
 This function is a wrapper of lower-level powermake functions.
 
-From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [powermake.compile_files](#powermakecompile_files) and a [powermake.Config](#powermakeconfig) object, it runs the command to create a n executable with the appropriate linker and options in `config`.
+From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [powermake.compile_files](#powermakecompile_files) and a [powermake.Config](#powermakeconfig) object, it runs the command to create an executable with the appropriate linker and options in `config`.
 
 - if `executable_name` is None, the `config.target_name` is used with the extension given by the type of linker.
 - if `executable_name` is not None, his value is concatenated with the extension.
@@ -1899,7 +1899,7 @@ These parameters are passed to the other powermake.
 
 You can pass any other parameter that you want in the list `command_line_args`.
 
-This function ensure that if a powermake A depends on powermakes B and C and the powermake B and the powermake C both depends on the powermake D, the powermake D will not be ran twice, even if the flag `-r` is provided.
+This function ensure that if a powermake A depends on powermakes B and C and the powermake B and the powermake C both depends on the powermake D, the powermake D will not be run twice, even if the flag `-r` is provided.
 
 > [!WARNING]  
 > This function is not thread safe for now.
@@ -1939,7 +1939,7 @@ powermake.needs_update(outputfile: str, dependencies: set, additional_includedir
 > [!NOTE]  
 > This function is low-level.
 
-Returns whether or not `outputfile` is up to date with all his dependencies.  
+Returns whether `outputfile` is up to date with all his dependencies.  
 If `dependencies` include C/C++ files and headers, all headers these files include recursively will be added as hidden dependencies.
 
 The `additional_includedirs` list is required to discover hidden dependencies. You must set this to the additional includedirs used during the compilation of `outputfile`. You can use [config.additional_includedirs](#additional_includedirs) if needed.
@@ -2047,7 +2047,7 @@ powermake.run("program_test", build_callback=on_build, args_parsed=args_parsed)
 powermake.generate_config(target_name: str, args_parsed: argparse.Namespace = None)
 ```
 
-This function behave like the first part of [powermake.run](#powermakerun), it generate a config object according to the command line. The difference with [powermake.run](#powermakerun) is that it stop at this point and returns the config generated.  
+This function behave like the first part of [powermake.run](#powermakerun), it generates a config object according to the command line. The difference with [powermake.run](#powermakerun) is that it stop at this point and returns the config generated.  
 It can be helpful if you want a global instance of the config.
 
 In most cases you should let `args_parsed` to None, and this function will automatically parse the command line.
@@ -2146,7 +2146,7 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -md
 > PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](./README.md#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
 > To get a good Makefile, you should never use the `subprocess` module but instead use [powermake.run_command](./documentation.md#powermakerun_command) or [powermake.run_command_if_needed](./documentation.md#powermakerun_command_if_needed).
 >
-> If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is ran.)
+> If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is run.)
 
 
 ### Visual Studio Code
@@ -2177,7 +2177,7 @@ VSCode uses 3 important json files:
 > You need the Microsoft C/C++ Extension Pack for this to work
 
 
-If the tip above isn't enough to setup vscode, here is more details:
+If the tip above isn't enough to set up vscode, here is more details:
 
 
 > [!IMPORTANT]  

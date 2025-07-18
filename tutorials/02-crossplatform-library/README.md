@@ -1,4 +1,4 @@
-# Crossplatform Library
+# Cross-platform Library
 
 ### [<- Previous tutorial (First PowerMake)](../01-first-powermake/README.md)
 
@@ -109,7 +109,7 @@ else:
 And voilà ! Our makefile will now automatically pick the good files to compile, as long as we keep the naming convention !
 
 > [!NOTE]  
-> You may be wondering if it's possible to test `config.target_is_linux()`, of course it's possible, but here we should not because usleep will also work under MacOS, FreeBSD, Android, etc... Maybe we should have called our file `time_unix.c`, but whatever...
+> You may be wondering if it's possible to test `config.target_is_linux()`, of course it's possible, but here we should not because usleep will also work under macOS, FreeBSD, Android, etc... Maybe we should have called our file `time_unix.c`, but whatever...
 
 
 It's now time to address the link issue !  
@@ -245,11 +245,11 @@ def on_install(config: powermake.Config, location: str):
         # No location is explicitly provided so we change the default for our convenance.
         location = "/usr/local/"
 
-    # This ensure that the file "my_time.h" will be exported into /usr/local/include/my_time/my_time.h
+    # This ensures that the file "my_time.h" will be exported into /usr/local/include/my_time/my_time.h
     # The .so will be copied into /usr/local/lib/my_time.so
     config.add_exported_headers("my_time.h", subfolder="my_time")
 
-    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending of the verbosity level, etc...
+    # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending on the verbosity level, etc...
     powermake.default_on_install(config, location)
 
 # Make sure you register the on_install callback in powermake.run

@@ -62,7 +62,7 @@ python YOUR_SCRIPT.py -crvt arg1 arg2 arg3
 You can follow the [tutorials](./tutorials/) or explore the [documentation](./documentation.md#documentation) to learn about the infinite possibilities of PowerMake !!
 And if you are too lazy or completely lost, just ask what you are searching for in the [Discussions section](https://github.com/mactul/powermake/discussions).
 
-If you don't exactly understand why PowerMake is different than Make, CMake, XMake, Scons, etc..., you should read the [Philosophy section](#philosophy).
+If you don't exactly understand why PowerMake is different from Make, CMake, XMake, Scons, etc..., you should read the [Philosophy section](#philosophy).
 
 
 ## What is PowerMake?
@@ -87,14 +87,14 @@ Since PowerMake 1.20.0, Powermake is able to generate a Makefile, but this will 
 
 PowerMake was specifically designed for complex projects that have very complicated compilation steps, with a lot of pre-built tasks that need to be compiled on multiple operating systems with different options.
 
-However, today, even for a 5 files project on Linux with GCC, PowerMake is more convenient than make because out of the box it provides a debug/release mode with different options and different build directories, it can generates a compile_commands.json file for a better integration with vscode, it detects better than make when files need to be recompiled, it provides default rebuild/clean/install options without any configuration, etc...
+However, today, even for a 5 files project on Linux with GCC, PowerMake is more convenient than make because out of the box it provides a debug/release mode with different options and different build directories, it can generate a compile_commands.json file for a better integration with vscode, it detects better than make when files need to be recompiled, it provides default rebuild/clean/install options without any configuration, etc...
 
 
 ## Advantages of PowerMake
 
 - Very easy to read makefiles
   - If you are tired of huge GNU Makefiles, makefile.am or CMakeLists.txt that are impossible to read, you will love PowerMake
-  - You makefile will just be a small python script that can be read from top to bottom, even by someone that have never used PowerMake.
+  - Your makefile will just be a small python script that can be read from top to bottom, even by someone that have never used PowerMake.
 
 - Cross-Platform:
   - PowerMake can detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
@@ -105,7 +105,7 @@ However, today, even for a 5 files project on Linux with GCC, PowerMake is more 
   - Missing features can always be written in the makefile.
 
 - Provides smart automatic configurations
-  - PowerMake have local and global config files, but on top of that, PowerMake is able to automatically find a value that make sense for each field that is not explicitly assigned, you can easily have very basic configurations files (often no config file at all) and it will still work for most systems. For example just specifying that your linker path is `i686-w64-mingw32-ld` will be enough for PowerMake to detect that you are compiling in cross-compilation, for windows 32 bits with a low level linker and the whole toolchain will be correctly set, the build folder will be correctly set and even the `config.target_is_windows()` method will return `True`.
+  - PowerMake have local and global config files, but on top of that, PowerMake is able to automatically find a value that make sense for each field that is not explicitly assigned, you can easily have very basic configurations files (often no config file at all) and it will still work for most systems. For example just specifying that your linker path is `i686-w64-mingw32-ld` will be enough for PowerMake to detect that you are compiling in cross-compilation, for Windows 32 bits with a low level linker and the whole toolchain will be correctly set, the build folder will be correctly set and even the `config.target_is_windows()` method will return `True`.
 
 - Extremely fast:
   - PowerMake is faster than make/xmake and most of the time faster than Ninja when building a project for the first time.
@@ -126,7 +126,7 @@ All other Make-like utilities that I know parse a file to understand directives 
 PowerMake does the opposite. You write a python script, you do whatever you like in this script and you call PowerMake functions to help you compile your code.  
 This gives you complete control; you can retrieve files from the web, read and write files, and even train a Neural Network if you want, and at any time you can use Powermake functions to help you in your compilation journey.
 
-This also means that the philosophy is completely different than in tool like make.  
+This also means that the philosophy is completely different from a tool like make.  
 When you read a GNU Makefile, you start at the end, the final target and you read each target dependency recursively before executing the task.  
 In a GNU Makefile, the order of each target doesn't reflect at all the order of execution.
 
@@ -196,7 +196,7 @@ powermake.run("program_test", build_callback=on_build)
 
 > [!TIP]  
 > You can generate a new makefile for a project by using `python -m powermake` in the project's folder.  
-> If pip's scripts folder (often ~/.local/bin) is in your path, can can also simply run `powermake`  
+> If pip's scripts folder (often ~/.local/bin) is in your path, you can also simply run `powermake`  
 > For more details about this, see [Generating a Powermake](./documentation.md#generating-a-powermake).
 
 
@@ -207,7 +207,7 @@ powermake.run("program_test", build_callback=on_build)
 
 ## [Documentation](./documentation.md#documentation)
 
-**Follow step by step tutorials [here](./tutorials/).**
+**Follow step-by-step tutorials [here](./tutorials/).**
 
 or
 
@@ -279,7 +279,7 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -md
 > PowerMake tries its best to generate a valid Makefile, however, because of the [PowerMake philosophy](./README.md#philosophy), PowerMake can't know exactly what you are doing in your Makefile, every function that is not provided by PowerMake can't be translated in the Makefile.  
 > To get a good Makefile, you should never use the `subprocess` module but instead use [powermake.run_command](./documentation.md#powermakerun_command) or [powermake.run_command_if_needed](./documentation.md#powermakerun_command_if_needed).
 >
-> If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is ran.)
+> If you are doing conditions and loops, it's not a problem at all, but you will not see any condition in the generated Makefile, what's in the Makefile depends on the commands actually generated during the initial PowerMake compilation. (That's why the -m flag also enable the -r flag, to be sure that every command is run.)
 
 
 ### Visual Studio Code
@@ -310,7 +310,7 @@ VSCode uses 3 important json files:
 > You need the Microsoft C/C++ Extension Pack for this to work
 
 
-If the tip above isn't enough to setup vscode, here is more details:
+If the tip above isn't enough to set up vscode, here is more details:
 
 
 > [!IMPORTANT]  
