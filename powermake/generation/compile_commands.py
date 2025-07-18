@@ -17,7 +17,7 @@ import json
 import typing as T
 
 from ..config import Config
-from . import _makefile_targets
+from .. import generation
 
 
 def generate_compile_commands(config: Config, maybe_incomplete: bool = False) -> None:
@@ -26,7 +26,7 @@ def generate_compile_commands(config: Config, maybe_incomplete: bool = False) ->
     json_commands = []
     json_commands_files_list = set()
     cwd = os.getcwd()
-    for operations in _makefile_targets:
+    for operations in generation._makefile_targets:
         # operations = [(phony, target, dependencies, command, tool), ]
         for operation in operations:
             phony, target, dependencies, command, tool = operation

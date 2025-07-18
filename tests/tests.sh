@@ -12,7 +12,7 @@ cd "$(dirname "$0")"
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)/../
 
-python3 ./multiplatform/makefile.py --version
+python3 ./multiplatform/makefile.py --delete-cache
 
 coverage run ./units/tests_main.py || failure
 
@@ -59,6 +59,12 @@ coverage run -a ./lib_depend/makefile.py -rv || failure
 CC=x86_64-w64-mingw32-gcc coverage run -a ./lib_depend/makefile.py -rvd --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
 
 
+coverage run -a ./multiplatform/makefile.py -c || failure
+coverage run -a ./lib_depend/makefile.py -c || failure
+coverage run -a ./lib_intermediate/makefile.py -c || failure
+coverage run -a ./library/makefile.py -c || failure
+
+
 coverage report
 
 if [ -f "$GITHUB_ENV" ]
@@ -66,9 +72,9 @@ then
     coverage json -o ../coverage.json
 fi
 
-if [ "$1" == "strict" ] && COV=$(coverage report | tail -n 1 | awk -F " " '{print $4}' | sed 's/.$//') && [ "$COV" -lt 70 ]
+if [ "$1" == "strict" ] && COV=$(coverage report | tail -n 1 | awk -F " " '{print $4}' | sed 's/.$//') && [ "$COV" -lt 80 ]
 then
-    printf "\033[31;1mYou don't have enough test coverage ($COV%% < 70%%) !\033[0m\n"
+    printf "\033[31;1mYou don't have enough test coverage ($COV%% < 80%%) !\033[0m\n"
     which firefox
     if [ $? -eq 0 ]
     then

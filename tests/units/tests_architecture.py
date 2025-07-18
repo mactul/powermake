@@ -1,4 +1,3 @@
-import os
 import powermake
 import powermake.architecture
 from unittest import mock
@@ -53,4 +52,12 @@ def run_tests():
         assert(powermake.architecture.search_new_toolchain("linux-gnu-gcc", "arm64", "x86") == "i386-linux-gnu-gcc")
     assert(powermake.architecture.search_new_toolchain("gfgrge_garbage_reghjrhgu", "arm64", "x86") is None)
     assert(powermake.architecture.search_new_toolchain("windres", "arm64", "x86") is None)
+    assert(powermake.architecture.search_new_toolchain("gfgrge_garbage_reghjrhgu", "x64", "arm64") is None)
+    with mock.patch("powermake.architecture.shutil.which", new=lambda name:"" if name == "arm-linux-gnueabi-gcc" else None):
+        assert(powermake.architecture.search_new_toolchain("linux-gnu-gcc", "x64", "arm32") == "arm-linux-gnueabi-gcc")
+        assert(powermake.architecture.search_new_toolchain("x86_64-linux-gnueabi-gcc", "x64", "arm32") == "arm-linux-gnueabi-gcc")
+    assert(powermake.architecture.search_new_toolchain("gfgrge_garbage_reghjrhgu", "x64", "arm32") is None)
+    assert(powermake.architecture.search_new_toolchain("x86_64-linux-gnueabi-windres", "x64", "arm32") is None)
+    assert(powermake.architecture.search_new_toolchain("x86_64-linux-gnueabi-windres", "x64", "garbage") is None)
+
 

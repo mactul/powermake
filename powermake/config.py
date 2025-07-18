@@ -31,6 +31,7 @@ from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 
+_Config = T.TypeVar("_Config", bound="Config")
 
 def get_global_config() -> str:
     global_config = os.getenv("POWERMAKE_CONFIG")
@@ -644,7 +645,7 @@ class Config:
         if self.host_simplified_architecture == "":
             self.host_simplified_architecture = self.host_architecture
 
-        if self.target_is_windows():
+        if self.host_is_windows() and self.target_is_windows():
             env = load_msvc_environment(os.path.join(get_cache_dir(), "msvc_envs.json"), architecture=self.target_simplified_architecture)
             if env is not None:
                 for var in env:
@@ -710,23 +711,14 @@ class Config:
         else:
             self.lib_build_directory = replace_architecture(self.lib_build_directory.replace(old_mode, mode), self.target_simplified_architecture)
 
-    def export_json(self) -> T.Dict[str, T.Any]:
-        output = {}
-        if self.c_compiler is not None:
-            output["c_compiler"] = {
-                "type": self.c_compiler.type,
-                "path": self.c_compiler.path
-            }
-        return output
-
-    def copy(self) -> T.Any:
+    def copy(self: _Config) -> _Config:
         return copy.deepcopy(self)
 
-    def empty_copy(self, local_config: T.Union[str, None] = None) -> T.Any:
+    def empty_copy(self: _Config, local_config: T.Union[str, None] = None) -> _Config:
         """Generate a new fresh config object without anything inside. By default, even the local config file isn't used.  
         It can be very helpful if you have a local config file specifying a cross compiler but you want to have the default compiler at some point during the compilation step.
         """
-        return Config(self.target_name, args_parsed=self._args_parsed, debug=self.debug, rebuild=self.rebuild, verbosity=self.verbosity, nb_jobs=self.nb_jobs, single_file=self.single_file, compile_commands_dir=self.compile_commands_dir, local_config=local_config)
+        return T.cast(_Config, Config(self.target_name, args_parsed=self._args_parsed, debug=self.debug, rebuild=self.rebuild, verbosity=self.verbosity, nb_jobs=self.nb_jobs, single_file=self.single_file, compile_commands_dir=self.compile_commands_dir, local_config=local_config))
 
     def set_debug(self, debug: bool = True, reset_optimization: bool = False) -> None:
         self.debug = debug

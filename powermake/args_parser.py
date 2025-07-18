@@ -21,6 +21,7 @@ import argparse
 import subprocess
 import typing as T
 
+from . import generation
 from .config import Config
 from .utils import makedirs
 from .cache import get_cache_dir
@@ -309,6 +310,8 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
 
     if vscode.generate_vscode_if_asked(config):
         exit(0)
+
+    generation._makefile_targets = []
 
     if config._args_parsed.action == "clean" or config._args_parsed.clean:
         clean = True
