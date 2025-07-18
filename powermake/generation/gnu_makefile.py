@@ -19,7 +19,7 @@ import typing as T
 from ..__version__ import __version__
 from ..config import Config
 from ..utils import handle_filename_conflict
-from . import _makefile_targets
+from .. import generation
 
 MKDIR = "@mkdir -p $(@D)\n\t"
 
@@ -49,7 +49,7 @@ def generate_makefile(config: Config, filepath: str = "Makefile") -> None:
     }
 
     file_content = ""
-    for operations in _makefile_targets:
+    for operations in generation._makefile_targets:
         # operations = [(phony, target, dependencies, command, tool), ]
         target = None
         if len(operations) > 1:
