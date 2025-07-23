@@ -39,11 +39,12 @@ def generate_compile_commands(config: Config, maybe_incomplete: bool = False) ->
                 json_command["output"] = target
 
             deps = list(dependencies)
-            if len(deps) > 0:
+            if len(deps) == 1:
                 json_command["file"] = deps[0]
                 json_commands_files_list.add(deps[0])
 
-            json_commands.append(json_command)
+                json_commands.append(json_command)
+            # else it's not standard
 
     if maybe_incomplete:
         old_json_commands = []
