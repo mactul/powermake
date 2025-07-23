@@ -73,7 +73,7 @@ then
     coverage json -o ../coverage.json
 fi
 
-if [ "$1" == "strict" ] && COV=$(coverage report | tail -n 1 | awk -F " " '{print $4}' | sed 's/.$//') && [ "$COV" -lt 80 ]
+if [ "$1" = "strict" ] && COV=$(coverage report | tail -n 1 | awk -F " " '{print $4}' | sed 's/.$//') && [ "$COV" -lt 80 ]
 then
     printf "\033[31;1mYou don't have enough test coverage ($COV%% < 80%%) !\033[0m\n"
     which firefox

@@ -95,7 +95,7 @@ class Tool(abc.ABC):
         else:
             self.path = path
 
-        self.cache_file = join_absolute_paths(os.path.join(get_cache_dir(), "compiler_flags", self.type), self.path + ".json")
+        self.cache_file = join_absolute_paths(os.path.join(get_cache_dir(), "compiler_flags", self.__class__.__name__), self.path + ".json")
         self.cache = load_cache_from_file(self.cache_file)
         if "supported_flags" not in self.cache:
             self.cache["supported_flags"] = []
