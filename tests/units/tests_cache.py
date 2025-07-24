@@ -1,4 +1,5 @@
 import os
+import time
 import powermake
 import powermake.cache
 from unittest import mock
@@ -35,7 +36,7 @@ def run_tests():
     cache_loaded = powermake.cache.load_cache_from_file(cache_file)
     assert("foo" in cache_loaded and cache_loaded["foo"] == "bar")
 
-    touch("foo") # modify the control filepath
+    touch("foo", (time.time() * 10, time.time() * 10)) # modify the control filepath
     cache_loaded = powermake.cache.load_cache_from_file(cache_file)
     assert(cache_loaded == {} or print("cache_loaded:", cache_loaded))
     powermake.delete_files_from_disk("foo")
