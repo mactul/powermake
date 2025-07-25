@@ -182,7 +182,7 @@ powermake.run("program_test", build_callback=on_build)
 > [!TIP]  
 > You can generate a new makefile for a project by using `python -m powermake` in the project's folder.  
 > If pip's scripts folder (often ~/.local/bin) is in your path, you can also simply run `powermake`  
-> For more details about this, see [Generating a Powermake](./documentation.md#generating-a-powermake).
+> For more details about this, see [Generating a PowerMake](./documentation.md#generating-a-powermake).
 
 
 ## [__More examples__](./examples.md)
@@ -208,7 +208,7 @@ Often pip install scripts in `~/.local/bin`, so if this location is not in your 
 
 Just run `powermake` (or `python -m powermake`) in a project folder and it will generate a default powermake for you.
 
-You can edit this default powermake to better fit your needs, once you've run `powermake` (or `python -m powermake`) at least one time, a file will appear in `~/.powermake/default_powermake.py`. Just edit this file and to what you want as the default powermake template. To reset the default, just delete the file and run `powermake`
+You can edit this default powermake to better fit your needs, once you've run `powermake` (or `python -m powermake`) at least one time, a file will appear in `~/.powermake/default_powermake.py`. Just edit this file to what you want as the default powermake template. To reset the default, just delete the file and run `powermake`
 
 The `powermake` script is no more than a classic powermake makefile (like the one in [Quick Example](#quick-example)), which instead of compiling a C code, generates a file named `makefile.py`.  
 This means that you have access to all usual command line options.  
@@ -294,7 +294,7 @@ Here is the list of flags translated by PowerMake:
 |                    | -Wpedantic     | Warn when the code isn't ISO (typically when C/C++ extension are used). |
 |                    | -pedantic      | Same a -Wpedantic |
 |                    | -Wswitch       | Warn when a switch on an enum lacks a case (enabled by -Wall) |
-|                    | -Wswitch-enum  | Like -Wswitch but warns even if their is a default case |
+|                    | -Wswitch-enum  | Like -Wswitch but warns even if there is a default case |
 |                    | -fanalyzer     | When supported by the compiler, run the code into a static analyzer to detect some bugs. |
 |       on GCC       | -Weverything   | Enable as most warning as possible, even the noisy and irrelevant ones. |
 | :white_check_mark: | -Wsecurity     | Enable all warnings that have a little chance to catch a security issue. |
@@ -304,7 +304,7 @@ Here is the list of flags translated by PowerMake:
 |                    | -O             | Same as -O1. |
 |                    | -O2            | Performs nearly all supported optimizations. |
 |                    | -O3            | Optimize aggressively for speed. |
-|                    | -Ofast         | Enable all -O3 optimizations + some some optimization that can brake the program. |
+|                    | -Ofast         | Enable all -O3 optimizations + some optimization that can brake the program. |
 |                    | -Os            | Optimize for size. |
 |                    | -Oz            | Optimize aggressively for size rather than speed. |
 |                    | -fomit-frame-pointer | Omit the frame pointer in functions that don’t need one. |
@@ -1815,8 +1815,8 @@ This function is a wrapper of lower-level powermake functions.
 
 From a set or a list of `.c`, `.cpp`, `.cc`, `.C`, `.s`, `.S`, `.rc` and `.asm` filepaths and a [powermake.Config](#powermakeconfig) object, runs the compilation of each file in parallel, with the appropriate compiler and options found in `config`.
 
-- If `force` is True, all files are recompiled, even if they are up to date.
-- If `force` is False, only the files that are not up to date are recompiled
+- If `force` is True, all files are recompiled, even if they are up-to-date.
+- If `force` is False, only the files that are not up-to-date are recompiled
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 Returns a set of `.o` (or compiler equivalent) filepaths for the next step.  
@@ -1835,8 +1835,8 @@ From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by
 - if `archive_name` is None, the `config.target_name` is concatenated with the prefix `"lib"` so if `config.target_name` is `"XXX"`, the name will be `"libXXX"` and then the extension given by the type of archiver is added.
 - if `archiver_name` is not None, only the extension is added, if you want to use this parameter and you want your lib to be `"libXXX"`, you have to explicitly write `"libXXX"`.
 
-- If `force` is True, the archive is re-created, even if it's up to date.
-- If `force` is False, the archive is created only if not up to date.
+- If `force` is True, the archive is re-created, even if it's up-to-date.
+- If `force` is False, the archive is created only if not up-to-date.
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 Returns the path of the static library generated.
@@ -1854,8 +1854,8 @@ From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by
 - if `executable_name` is None, the `config.target_name` is used with the extension given by the type of linker.
 - if `executable_name` is not None, his value is concatenated with the extension.
 
-- If `force` is True, the executable is re-created, even if it's up to date.
-- If `force` is False, the executable is created only if not up to date.
+- If `force` is True, the executable is re-created, even if it's up-to-date.
+- If `force` is False, the executable is created only if not up-to-date.
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 Returns the path of the executable generated.
@@ -1873,8 +1873,8 @@ From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by
 - if `lib_name` is None, the `config.target_name` is concatenated with the prefix `"lib"` so if `config.target_name` is `"XXX"`, the name will be `"libXXX"` and then the extension given by the type of shared linker is added.
 - if `lib_name` is not None, only the extension is added, if you want to use this parameter and you want your lib to be `"libXXX"`, you have to explicitly write `"libXXX"`.
 
-- If `force` is True, the lib is re-created, even if it's up to date.
-- If `force` is False, the lib is created only if not up to date.
+- If `force` is True, the lib is re-created, even if it's up-to-date.
+- If `force` is False, the lib is created only if not up-to-date.
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 Returns the path of the shared library generated.
@@ -1931,7 +1931,7 @@ Raise a PowerMakeRuntimeError if the command fails.
 
 
 - If `force` is True, the command is run anyway.
-- If `force` is False, the command is only run if `outputfile` is up to date with its dependencies.
+- If `force` is False, the command is only run if `outputfile` is up-to-date with its dependencies.
 - If `force` is None (default), the value of `config.rebuild` is used.
 
 `**kwargs` is passed to `powermake.run`
@@ -1945,7 +1945,7 @@ powermake.needs_update(outputfile: str, dependencies: set, additional_includedir
 > [!NOTE]  
 > This function is low-level.
 
-Returns whether `outputfile` is up to date with all his dependencies.  
+Returns whether `outputfile` is up-to-date with all his dependencies.  
 If `dependencies` include C/C++ files and headers, all headers these files include recursively will be added as hidden dependencies.
 
 The `additional_includedirs` list is required to discover hidden dependencies. You must set this to the additional includedirs used during the compilation of `outputfile`. You can use [config.additional_includedirs](#additional_includedirs) if needed.
@@ -2000,7 +2000,7 @@ This list is then directly passed to `subprocess.run`
 operation.execute(force: bool = False) -> str
 ```
 
-Run the `command` if `outputfile` is not up to date.
+Run the `command` if `outputfile` is not up-to-date.
 
 If `force` is True, the command is run in any case.
 
@@ -2099,7 +2099,7 @@ We recommend you try compiling your code with different static analyzers to catc
 We especially recommend gcc and the `-fanalyzer` option, it's one of the most powerful analyzer we know and PowerMake will ensure that this flag will be removed if unsupported.
 
 > [!TIP]  
-> You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accros translation units.
+> You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accross translation units.
 > Simply writing `config.add_flags('-fanalyzer')` in the beginning of your build callback will ensure that.
 
 

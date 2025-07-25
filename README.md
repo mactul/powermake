@@ -11,7 +11,7 @@
 - [PowerMake](#powermake)
   - [__TLDR__](#tldr)
   - [What is PowerMake?](#what-is-powermake)
-  - [Does PowerMake generates a Makefile like CMake ?](#does-powermake-generates-a-makefile-like-cmake-)
+  - [Does PowerMake generate a Makefile like CMake ?](#does-powermake-generate-a-makefile-like-cmake-)
   - [For which project is PowerMake suitable?](#for-which-project-is-powermake-suitable)
   - [Advantages of PowerMake](#advantages-of-powermake)
   - [Disadvantages of PowerMake](#disadvantages-of-powermake)
@@ -76,7 +76,7 @@ Powermake extends what is possible to do during the compilation by providing a l
 Powermake is entirely configurable, but for every behavior you haven't explicitly defined, PowerMake will do most of the job for you by detecting installed toolchains, translating compiler flags, etc...
 
 
-## Does PowerMake generates a Makefile like CMake ?
+## Does PowerMake generate a Makefile like CMake ?
 
 Not by default.
 PowerMake does not build on top of make, it replaces make.
@@ -242,7 +242,7 @@ We recommend you try compiling your code with different static analyzers to catc
 We especially recommend gcc and the `-fanalyzer` option, it's one of the most powerful analyzer we know and PowerMake will ensure that this flag will be removed if unsupported.
 
 > [!TIP]  
-> You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accros translation units.
+> You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work across translation units.
 > Simply writing `config.add_flags('-fanalyzer')` in the beginning of your build callback will ensure that.
 
 
@@ -326,7 +326,7 @@ VSCode uses 3 important json files:
 > You need the Microsoft C/C++ Extension Pack for this to work
 
 
-If the tip above isn't enough to set up vscode, here is more details:
+If the tip above isn't enough to set up vscode, here are more details:
 
 
 > [!IMPORTANT]  

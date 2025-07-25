@@ -3,10 +3,10 @@
 ### [<- Previous tutorial (Cross-platform Library)](../02-crossplatform-library/README.md)
 
 > [!IMPORTANT]  
-> This tutorial assumes that you have followed at least the first one: [First Powermake](../01-first-powermake/README.md)
+> This tutorial assumes that you have followed at least the first one: [First PowerMake](../01-first-powermake/README.md)
 
 
-If you have ever made a GNU Makefile, you may be used to create Makefiles with numerous different targets.  
+If you have ever made a GNU Makefile, you may be used to create makefiles with numerous targets.  
 For example a target to compile a lib in static mode, one to compile in shared mode, a target to generate the docs, etc...
 
 With PowerMake, you need to handle your targets differently.
@@ -15,11 +15,11 @@ You must differentiate two types of targets.
 - The ones that don't have anything related to the others
 - The ones that share or depends on the main makefile
 
-For the former, the answer is easy, don't fear to make multiple makefiles. beaucoup you don't need to name your makefile `makefile.py` you can easily have `generate_docs.py`, `generate_tests.py`, etc...
+For the former, the answer is easy, don't fear to make multiple makefiles. Because you don't need to name your makefile `makefile.py` you can easily have `generate_docs.py`, `generate_tests.py`, etc...
 
 For the latter, you should use custom command line arguments.
 
-Unfortunately, custom command line arguments are a little bit advanced and they require a little bit of practice.
+Unfortunately, custom command line arguments are a little advanced and they require a little practice.
 
 ## Custom Command Line Arguments
 
@@ -92,16 +92,16 @@ Here we just store the result in a global variable.
 powermake.run("my_project", build_callback=on_build, args_parsed=args_parsed)
 ```
 
-And finally, we can call `powermake.run` with the Namespace of parsed args.
+And finally, we can call `powermake.run` with the Namespace of parsed arguments.
 
 
 Most of the time you will need to use boolean arguments (with `action="store_true"`).  
 Obviously you can also have different type of arguments.  
-You can't really have positional arguments because those are already all used by PowerMake for the test callback but you can do almost anything you want with named arguments.
+You can't really have positional arguments because those are already all used by PowerMake for the test callback, but you can do almost anything you want with named arguments.
 
 > [!TIP]  
 > Avoid using single letter arguments for future-proof makefiles because you have a high risk to have a conflict with a future version of PowerMake.  
-> To be perfectly future-proof, a good practice might be to prefix each of your arg with a name of your own. For example if the program you're compiling is called zorglub, a custom argument might be `--zb-enable-something`.
+> To be perfectly future-proof, a good practice might be to prefix each of your argument with a name of your own. For example if the program you're compiling is called zorglub, a custom argument might be `--zb-enable-something`.
 
 
 If you want to know everything you can do with the command line, please refer to the [argparse documentation](https://docs.python.org/3/library/argparse.html); however this documentation might not be very easy to read so here are some common examples:
@@ -141,6 +141,49 @@ parser.add_argument("--zb-color-rgb", nargs=3, help="specify the zorglub main co
 args_parsed = parser.parse_args()
 
 print(args_parsed)
+```
+
+## Specifying executables/libraries names
+
+Using custom command line arguments you can easily conditionally compile different pieces of code.
+However, this doesn't serve a ton of purpose if you can only link files with the name specified in `powermake.run`.
+
+Hopefully, `powermake.link_files`, `powermake.archive_files` and `powermake.link_shared_lib` all have an optional argument to specify the output file name.
+
+For example, let's compile a lib under different names if it's hardened:
+```py
+import powermake
+
+my_lib_hardened: bool = False
+
+
+def on_build(config: powermake.Config):
+    files = powermake.get_files("**/*.c")
+
+    if my_lib_hardened:
+        config.add_flags("-fsecurity")
+
+    objects = powermake.compile_files(config, files)
+
+    if my_lib_hardened:
+        lib_name = f"lib{config.target_name}-hardened"
+    else:
+        lib_name = f"lib{config.target_name}"
+
+    powermake.archive_files(config, powermake.filter_files(objects, "**/test.*"), archive_name=lib_name)
+    powermake.link_shared_lib(config, powermake.filter_files(objects, "**/test.*"), lib_name=lib_name)
+
+    powermake.link_files(config, objects, executable_name="test_lib")
+
+
+parser = powermake.ArgumentParser()
+parser.add_argument("--ml-hardened", help="Harden the lib my_lib", action="store_true")
+args_parsed = parser.parse_args()
+
+if args_parsed.ml_hardened:
+    my_lib_hardened = True
+
+powermake.run("my_lib", build_callback=on_build, args_parsed=args_parsed)
 ```
 
 ### [-> Next tutorial (Configuration and Cross-compilation)](../04-configuration-and-crosscompilation/README.md)
