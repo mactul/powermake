@@ -9,19 +9,20 @@
 [![Code Coverage](https://mactul.github.io/powermake/badges/coverage.svg)](https://github.com/mactul/powermake/actions)
 
 - [PowerMake](#powermake)
-  - [TLDR](#tldr)
+  - [__TLDR__](#tldr)
   - [What is PowerMake?](#what-is-powermake)
   - [Does PowerMake generates a Makefile like CMake ?](#does-powermake-generates-a-makefile-like-cmake-)
   - [For which project is PowerMake suitable?](#for-which-project-is-powermake-suitable)
   - [Advantages of PowerMake](#advantages-of-powermake)
   - [Disadvantages of PowerMake](#disadvantages-of-powermake)
   - [Philosophy](#philosophy)
-  - [Installation](#installation)
-  - [Install from Pypi: (RECOMMENDED)](#install-from-pypi-recommended)
-  - [install from sources: (NOT RECOMMENDED AT ALL)](#install-from-sources-not-recommended-at-all)
-  - [Quick Example](#quick-example)
-  - [More examples](#more-examples)
-  - [Documentation](#documentation)
+  - [__Installation__](#installation)
+    - [Install from Pypi: (RECOMMENDED)](#install-from-pypi-recommended)
+    - [install from sources: (NOT RECOMMENDED)](#install-from-sources-not-recommended)
+  - [__Quick Example__](#quick-example)
+  - [__More examples__](#more-examples)
+  - [__Tutorials__](#tutorials)
+  - [__Documentation__](#documentation)
   - [Compatibility with other tools](#compatibility-with-other-tools)
     - [Scan-Build](#scan-build)
     - [LLVM CodeChecker](#llvm-codechecker)
@@ -30,7 +31,7 @@
     - [Visual Studio Code](#visual-studio-code)
 
 
-## TLDR
+## __TLDR__
 
 Use PowerMake to write cross-platform makefiles.  
 The idea is to create a python script and use python powermake library to compile all your project reliably with the least amount of effort as possible.
@@ -136,14 +137,14 @@ Powermake is read as a script. the order of each instruction has a capital impor
 
 
 <!--snippet:installation_and_examples-->
-## Installation
+## __Installation__
 
 > [!WARNING]  
 > In this documentation, the command `python` refers to python >= python 3.7.  
 > On old systems, `python` and `pip` can refer to python 2.7, in this case, use `python3` and `pip3`.
 
 
-## Install from Pypi: (RECOMMENDED)
+### Install from Pypi: (RECOMMENDED)
 
 ```sh
 pip install -U powermake
@@ -151,14 +152,16 @@ pip install -U powermake
 Don't hesitate to run this command regularly to benefit from new features and bug fixes.
 
 
-## install from sources: (NOT RECOMMENDED AT ALL)
+### install from sources: (NOT RECOMMENDED)
 
-Version installed from sources might be untested and might not work at all.
+The main branch might be untested and might not work at all.  
+If you really want to install from sources, we suggest you to checkout to the latest tag and build from this point in the history.
 
 ```sh
-# USE AT YOUR OWN RISKS
 pip install -U build twine
 git clone https://github.com/mactul/powermake
+# Checkout to the latest tag
+git checkout $(git tag | tail -n1)
 cd powermake
 sed -i "s/{{VERSION_PLACEHOLDER}}/0.0.0/g" pyproject.toml
 rm -rf ./dist/
@@ -167,7 +170,7 @@ pip install -U dist/powermake-*-py3-none-any.whl --force-reinstall
 ```
 
 
-## Quick Example
+## __Quick Example__
 
 This example compiles all `.c` and `.cpp` files that are recursively in the same folder as the python script and generate an executable named `program_test`
 
@@ -200,18 +203,31 @@ powermake.run("program_test", build_callback=on_build)
 > For more details about this, see [Generating a Powermake](./documentation.md#generating-a-powermake).
 
 
-## [More examples](./examples.md)
+## [__More examples__](./examples.md)
+<hr>
+<br>
 
-**See more examples [here](./examples.md).**
+:pencil: **See more examples [here](./examples.md).**
+
+<br>
+
 <!--/snippet-->
 
-## [Documentation](./documentation.md#documentation)
+## [__Tutorials__](./tutorials/)
+<hr>
+<br>
 
-**Follow step-by-step tutorials [here](./tutorials/).**
+:bulb: **Follow step-by-step tutorials [here](./tutorials/).**
 
-or
+<br>
 
-**Read the documentation [here](./documentation.md#documentation).**
+## [__Documentation__](./documentation.md#documentation)
+<hr>
+<br>
+
+:books: **Read the documentation [here](./documentation.md#documentation).**
+
+<br>
 
 <!--snippet:compatibility_with_other_tools-->
 ## Compatibility with other tools
