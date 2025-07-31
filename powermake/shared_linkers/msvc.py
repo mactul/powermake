@@ -18,7 +18,7 @@ import typing as T
 from .common import SharedLinker
 
 
-_powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_warning_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-w": [],
     "-Wall": [],
     "-Wextra": [],
@@ -33,7 +33,7 @@ _powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": []
 }
 
-_powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_optimization_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-O0": ["/Od"],
     "-Og": ["/Od"],
     "-O": ["/O1"],
@@ -46,7 +46,7 @@ _powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-fomit-frame-pointer": ["/Oy"],
 }
 
-_powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_machine_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-m32": [],
     "-m64": [],
     "-march=native": [],
@@ -59,7 +59,7 @@ _powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-mavx2": ["/arch:AVX2"]
 }
 
-_powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     **_powermake_warning_flags_to_msvc_flags,
     **_powermake_optimization_flags_to_msvc_flags,
     **_powermake_machine_flags_to_msvc_flags,
@@ -79,14 +79,17 @@ class SharedLinkerMSVC(SharedLinker):
     def __init__(self, path: str = "link") -> None:
         super().__init__(path, _powermake_flags_to_msvc_flags)
 
-    def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
+    def format_args(self, shared_libs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
         return [(lib if lib.endswith(".lib") else lib + ".lib") for lib in shared_libs] + self.translate_flags(flags)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/DLL", "/nologo", *args, "/out:" + outputfile, *objectfiles, *archives]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, "/WX", arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, "/WX", *arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
+        else:
+            return subprocess.run([self.path, "/WX", arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
 
 
 class SharedLinkerClang_CL(SharedLinkerMSVC):

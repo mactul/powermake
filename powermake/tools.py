@@ -33,7 +33,7 @@ from .display import error_text, warning_text, print_debug_info
 from .cache import load_cache_from_file, store_cache_to_file, get_cache_dir
 
 
-_powermake_flags_to_gnu_flags: T.Dict[str, T.List[str]] = {
+_powermake_flags_to_gnu_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-Wsecurity": ["-Wall", "-Wextra", "-fanalyzer", "-Wformat-security", "-Wformat", "-Wconversion", "-Wsign-conversion", "-Wtrampolines", "-Wbidi-chars=any,ucn"],
     "-fsecurity=1": ["-Wsecurity", "-fstrict-flex-arrays=2", "-fcf-protection=full", "-mbranch-protection=standard", "-Wl,-z,nodlopen", "-Wl,-z,noexecstack", "-Wl,-z,relro", "-fPIE", "-pie", "-fPIC", "-fno-delete-null-pointer-checks", "-fno-strict-overflow", "-fno-strict-aliasing", "-fexceptions", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"],
     "-fsecurity=2": ["-fsecurity=1", "-D_FORTIFY_SOURCE=3", "-D_GLIBCXX_ASSERTIONS", "-fstack-clash-protection", "-fstack-protector-strong", "-Wl,-z,now", "-ftrivial-auto-var-init=zero"],
@@ -66,12 +66,12 @@ class EnforcedType(str):
 class Tool(abc.ABC):
     type: T.ClassVar = ""
 
-    def __init__(self, path: T.Union[str, T.List[str]], translation_dict: T.Union[T.Dict[str, T.List[str]], None] = None) -> None:
+    def __init__(self, path: T.Union[str, T.List[str]], translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None) -> None:
         if translation_dict is None:
             self.translation_dict = _powermake_flags_to_gnu_flags.copy()
         else:
             self.translation_dict = translation_dict.copy()
-        self.verified_translation_dict: T.Dict[str, T.List[str]] = {}
+        self.verified_translation_dict: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {}
         self.cache: T.Dict[str, T.Any] = {}
         if isinstance(path, str):
             self._name = path
@@ -103,10 +103,10 @@ class Tool(abc.ABC):
             self.cache["unsupported_flags"] = []
 
     @abc.abstractmethod
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return False
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        return True
 
-    def _flag_exists(self, f: str) -> T.Tuple[bool, bool]:
+    def _flag_exists(self, f: T.Union[str, T.Tuple[str, ...]]) -> T.Tuple[bool, bool]:
         if f in self.cache["unsupported_flags"]:
             return (False, False)
         if f in self.cache["supported_flags"]:
@@ -117,7 +117,7 @@ class Tool(abc.ABC):
         self.cache["unsupported_flags"].append(f)
         return (False, True)
 
-    def _translate_flag(self, flag: str, output_list: T.List[str], already_translated_flags: T.List[str]) -> bool:
+    def _translate_flag(self, flag: T.Union[str, T.Tuple[str, ...]], output_list: T.List[str], already_translated_flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> bool:
         if isinstance(flag, EnforcedFlag):
             output_list.append(flag)
             return False
@@ -126,14 +126,21 @@ class Tool(abc.ABC):
         already_translated_flags.append(flag)
 
         if flag in self.verified_translation_dict:
-            output_list.extend(self.verified_translation_dict[flag])
+            for f in self.verified_translation_dict[flag]:
+                if isinstance(f, tuple):
+                    output_list.extend(f)
+                else:
+                    output_list.append(f)
             return False
 
         if flag not in self.translation_dict or len(self.translation_dict[flag]) >= 2:
             valid, cache_modified = self._flag_exists(flag)
             if valid:
                 self.verified_translation_dict[flag] = [flag]
-                output_list.append(flag)
+                if isinstance(flag, tuple):
+                    output_list.extend(flag)
+                else:
+                    output_list.append(flag)
                 return cache_modified
             elif flag not in self.translation_dict:
                 # This flag is not valid and not in any translation table, we must remove it.
@@ -157,13 +164,16 @@ class Tool(abc.ABC):
                 if f not in self.verified_translation_dict[flag]:
                     self.verified_translation_dict[flag].append(f)
                 if f not in output_list:
-                    output_list.append(f)
+                    if isinstance(f, tuple):
+                        output_list.extend(f)
+                    else:
+                        output_list.append(f)
 
         return cache_modified
 
-    def translate_flags(self, flags: T.List[str]) -> T.List[str]:
+    def translate_flags(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
         translated_flags: T.List[str] = []
-        already_translated_flags: T.List[str] = []
+        already_translated_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
         cache_modified = False
         for flag in flags:
             cache_modified = self._translate_flag(flag, translated_flags, already_translated_flags) or cache_modified
@@ -173,7 +183,7 @@ class Tool(abc.ABC):
 
         return translated_flags
 
-    def remove_flag(self, flag: str) -> None:
+    def remove_flag(self, flag: T.Union[str, T.Tuple[str, ...]]) -> None:
         for k in self.translation_dict:
             if flag in self.translation_dict[k]:
                 self.translation_dict[k].remove(flag)

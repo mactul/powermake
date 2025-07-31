@@ -372,14 +372,14 @@ class Config:
         self.defines: T.List[str] = []
         self.shared_libs: T.List[str] = []
         self.additional_includedirs: T.List[str] = []
-        self.c_flags: T.List[str] = []
-        self.cpp_flags: T.List[str] = []
-        self.as_flags: T.List[str] = []
-        self.asm_flags: T.List[str] = []
-        self.rc_flags: T.List[str] = []
-        self.ar_flags: T.List[str] = []
-        self.ld_flags: T.List[str] = []
-        self.shared_linker_flags: T.List[str] = []
+        self.c_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.cpp_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.as_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.asm_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.rc_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.ar_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.ld_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+        self.shared_linker_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
 
         self.exported_headers: T.List[T.Tuple[str, T.Union[str, None]]] = []
 
@@ -616,16 +616,26 @@ class Config:
         self.set_target_architecture(self.target_architecture, False)
 
     @property
-    def c_cpp_flags(self) -> T.List[str]:
-        return self.c_flags + self.cpp_flags
+    def c_cpp_flags(self) -> T.List[T.Union[str, T.Tuple[str, ...]]]:
+        return self.c_flags + [flag for flag in self.cpp_flags if flag not in self.c_flags]
 
     @property
-    def c_cpp_as_asm_flags(self) -> T.List[str]:
-        return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags
+    def c_cpp_as_asm_flags(self) -> T.List[T.Union[str, T.Tuple[str, ...]]]:
+        flags = self.c_flags
+        flags += [flag for flag in self.cpp_flags if flag not in self.c_flags]
+        flags += [flag for flag in self.as_flags if flag not in self.c_flags and flag not in self.cpp_flags]
+        flags += [flag for flag in self.asm_flags if flag not in self.c_flags and flag not in self.cpp_flags and flag not in self.as_flags]
+        return flags
 
     @property
-    def flags(self) -> T.List[str]:
-        return self.c_flags + self.cpp_flags + self.as_flags + self.asm_flags + self.shared_linker_flags + self.ld_flags
+    def flags(self) -> T.List[T.Union[str, T.Tuple[str, ...]]]:
+        flags = self.c_flags
+        flags += [flag for flag in self.cpp_flags if flag not in self.c_flags]
+        flags += [flag for flag in self.as_flags if flag not in self.c_flags and flag not in self.cpp_flags]
+        flags += [flag for flag in self.asm_flags if flag not in self.c_flags and flag not in self.cpp_flags and flag not in self.as_flags]
+        flags += [flag for flag in self.ld_flags if flag not in self.c_flags and flag not in self.cpp_flags and flag not in self.as_flags and flag not in self.asm_flags]
+        flags += [flag for flag in self.shared_linker_flags if flag not in self.c_flags and flag not in self.cpp_flags and flag not in self.as_flags and flag not in self.asm_flags and flag not in self.ld_flags]
+        return flags
 
     def reload_env(self) -> None:
         if self.target_architecture == "" or self.host_architecture == "":
@@ -774,7 +784,7 @@ class Config:
 
     def get_optimization_level(self) -> T.Union[str, None]:
         for flag in reversed(self.c_cpp_flags):
-            if flag in ("-O0", "-Og", "-O", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer"):
+            if isinstance(flag, str) and flag in ("-O0", "-Og", "-O", "-O1", "-O2", "-O3", "-Os", "-Oz", "-Ofast", "-fomit-frame-pointer"):
                 return flag
         return None
 
@@ -817,45 +827,45 @@ class Config:
     def remove_includedirs(self, *includedirs: str) -> None:
         self.additional_includedirs = [dir for dir in self.additional_includedirs if dir not in includedirs]
 
-    def add_c_flags(self, *c_flags: str) -> None:
+    def add_c_flags(self, *c_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.c_flags.extend(c_flags)
 
-    def remove_c_flags(self, *c_flags: str) -> None:
+    def remove_c_flags(self, *c_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.c_flags = [flag for flag in self.c_flags if flag not in c_flags]
         if self.c_compiler is not None:
             for flag in c_flags:
                 self.c_compiler.remove_flag(flag)
 
-    def add_cpp_flags(self, *cpp_flags: str) -> None:
+    def add_cpp_flags(self, *cpp_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.cpp_flags.extend(cpp_flags)
 
-    def remove_cpp_flags(self, *cpp_flags: str) -> None:
+    def remove_cpp_flags(self, *cpp_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.cpp_flags = [flag for flag in self.cpp_flags if flag not in cpp_flags]
         if self.cpp_compiler is not None:
             for flag in cpp_flags:
                 self.cpp_compiler.remove_flag(flag)
 
-    def add_c_cpp_flags(self, *c_cpp_flags: str) -> None:
+    def add_c_cpp_flags(self, *c_cpp_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.add_c_flags(*c_cpp_flags)
         self.add_cpp_flags(*c_cpp_flags)
 
-    def remove_c_cpp_flags(self, *c_cpp_flags: str) -> None:
+    def remove_c_cpp_flags(self, *c_cpp_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.remove_c_flags(*c_cpp_flags)
         self.remove_cpp_flags(*c_cpp_flags)
 
-    def add_c_cpp_as_asm_flags(self, *c_cpp_as_asm_flags: str) -> None:
+    def add_c_cpp_as_asm_flags(self, *c_cpp_as_asm_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.add_c_flags(*c_cpp_as_asm_flags)
         self.add_cpp_flags(*c_cpp_as_asm_flags)
         self.add_as_flags(*c_cpp_as_asm_flags)
         self.add_asm_flags(*c_cpp_as_asm_flags)
 
-    def remove_c_cpp_as_asm_flags(self, *c_cpp_as_asm_flags: str) -> None:
+    def remove_c_cpp_as_asm_flags(self, *c_cpp_as_asm_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.remove_c_flags(*c_cpp_as_asm_flags)
         self.remove_cpp_flags(*c_cpp_as_asm_flags)
         self.remove_as_flags(*c_cpp_as_asm_flags)
         self.remove_asm_flags(*c_cpp_as_asm_flags)
 
-    def add_flags(self, *flags: str) -> None:
+    def add_flags(self, *flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.add_c_flags(*flags)
         self.add_cpp_flags(*flags)
         self.add_as_flags(*flags)
@@ -863,7 +873,7 @@ class Config:
         self.add_ld_flags(*flags)
         self.add_shared_linker_flags(*flags)
 
-    def remove_flags(self, *flags: str) -> None:
+    def remove_flags(self, *flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.remove_c_flags(*flags)
         self.remove_cpp_flags(*flags)
         self.remove_as_flags(*flags)
@@ -871,55 +881,55 @@ class Config:
         self.remove_ld_flags(*flags)
         self.remove_shared_linker_flags(*flags)
 
-    def add_as_flags(self, *as_flags: str) -> None:
+    def add_as_flags(self, *as_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.as_flags.extend(as_flags)
 
-    def remove_as_flags(self, *as_flags: str) -> None:
+    def remove_as_flags(self, *as_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.as_flags = [flag for flag in self.as_flags if flag not in as_flags]
         if self.as_compiler is not None:
             for flag in as_flags:
                 self.as_compiler.remove_flag(flag)
 
-    def add_asm_flags(self, *asm_flags: str) -> None:
+    def add_asm_flags(self, *asm_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.asm_flags.extend(asm_flags)
 
-    def remove_asm_flags(self, *asm_flags: str) -> None:
+    def remove_asm_flags(self, *asm_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.asm_flags = [flag for flag in self.asm_flags if flag not in asm_flags]
         if self.asm_compiler is not None:
             for flag in asm_flags:
                 self.asm_compiler.remove_flag(flag)
 
-    def add_rc_flags(self, *rc_flags: str) -> None:
+    def add_rc_flags(self, *rc_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.rc_flags.extend(rc_flags)
 
-    def remove_rc_flags(self, *rc_flags: str) -> None:
+    def remove_rc_flags(self, *rc_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.rc_flags = [flag for flag in self.rc_flags if flag not in rc_flags]
         if self.rc_compiler is not None:
             for flag in rc_flags:
                 self.rc_compiler.remove_flag(flag)
 
-    def add_ar_flags(self, *ar_flags: str) -> None:
+    def add_ar_flags(self, *ar_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.ar_flags.extend(ar_flags)
 
-    def remove_ar_flags(self, *ar_flags: str) -> None:
+    def remove_ar_flags(self, *ar_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.ar_flags = [flag for flag in self.ar_flags if flag not in ar_flags]
         if self.archiver is not None:
             for flag in ar_flags:
                 self.archiver.remove_flag(flag)
 
-    def add_ld_flags(self, *ld_flags: str) -> None:
+    def add_ld_flags(self, *ld_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.ld_flags.extend(ld_flags)
 
-    def remove_ld_flags(self, *ld_flags: str) -> None:
+    def remove_ld_flags(self, *ld_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.ld_flags = [flag for flag in self.ld_flags if flag not in ld_flags]
         if self.linker is not None:
             for flag in ld_flags:
                 self.linker.remove_flag(flag)
 
-    def add_shared_linker_flags(self, *shared_linker_flags: str) -> None:
+    def add_shared_linker_flags(self, *shared_linker_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.shared_linker_flags.extend(shared_linker_flags)
 
-    def remove_shared_linker_flags(self, *shared_linker_flags: str) -> None:
+    def remove_shared_linker_flags(self, *shared_linker_flags: T.Union[str, T.Tuple[str, ...]]) -> None:
         self.shared_linker_flags = [flag for flag in self.shared_linker_flags if flag not in shared_linker_flags]
         if self.shared_linker is not None:
             for flag in shared_linker_flags:

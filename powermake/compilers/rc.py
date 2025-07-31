@@ -24,11 +24,17 @@ class CompilerWindRes(Compiler):
     def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-windres", "windres"]):
         super().__init__(path)
 
-    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
-        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + flags
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
+        flatten_flags: T.List[str] = []
+        for flag in flags:
+            if isinstance(flag, tuple):
+                flatten_flags.extend(flag)
+            else:
+                flatten_flags.append(flag)
+        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + flatten_flags
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, inputfile, "-O", "coff", "-o", outputfile, *args]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return False
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        return True

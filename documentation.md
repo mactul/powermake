@@ -268,8 +268,19 @@ CC=x86_64-w64-mingw32-gcc python makefile.py -rvd
 
 When this is possible, PowerMake tries to translate C/C++/AS/ASM/LD flags.
 
-Only the most common flags are known and therefore translated by PowerMake.
-For all flags that PowerMake is able to translate, PowerMake will check at runtime if the flag is compatible with your compiler and if not, the flag will be removed, a warning will be displayed, but the compilation will not be aborted.
+The most common flags (see the list below) are translated by PowerMake across compilers. For example, `-Wall` is translated into `/W3` under MSVC.  
+The flags are translated from the GCC/Clang syntax to the syntax of the other compilers, never the opposite.
+
+All other flags are checked by PowerMake at runtime. If the compiler doesn't support the flag, the flag is removed and PowerMake emits a yellow warning, so you can verify it was not an important flag.
+
+> [!IMPORTANT]  
+> flags are checked one by one, so if you naively write `config.add_flags("-isystem", "/usr/local/include/")`, `-isystem` will be removed because alone it makes no sense and `/usr/local/include/` will be removed for the same reason.  
+> To prevent that, you can group flags together with a tuple, so they will be checked together.  
+> For example:
+> ```py
+> config.add_flags("-Wall", ("-isystem", "/usr/local/include/"))
+> ```
+> In this example, `-Wall` will be checked alone and `-isystem` and its directory will be checked together.
 
 > [!TIP]  
 > You can disable translation and automatic flag removal for a specific flag by using `powermake.EnforcedFlag`.
@@ -280,9 +291,10 @@ For all flags that PowerMake is able to translate, PowerMake will check at runti
 > In this example, the `-fanalyzer` flag will be removed if unsupported (for example if you are using clang), but the `-S` will be kept untouched no matter what.
 
 
-There is also some flags that PowerMake defines that doesn't exist in any compiler, these are set of useful flags for a situation.
+There is also some flags that PowerMake defines that doesn't exist in any compiler, like `-fsecurity`.
+These flags are marked with :white_check_mark: on the first column below.
 
-Here is the list of flags translated by PowerMake:
+Here is the list of flags translated by PowerMake across compilers:
 
 
 | PowerMake Specific | PowerMake Flag |  Description                   |
@@ -1327,14 +1339,20 @@ Add flags to [config.flags](#flags) if they do not exist.
 This method is variadic so you can put as many flags as you want.  
 The list order is preserved.
 
+> [!NOTE]
+> If a flag is made of multiple command line arguments, like `-isystem /usr/local/include`, you can't put a space between them, but you can group them in a tuple like `config.add_flags('-some_other_flag', ('-isystem', '/usr/local/include))`.
+This will ensure that the flags are translated together (see [flags translation](#powermake-flags-translation)).  
+> Use a tuple and never a list, because all flags need to be hashable.
+
 <details>
 <summary>Example</summary>
 
 ```py
 def on_build(config: powermake.Config):
-    config.add_flags("-flto", "-fanalyzer")
+    config.add_flags("-flto", "-fanalyzer", ("-isystem", "/usr/local/include/"))
     # The lto and fanalyzer flag will be added to every compiler (C/C++/AS/ASM) and to the linker
-    # Here, it's a very good way to have cross-translation-unit static analysis.
+    # This specific combo is a very good way to have cross-translation-unit static analysis.
+    # The flag isystem /usr/local/include/ will also be added to every compiler and to the linker, but it's just to show that you can group flags in tuples so they will be checked and translated together.
 
     files = powermake.get_files("**/*.c")
     objects = powermake.compile_files(config, files)
@@ -1360,9 +1378,10 @@ The list order is preserved.
 config.add_c_flags(*c_flags: str)
 ```
 
-Add flags to [config.c_flags](#c_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.c_flags](#c_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_c_flags()
@@ -1380,9 +1399,10 @@ The list order is preserved.
 config.add_cpp_flags(*cpp_flags: str)
 ```
 
-Add flags to [config.cpp_flags](#cpp_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.cpp_flags](#cpp_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_cpp_flags()
@@ -1400,9 +1420,10 @@ The list order is preserved.
 config.add_c_cpp_flags(*c_cpp_flags: str)
 ```
 
-Add flags to [config.c_cpp_flags](#c_cpp_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.c_cpp_flags](#c_cpp_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_c_cpp_flags()
@@ -1420,9 +1441,10 @@ The list order is preserved.
 config.add_as_flags(*as_flags: str)
 ```
 
-Add flags to [config.as_flags](#as_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.as_flags](#as_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_as_flags()
@@ -1440,9 +1462,10 @@ The list order is preserved.
 config.add_asm_flags(*asm_flags: str)
 ```
 
-Add flags to [config.asm_flags](#asm_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.asm_flags](#asm_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_asm_flags()
@@ -1460,9 +1483,10 @@ The list order is preserved.
 config.add_c_cpp_as_asm_flags(*c_cpp_as_asm_flags: str)
 ```
 
-Add flags to [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.c_cpp_as_asm_flags](#c_cpp_as_asm_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_c_cpp_as_asm_flags()
@@ -1479,9 +1503,10 @@ The list order is preserved.
 config.add_rc_flags(*rc_flags: str)
 ```
 
-Add flags to [config.rc_flags](#rc_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.rc_flags](#rc_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_rc_flags()
@@ -1499,9 +1524,10 @@ The list order is preserved.
 config.add_ar_flags(*ar_flags: str)
 ```
 
-Add flags to [config.ar_flags](#ar_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.ar_flags](#ar_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_ar_flags()
@@ -1519,9 +1545,10 @@ The list order is preserved.
 config.add_ld_flags(*ld_flags: str)
 ```
 
-Add flags to [config.ld_flags](#ld_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.ld_flags](#ld_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_ld_flags()
@@ -1539,9 +1566,10 @@ The list order is preserved.
 config.add_shared_linker_flags(*shared_linker_flags: str)
 ```
 
-Add flags to [config.shared_linker_flags](#shared_linker_flags) if they do not exist.  
-This method is variadic so you can put as many flags as you want.  
-The list order is preserved.
+Add flags to [config.shared_linker_flags](#shared_linker_flags) if they do not exist.
+
+It behave the same as [config.add_flags](#add_flags).  
+See [config.add_flags](#add_flags) for details and examples.
 
 
 ##### remove_shared_linker_flags()

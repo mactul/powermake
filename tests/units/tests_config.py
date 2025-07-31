@@ -2,31 +2,31 @@ import powermake
 import powermake.compilers
 
 def on_build(config: powermake.Config):
-    config.add_c_flags("-Wall", "-Wextra")
-    assert("-Wall" in config.c_flags and "-Wextra" in config.c_flags)
+    config.add_c_flags("-Wall", "-Wextra", ("-isystem", "/usr/include/c_flags"))
+    assert("-Wall" in config.c_flags and "-Wextra" in config.c_flags and ("-isystem", "/usr/include/c_flags") in config.c_flags)
 
-    config.add_cpp_flags("-Wall", "-Wextra")
-    assert("-Wall" in config.cpp_flags and "-Wextra" in config.cpp_flags)
+    config.add_cpp_flags("-Wall", "-Wextra", ("-isystem", "/usr/include/cpp_flags"))
+    assert("-Wall" in config.cpp_flags and "-Wextra" in config.cpp_flags and ("-isystem", "/usr/include/cpp_flags") in config.cpp_flags)
 
-    config.add_as_flags("-Wall", "-Wextra")
-    assert("-Wall" in config.as_flags and "-Wextra" in config.as_flags)
+    config.add_as_flags("-Wall", "-Wextra", ("-isystem", "/usr/include/as_flags"))
+    assert("-Wall" in config.as_flags and "-Wextra" in config.as_flags and ("-isystem", "/usr/include/as_flags") in config.as_flags)
 
-    config.add_asm_flags("-Wall", "-Wextra")
-    assert("-Wall" in config.asm_flags and "-Wextra" in config.asm_flags)
+    config.add_asm_flags("-Wall", "-Wextra", ("-isystem", "/usr/include/asm_flags"))
+    assert("-Wall" in config.asm_flags and "-Wextra" in config.asm_flags and ("-isystem", "/usr/include/asm_flags") in config.asm_flags)
 
-    config.add_ld_flags("-Wall", "-Wextra")
-    assert("-Wall" in config.ld_flags and "-Wextra" in config.ld_flags)
+    config.add_ld_flags("-Wall", "-Wextra", ("-isystem", "/usr/include/ld_flags"))
+    assert("-Wall" in config.ld_flags and "-Wextra" in config.ld_flags and ("-isystem", "/usr/include/ld_flags") in config.ld_flags)
 
-    config.add_shared_linker_flags("-Wall", "-Wextra")
-    assert("-Wall" in config.shared_linker_flags and "-Wextra" in config.shared_linker_flags)
+    config.add_shared_linker_flags("-Wall", "-Wextra", ("-isystem", "/usr/include/shared_linker_flags"))
+    assert("-Wall" in config.shared_linker_flags and "-Wextra" in config.shared_linker_flags and ("-isystem", "/usr/include/shared_linker_flags") in config.shared_linker_flags)
 
-    config.remove_flags("-Wall", "-Wextra")
-    assert("-Wall" not in config.c_flags and "-Wextra" not in config.c_flags)
-    assert("-Wall" not in config.cpp_flags and "-Wextra" not in config.cpp_flags)
-    assert("-Wall" not in config.as_flags and "-Wextra" not in config.as_flags)
-    assert("-Wall" not in config.asm_flags and "-Wextra" not in config.asm_flags)
-    assert("-Wall" not in config.ld_flags and "-Wextra" not in config.ld_flags)
-    assert("-Wall" not in config.shared_linker_flags and "-Wextra" not in config.shared_linker_flags)
+    config.remove_flags("-Wall", "-Wextra", *[("-isystem", f"/usr/include/{f}") for f in {"c_flags", "cpp_flags", "as_flags", "asm_flags", "ld_flags", "shared_linker_flags"}])
+    assert("-Wall" not in config.c_flags and "-Wextra" not in config.c_flags and ("-isystem", "/usr/include/c_flags") not in config.c_flags)
+    assert("-Wall" not in config.cpp_flags and "-Wextra" not in config.cpp_flags and ("-isystem", "/usr/include/cpp_flags") not in config.cpp_flags)
+    assert("-Wall" not in config.as_flags and "-Wextra" not in config.as_flags and ("-isystem", "/usr/include/as_flags") not in config.as_flags)
+    assert("-Wall" not in config.asm_flags and "-Wextra" not in config.asm_flags and ("-isystem", "/usr/include/asm_flags") not in config.asm_flags)
+    assert("-Wall" not in config.ld_flags and "-Wextra" not in config.ld_flags and ("-isystem", "/usr/include/ld_flags") not in config.ld_flags)
+    assert("-Wall" not in config.shared_linker_flags and "-Wextra" not in config.shared_linker_flags and ("-isystem", "/usr/include/shared_linker_flags") not in config.shared_linker_flags)
 
     config.add_flags("-Wall", "-Wextra")
     assert("-Wall" in config.c_flags and "-Wextra" in config.c_flags)
@@ -120,5 +120,5 @@ def on_build(config: powermake.Config):
     assert(config.copy().c_compiler.type == "clang")
 
 
-def run_test():
+def run_tests():
     powermake.run("test", build_callback=on_build)

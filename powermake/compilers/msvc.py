@@ -19,7 +19,7 @@ from .common import Compiler
 from ..utils import get_empty_file
 
 
-_powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_warning_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-w": ["/W0"],
     "-Wall": ["/W3"],
     "-Wextra": ["/W4"],
@@ -34,7 +34,7 @@ _powermake_warning_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": ["/fsanitize=address", "/fsanitize=fuzzer"]
 }
 
-_powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_optimization_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-O0": ["/Od"],
     "-Og": ["/Od"],
     "-O": ["/O1"],
@@ -47,7 +47,7 @@ _powermake_optimization_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-fomit-frame-pointer": ["/Oy"],
 }
 
-_powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_machine_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-m32": [],
     "-m64": [],
     "-march=native": [],
@@ -60,7 +60,7 @@ _powermake_machine_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
     "-mavx2": ["/arch:AVX2"]
 }
 
-_powermake_flags_to_msvc_flags: T.Dict[str, T.List[str]] = {
+_powermake_flags_to_msvc_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     **_powermake_warning_flags_to_msvc_flags,
     **_powermake_optimization_flags_to_msvc_flags,
     **_powermake_machine_flags_to_msvc_flags,
@@ -80,14 +80,17 @@ class CompilerMSVC(Compiler):
     def __init__(self, path: str = "cl") -> None:
         super().__init__(path, _powermake_flags_to_msvc_flags)
 
-    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
         return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + self.translate_flags(flags)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "/E", "/options:strict", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, *arg, "/E", "/options:strict", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        else:
+            return subprocess.run([self.path, arg, "/E", "/options:strict", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 class CompilerClang_CL(CompilerMSVC):
     type: T.ClassVar = "clang-cl"

@@ -22,11 +22,11 @@ class Compiler(Tool, abc.ABC):
     type: T.ClassVar = ""
     obj_extension: T.ClassVar = ""
 
-    def __init__(self, path: T.Union[str, T.List[str]], translation_dict: T.Union[T.Dict[str, T.List[str]], None] = None):
+    def __init__(self, path: T.Union[str, T.List[str]], translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None):
         Tool.__init__(self, path, translation_dict)
 
     @abc.abstractmethod
-    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
         return []
 
     @abc.abstractmethod

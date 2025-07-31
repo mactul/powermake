@@ -25,8 +25,18 @@ class ArchiverMSVC(Archiver):
     def __init__(self, path: str = "lib"):
         super().__init__(path)
 
-    def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> T.List[str]:
-        return [self.path, "/nologo", *args, "/out:" + outputfile, *inputfiles]
+    def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
+        flatten_args: T.List[str] = []
+        for arg in args:
+            if isinstance(arg, tuple):
+                flatten_args.extend(arg)
+            else:
+                flatten_args.append(arg)
+        return [self.path, "/nologo", *flatten_args, "/out:" + outputfile, *inputfiles]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "/WX"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, *arg, "/WX"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        else:
+            return subprocess.run([self.path, arg, "/WX"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+

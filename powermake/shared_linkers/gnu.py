@@ -24,17 +24,20 @@ class SharedLinkerGNU(SharedLinker):
     type: T.ClassVar = "gnu"
     shared_lib_extension: T.ClassVar = ".so"
 
-    def __init__(self, path: str = "c++", translation_dict: T.Union[T.Dict[str, T.List[str]], None] = None):
+    def __init__(self, path: str = "c++", translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None):
         super().__init__(path, translation_dict)
 
-    def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
+    def format_args(self, shared_libs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
         return ["-l" + lib for lib in shared_libs] + self.translate_flags(flags)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-shared", "-o", outputfile, *objectfiles, *archives, *args]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, *arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        else:
+            return subprocess.run([self.path, arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class SharedLinkerLD(SharedLinkerGNU):
@@ -43,8 +46,11 @@ class SharedLinkerLD(SharedLinkerGNU):
     def __init__(self, path: str = "ld"):
         super().__init__(path, _powermake_flags_to_ld_flags)
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, *arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        else:
+            return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class SharedLinkerGCC(SharedLinkerGNU):

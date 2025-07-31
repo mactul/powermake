@@ -20,11 +20,11 @@ from ..tools import Tool
 
 
 class Linker(Tool, abc.ABC):
-    def __init__(self, path: str, translation_dict: T.Union[T.Dict[str, T.List[str]], None] = None) -> None:
+    def __init__(self, path: str, translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None) -> None:
         Tool.__init__(self, path, translation_dict)
 
     @abc.abstractmethod
-    def format_args(self, shared_libs: T.List[str], flags: T.List[str]) -> T.List[str]:
+    def format_args(self, shared_libs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
         return []
 
     @abc.abstractmethod

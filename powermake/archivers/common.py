@@ -26,5 +26,5 @@ class Archiver(Tool, abc.ABC):
         Tool.__init__(self, path)
 
     @abc.abstractmethod
-    def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[str] = []) -> T.List[str]:
+    def basic_archive_command(self, outputfile: str, inputfiles: T.Iterable[str], args: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
         return []

@@ -19,7 +19,7 @@ from .common import Compiler
 from ..utils import get_empty_file
 
 
-_powermake_warning_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
+_powermake_warning_flags_to_nasm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-Wextra": ["-Wall"],
     "-Weverything": ["-Wall"],
     "-Wsecurity": ["-Wall"],
@@ -31,7 +31,7 @@ _powermake_warning_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": []
 }
 
-_powermake_optimization_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
+_powermake_optimization_flags_to_nasm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-Og": ["-O1"],
     "-O2": ["-Ox"],
     "-O3": ["-Ox"],
@@ -41,7 +41,7 @@ _powermake_optimization_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
     "-fomit-frame-pointer": [],
 }
 
-_powermake_machine_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
+_powermake_machine_flags_to_nasm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-m32": ["-felf32"],
     "-m64": ["-felf64"],
     "-mmmx": [],
@@ -53,7 +53,7 @@ _powermake_machine_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
 }
 
 # These flags doesn't inherit from tools._powermake_flags_to_gnu_flags because 
-_powermake_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
+_powermake_flags_to_nasm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     **_powermake_warning_flags_to_nasm_flags,
     **_powermake_optimization_flags_to_nasm_flags,
     **_powermake_machine_flags_to_nasm_flags,
@@ -64,7 +64,7 @@ _powermake_flags_to_nasm_flags: T.Dict[str, T.List[str]] = {
 }
 
 
-_powermake_warning_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
+_powermake_warning_flags_to_masm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-w": ["/W0"],
     "-Wall": ["/W2"],
     "-Wextra": ["/W3"],
@@ -77,7 +77,7 @@ _powermake_warning_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
     "-ffuzzer": []
 }
 
-_powermake_optimization_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
+_powermake_optimization_flags_to_masm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-O0": [],
     "-Og": [],
     "-O": [],
@@ -90,7 +90,7 @@ _powermake_optimization_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
     "-fomit-frame-pointer": [],
 }
 
-_powermake_machine_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
+_powermake_machine_flags_to_masm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     "-m32": [],
     "-m64": [],
     "-fwin32": [],
@@ -109,7 +109,7 @@ _powermake_machine_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
     "-mavx2": []
 }
 
-_powermake_flags_to_masm_flags: T.Dict[str, T.List[str]] = {
+_powermake_flags_to_masm_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]] = {
     **_powermake_warning_flags_to_masm_flags,
     **_powermake_optimization_flags_to_masm_flags,
     **_powermake_machine_flags_to_masm_flags,
@@ -129,14 +129,18 @@ class CompilerNASM(Compiler):
     def __init__(self, path: str = "nasm"):
         super().__init__(path, _powermake_flags_to_nasm_flags)
 
-    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
         return [f"-d{define}" for define in defines] + [f"-i{includedir}" for includedir in includedirs] + self.translate_flags(flags)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-o", outputfile, inputfile, *args]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
-        return subprocess.run([self.path, arg, get_empty_file(), "-e"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, *arg, get_empty_file(), "-e"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        else:
+            return subprocess.run([self.path, arg, get_empty_file(), "-e"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+
 
 class CompilerMASM(Compiler):
     type: T.ClassVar = "masm"
@@ -145,14 +149,17 @@ class CompilerMASM(Compiler):
     def __init__(self, path: str = "ml64"):
         super().__init__(path, _powermake_flags_to_masm_flags)
 
-    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[str] = []) -> T.List[str]:
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
         return [f"/D{define}" for define in defines] + [f"/I{includedir}" for includedir in includedirs] + self.translate_flags(flags)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "/c", "/nologo", "/Fo" + outputfile, inputfile, *args]
 
-    def check_if_arg_exists(self, arg: str) -> bool:
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
         try:
-            return b"A4018:invalid command-line option" not in subprocess.check_output([self.path, "/nologo", arg, "/help"], shell=True, stderr=subprocess.DEVNULL)
+            if isinstance(arg, tuple):
+                return b"A4018:invalid command-line option" not in subprocess.check_output([self.path, "/nologo", *arg, "/help"], shell=True, stderr=subprocess.DEVNULL)
+            else:
+                return b"A4018:invalid command-line option" not in subprocess.check_output([self.path, "/nologo", arg, "/help"], shell=True, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             return False
