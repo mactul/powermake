@@ -145,7 +145,14 @@ class Tool(abc.ABC):
             elif flag not in self.translation_dict:
                 # This flag is not valid and not in any translation table, we must remove it.
                 self.verified_translation_dict[flag] = []
-                print(warning_text(f"Warning: the flag {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as powermake.EnforcedFlag(\"{flag}\") instead of \"{flag}\""))
+                if isinstance(flag, tuple) and len(flag) > 0:
+                    enforced_str = ""
+                    for f in flag:
+                        enforced_str += f"powermake.EnforcedFlag({json.dumps(f)}), "
+                    enforced_str = enforced_str[:-2]
+                    print(warning_text(f"Warning: the combination of flags {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as multiple enforced flags: {enforced_str} instead of {flag}"))
+                else:
+                    print(warning_text(f"Warning: the flag {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as powermake.EnforcedFlag({json.dumps(flag)}) instead of {json.dumps(flag)}"))
                 return cache_modified
 
         self.verified_translation_dict[flag] = []
