@@ -6,10 +6,10 @@ import typing as T
 
 from .config import Config
 from .utils import makedirs
-from .display import print_info, print_debug_info
 from .architecture import split_toolchain_prefix
-from .cache import get_cache_dir, load_cache_from_file, check_cache_controls
+from .display import print_info, print_debug_info
 from .version_parser import Version, parse_version, remove_version_frills, PreType
+from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
 
 
 def git_get_server_versions(git_url: str) -> T.List[T.Tuple[str, Version]]:
@@ -139,49 +139,25 @@ def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str
     return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
 
 
-def truc(config: Config, libname: str, install_dir: str, min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False) -> T.Tuple[str, str]:
-    cache = {
-        "system": [
-            {
-                "version": "1!3.5.2-post1",
-                "lib": "/usr/lib/libssl.so",
-                "include": "/usr/include/",
-                "controls": [
-                    {
-                        "filepath": "/usr/lib/libssl.so",
-                        "date": 1754818240.4226027
-                    }
-                ]
-            },
-            {
-                "version": "1!3.5.2-post1",
-                "lib": "/usr/lib32/libssl.so",
-                "include": "/usr/include/",
-                "controls": [
-                    {
-                        "filepath": "/usr/lib32/libssl.so",
-                        "date": 1754818240.4226027
-                    }
-                ]
-            }
-        ],
-        "local": [
-            {
-                "version": "1!3.5.2-post1",
-                "arch": "arm64",
-                "toolchain-prefix": "aarch64-linux-gnu-",
-                "lib": "/home/mactul/Documents/libs/ssl/1!3.5.2-post1/lib/libssl.so",
-                "include": "/home/mactul/Documents/libs/ssl/1!3.5.2-post1/include/",
-                "controls": [
-                    {
-                        "filepath": "/home/mactul/Documents/libs/ssl/1!3.5.2-post1/lib/libssl.so",
-                        "date": 1754818240.4226027
-                    }
-                ]
-            }
-        ]
+def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:
+    new_cache = {
+        "system": [],
+        "local": []
     }
-    cache = load_cache_from_file(os.path.join(get_cache_dir(), "packages", "installed", f"{libname}.json"))
+    for entry in cache["system"]:
+        if "invalid" not in entry:
+            new_cache["system"].append(entry)
+
+    for entry in cache["local"]:
+        if "invalid" not in entry:
+            new_cache["local"].append(entry)
+
+    store_cache_to_file(cache_filepath, cache)
+
+
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+    cache_modified = False
+
     if "system" not in cache:
         cache["system"] = []
     if "local" not in cache:
@@ -201,29 +177,37 @@ def truc(config: Config, libname: str, install_dir: str, min_version: T.Union[st
         # If we find a compatible file installed, no need to search the version number it will be good in any case.
         for filepath in possible_filepaths:
             if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
-                return (filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')))
+                return (cache_modified, filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')), None)
 
+    current_toolchain_prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
 
     for entry in cache["system"]:
         if not check_cache_controls(entry):
+            entry["invalid"] = True
+            cache_modified = True
             continue
         if entry["lib"] in possible_filepaths:
             v = parse_version(entry["version"])
+            if v is None:
+                continue
             if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= v) and (max_v is None or v <= max_v):
                 if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                    return (entry["lib"], entry["include"])
+                    return (cache_modified, entry["lib"], entry["include"], v)
 
     for entry in cache["local"]:
         if not check_cache_controls(entry):
+            entry["invalid"] = True
+            cache_modified = True
             continue
         v = parse_version(entry["version"])
+        if v is None:
+            continue
         if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= v) and (max_v is None or v <= max_v):
-            prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
-            if prefix is not None and prefix == entry["toolchain-prefix"] and config.target_simplified_architecture == entry["arch"]:
+            if current_toolchain_prefix is not None and current_toolchain_prefix == entry["toolchain-prefix"] and config.target_simplified_architecture == entry["arch"]:
                 if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                    return (entry["lib"], entry["include"])
+                    return (cache_modified, entry["lib"], entry["include"], v)
 
-    install_path = os.path.join(install_dir, libname)
+    install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, libname)
     if os.path.isdir(install_path):
         files = os.listdir(install_path)
         versions = []
@@ -237,8 +221,16 @@ def truc(config: Config, libname: str, install_dir: str, min_version: T.Union[st
             lib = os.path.join(lib_dir, autocomplete_filename(lib_dir, f"lib{libname}.so"))
             include = os.path.join(install_path, version[0], "include")
             if check_linker_compat(config, tempdir.name, main_object_path, lib):
-                # TODO: update cache
-                return (lib, include)
+                # update cache
+                cache["local"].append({
+                    "version": str(version[1]),
+                    "arch": config.target_simplified_architecture,
+                    "toolchain-prefix": current_toolchain_prefix,
+                    "lib": lib,
+                    "include": include,
+                    "controls": cache_controls_array(lib)
+                })
+                return (True, lib, include, version[1])
 
     print_info("Updating pacman db in a fakeroot environment", verbosity=config.verbosity)
     pacman_update_db()
@@ -249,18 +241,26 @@ def truc(config: Config, libname: str, install_dir: str, min_version: T.Union[st
     for libpath, package, installed_version, server_version in available_versions:
         incompatible = False
         if installed_version is not None:
-            # TODO: update cache
-            if (found is None or found[0] < installed_version) and (allow_prerelease or installed_version.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= installed_version) and (max_v is None or installed_version <= max_v):
+            include = os.path.realpath(os.path.join(os.path.dirname(libpath), '..', 'include'))
+            # update cache
+            cache["system"].append({
+                "version": str(installed_version),
+                "lib": libpath,
+                "include": include,
+                "controls": cache_controls_array(libpath)
+            })
+            cache_modified = True
+            if (found is None or found[2] < installed_version) and (allow_prerelease or installed_version.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= installed_version) and (max_v is None or installed_version <= max_v):
                 if check_linker_compat(config, tempdir.name, main_object_path, libpath):
-                    found = (installed_version, (libpath, os.path.realpath(os.path.join(os.path.dirname(libpath), '..', 'include'))))
+                    found = (libpath, include, installed_version)
                 else:
                     incompatible = True
         if not incompatible and found is None and server_version is not None and (allow_prerelease or server_version.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= server_version) and (max_v is None or server_version <= max_v):
             # installed_version is not the good version but the server version might be compatible
             installable.append((package, libpath, installed_version))
+
     if found is not None:
-        print_debug_info(f"found {libname} version {found[0]}", config.verbosity)
-        return found[1]
+        return (cache_modified, *found)
     if len(installable) > 0:
         print("Installable packages:")
         print(installable)
@@ -270,3 +270,56 @@ def truc(config: Config, libname: str, install_dir: str, min_version: T.Union[st
     # No other choice than to build from sources
 
     raise RuntimeError("Unable to find any package that meets the requirements.")
+
+def find_lib(config: Config, libname: str, install_dir: str, min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False) -> T.Tuple[str, str, T.Union[Version, None]]:
+    # Cache structure example:
+    # =======================================================
+    # cache = {
+    #     "system": [
+    #         {
+    #             "version": "1!3.5.2-post1",
+    #             "lib": "/usr/lib/libssl.so",
+    #             "include": "/usr/include/",
+    #             "controls": [
+    #                 {
+    #                     "filepath": "/usr/lib/libssl.so",
+    #                     "date": 1754818240.4226027
+    #                 }
+    #             ]
+    #         },
+    #         {
+    #             "version": "1!3.5.2-post1",
+    #             "lib": "/usr/lib32/libssl.so",
+    #             "include": "/usr/include/",
+    #             "controls": [
+    #                 {
+    #                     "filepath": "/usr/lib32/libssl.so",
+    #                     "date": 1754818240.4226027
+    #                 }
+    #             ]
+    #         }
+    #     ],
+    #     "local": [
+    #         {
+    #             "version": "1!3.5.2-post1",
+    #             "arch": "arm64",
+    #             "toolchain-prefix": "aarch64-linux-gnu-",
+    #             "lib": "/home/mactul/Documents/libs/arm64/aarch64-linux-gnu-/ssl/1!3.5.2-post1/lib/libssl.so",
+    #             "include": "/home/mactul/Documents/libs/arm64/aarch64-linux-gnu-/ssl/1!3.5.2-post1/include/",
+    #             "controls": [
+    #                 {
+    #                     "filepath": "/home/mactul/Documents/libs/arm64/aarch64-linux-gnu-/ssl/1!3.5.2-post1/lib/libssl.so",
+    #                     "date": 1754818240.4226027
+    #                 }
+    #             ]
+    #         }
+    #     ]
+    # }
+    cache_filepath = os.path.join(get_cache_dir(), "packages", "installed", f"{libname}.json")
+    cache = load_cache_from_file(cache_filepath)
+
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, min_version, max_version, allow_prerelease, strict_post)
+    if cache_modified:
+        save_cache(cache_filepath, cache)
+
+    return lib, include, version
