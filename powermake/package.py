@@ -1,4 +1,5 @@
 import os
+import shlex
 import shutil
 import tempfile
 import subprocess
@@ -10,6 +11,29 @@ from .architecture import split_toolchain_prefix
 from .display import print_info, print_debug_info
 from .version_parser import Version, parse_version, remove_version_frills, PreType
 from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
+
+
+_privilege_escalator: T.Union[None, T.List[str]] = None
+def escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]] = None) -> T.Union[None, T.List[str]]:
+    global _privilege_escalator
+
+    if os.getuid() == 0:
+        return []
+
+    if _privilege_escalator is None:
+        for auth in (pref, ["pkexec"], ["run0", "--background="], ["sudo"], ["doas"], ["su", "-c"]):
+            if auth is None:
+                continue
+            if shutil.which(auth[0]) is not None:
+                _privilege_escalator = auth
+                break
+
+    if _privilege_escalator is None:
+        return None
+
+    if auth[0] == "su":
+        return [*auth, shlex.join(command)]
+    return [*auth, *command]
 
 
 def git_get_server_versions(git_url: str) -> T.List[T.Tuple[str, Version]]:
@@ -238,6 +262,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     available_versions = pacman_get_available_versions(possible_filepaths)
     found = None
     installable = []
+    upgradable = []
     for libpath, package, installed_version, server_version in available_versions:
         incompatible = False
         if installed_version is not None:
@@ -257,14 +282,74 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                     incompatible = True
         if not incompatible and found is None and server_version is not None and (allow_prerelease or server_version.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= server_version) and (max_v is None or server_version <= max_v):
             # installed_version is not the good version but the server version might be compatible
-            installable.append((package, libpath, installed_version))
+            if installed_version is None:
+                installable.append((package, libpath, server_version))
+            else:
+                upgradable.append((package, libpath, installed_version, server_version))
 
     if found is not None:
         return (cache_modified, *found)
-    if len(installable) > 0:
-        print("Installable packages:")
-        print(installable)
-        input()
+
+    cmd = None
+    if len(installable) > 0 or len(upgradable) > 0:
+        if len(upgradable) > 0:
+            if len(upgradable) > 1:
+                text = "The packages "
+                for u in upgradable[:-1]:
+                    text += u[0] + ", "
+                text = text[:-2] + " and " + upgradable[-1][0]
+                print(text, "are upgradable to a version that will satisfy your requirements.")
+            else:
+                print(f"The package {upgradable[0][0]} is installed with the incompatible version {upgradable[0][2]} but can be upgraded to the version {upgradable[0][3]}")
+            print("Do you want to upgrade your entire system ? (will run `pacman -Syu` as root)")
+            answer = input("[Y/n] ")
+            if answer == "" or answer == "y" or answer == "Y":
+                cmd = escalate_command(["pacman", "-Syu"])
+            else:
+                cmd = []
+        else:
+            if len(installable) > 1:
+                print("Multiple packages that might be compatible were found.")
+                print("Do you want to install one of them ? (will run `pacman -S <package>` as root)")
+                print("0: None of them")
+                for i in range(len(installable)):
+                    print(f"{i+1}: {installable[i][0]}, version {installable[i][2]}, providing {installable[i][1]}")
+                answer = ""
+                while not answer.isdigit() or int(answer) < 0 or int(answer) > len(installable):
+                    answer = input(f"[0-{len(installable)}] ")
+                if answer != "0":
+                    cmd = escalate_command(["pacman", "-S", installable[int(answer)-1][0]])
+                else:
+                    cmd = []
+            else:
+                print(f"The package {installable[0][0]}, version {installable[0][2]}, providing {installable[0][1]} might be compatible.")
+                print(f"Do you want to install it ? (will run `pacman -S {shlex.quote(installable[0][0])}` as root)")
+                answer = input("[Y/n] ")
+                if answer == "" or answer == "y" or answer == "Y":
+                    cmd = escalate_command(["pacman", "-S", installable[0][0]])
+                else:
+                    cmd = []
+
+        if cmd is None:
+            print("No tool was found to escalate to root.")
+            print("If you have a root access, install the package mentioned above manually and then enter 1.")
+            print("If you don't have a root access, enter 2.")
+            print("1: You have installed the package manually, proceed as if it's installed.")
+            print("2: Continue without root access and install from sources.")
+            answer = ""
+            while answer not in ("1", "2"):
+                answer = input("[1/2] ")
+            if answer == "1":
+                # TODO
+                pass
+            if answer == "2":
+                cmd = []
+
+        if cmd is not None and len(cmd) > 0:
+            print_info("Running pacman as root", verbosity=config.verbosity)
+            print_debug_info(cmd, verbosity=config.verbosity)
+            if subprocess.run(cmd).returncode != 0:
+                raise RuntimeError("Unable to run pacman as root")
 
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
