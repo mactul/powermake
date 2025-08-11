@@ -28,26 +28,38 @@ def get_cache_dir() -> str:
     return os.path.expanduser("~/.cache/powermake/")
 
 
+def check_cache_controls(cache: T.Dict[str, T.Any]) -> bool:
+    if "controls" not in cache:
+        return False
+    for control in cache["controls"]:
+        control_filepath = control["filepath"]
+        if control_filepath is None or not os.path.exists(control_filepath):
+            return False
+        if abs(max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) - control["date"]) > 1e3:
+            return False
+    return True
+
+
+def cache_controls_array(*controls_filepath: str) -> T.List[T.Dict[str, T.Any]]:
+    controls = []
+    for control_filepath in controls_filepath:
+        controls.append({"filepath": control_filepath, "date": 0.0 if not os.path.exists(control_filepath) else max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath))})
+    return controls
+
+
 def load_cache_from_file(filepath: str) -> T.Dict[str, T.Any]:
     try:
         with open(filepath, "r") as file:
             cache = dict(json.load(file))
-        if "controls" not in cache:
+        if not check_cache_controls(cache):
             return {}
-        for control in cache["controls"]:
-            control_filepath = control["filepath"]
-            if control_filepath is None or max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath)) > control["date"]:
-                return {}
         return cache
     except OSError:
         return {}
 
 
 def store_cache_to_file(filepath: str, cache: T.Dict[str, T.Any], *controls_filepath: str) -> None:
-    controls = []
-    for control_filepath in controls_filepath:
-        controls.append({"filepath": control_filepath, "date": 0.0 if not os.path.exists(control_filepath) else max(os.path.getmtime(control_filepath), os.path.getctime(control_filepath))})
-    cache["controls"] = controls
+    cache["controls"] = cache_controls_array(*controls_filepath)
     makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w") as file:
         json.dump(cache, file, indent=4)
