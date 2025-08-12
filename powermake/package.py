@@ -179,82 +179,8 @@ def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:
     store_cache_to_file(cache_filepath, cache)
 
 
-def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, main_object_path: str, cache: T.Dict[str, T.Any], config: Config, min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False) -> T.Union[T.Tuple[bool, str, str, T.Union[Version, None]], None]:
     cache_modified = False
-
-    if "system" not in cache:
-        cache["system"] = []
-    if "local" not in cache:
-        cache["local"] = []
-
-    min_v = parse_version(min_version) if min_version is not None else None
-    max_v = parse_version(max_version) if max_version is not None else None
-
-    if not strict_post and max_v is not None and max_v.post_number is None:
-        max_v.post_number = '*'
-
-    tempdir, main_object_path = create_main_object(config)
-
-
-    possible_filepaths = get_possible_filepaths(config, libname)
-    if min_v is None and max_v is None:
-        # If we find a compatible file installed, no need to search the version number it will be good in any case.
-        for filepath in possible_filepaths:
-            if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
-                return (cache_modified, filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')), None)
-
-    current_toolchain_prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
-
-    for entry in cache["system"]:
-        if not check_cache_controls(entry):
-            entry["invalid"] = True
-            cache_modified = True
-            continue
-        if entry["lib"] in possible_filepaths:
-            v = parse_version(entry["version"])
-            if v is None:
-                continue
-            if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= v) and (max_v is None or v <= max_v):
-                if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                    return (cache_modified, entry["lib"], entry["include"], v)
-
-    for entry in cache["local"]:
-        if not check_cache_controls(entry):
-            entry["invalid"] = True
-            cache_modified = True
-            continue
-        v = parse_version(entry["version"])
-        if v is None:
-            continue
-        if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= v) and (max_v is None or v <= max_v):
-            if current_toolchain_prefix is not None and current_toolchain_prefix == entry["toolchain-prefix"] and config.target_simplified_architecture == entry["arch"]:
-                if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                    return (cache_modified, entry["lib"], entry["include"], v)
-
-    install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, libname)
-    if os.path.isdir(install_path):
-        files = os.listdir(install_path)
-        versions = []
-        for filename in files:
-            v = parse_version(filename)
-            if v is not None:
-                versions.append((filename, v))
-        compatible_versions = filter_versions(versions, min_v, max_v, allow_prerelease=allow_prerelease)
-        for version in compatible_versions:
-            lib_dir = os.path.join(install_path, version[0], "lib")
-            lib = os.path.join(lib_dir, autocomplete_filename(lib_dir, f"lib{libname}.so"))
-            include = os.path.join(install_path, version[0], "include")
-            if check_linker_compat(config, tempdir.name, main_object_path, lib):
-                # update cache
-                cache["local"].append({
-                    "version": str(version[1]),
-                    "arch": config.target_simplified_architecture,
-                    "toolchain-prefix": current_toolchain_prefix,
-                    "lib": lib,
-                    "include": include,
-                    "controls": cache_controls_array(lib)
-                })
-                return (True, lib, include, version[1])
 
     print_info("Updating pacman db in a fakeroot environment", verbosity=config.verbosity)
     pacman_update_db()
@@ -275,12 +201,12 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                 "controls": cache_controls_array(libpath)
             })
             cache_modified = True
-            if (found is None or found[2] < installed_version) and (allow_prerelease or installed_version.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= installed_version) and (max_v is None or installed_version <= max_v):
-                if check_linker_compat(config, tempdir.name, main_object_path, libpath):
+            if (found is None or found[2] < installed_version) and (allow_prerelease or installed_version.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= installed_version) and (max_version is None or installed_version <= max_version):
+                if check_linker_compat(config, tempdir_name, main_object_path, libpath):
                     found = (libpath, include, installed_version)
                 else:
                     incompatible = True
-        if not incompatible and found is None and server_version is not None and (allow_prerelease or server_version.pre_type == PreType.NOT_PRE) and (min_v is None or min_v <= server_version) and (max_v is None or server_version <= max_v):
+        if not incompatible and found is None and server_version is not None and (allow_prerelease or server_version.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= server_version) and (max_version is None or server_version <= max_version):
             # installed_version is not the good version but the server version might be compatible
             if installed_version is None:
                 installable.append((package, libpath, server_version))
@@ -339,9 +265,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
             answer = ""
             while answer not in ("1", "2"):
                 answer = input("[1/2] ")
-            if answer == "1":
-                # TODO
-                pass
+            # if answer is 1, cmd will be left to None and the lib will be checked for installation later
             if answer == "2":
                 cmd = []
 
@@ -350,6 +274,114 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
             print_debug_info(cmd, verbosity=config.verbosity)
             if subprocess.run(cmd).returncode != 0:
                 raise RuntimeError("Unable to run pacman as root")
+
+        if cmd is None or len(cmd) > 0:
+            found = None
+            available_versions = pacman_get_available_versions(possible_filepaths)
+            found = None
+            for libpath, package, installed_version, server_version in available_versions:
+                if installed_version is not None:
+                    include = os.path.realpath(os.path.join(os.path.dirname(libpath), '..', 'include'))
+                    # update cache
+                    already_in_cache = False
+                    for entry in cache["system"]:
+                        if "invalid" not in entry and parse_version(entry["version"]) == installed_version and entry["lib"] == libpath:
+                            already_in_cache = True
+                            break
+                    if not already_in_cache:
+                        cache["system"].append({
+                            "version": str(installed_version),
+                            "lib": libpath,
+                            "include": include,
+                            "controls": cache_controls_array(libpath)
+                        })
+                        cache_modified = True
+                    if (found is None or found[2] < installed_version) and (allow_prerelease or installed_version.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= installed_version) and (max_version is None or installed_version <= max_version):
+                        if check_linker_compat(config, tempdir_name, main_object_path, libpath):
+                            found = (libpath, include, installed_version)
+            if found is not None:
+                return (cache_modified, *found)
+
+    return None
+
+
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+    cache_modified = False
+
+    if "system" not in cache:
+        cache["system"] = []
+    if "local" not in cache:
+        cache["local"] = []
+
+    tempdir, main_object_path = create_main_object(config)
+
+
+    possible_filepaths = get_possible_filepaths(config, libname)
+    if min_version is None and max_version is None:
+        # If we find a compatible file installed, no need to search the version number it will be good in any case.
+        for filepath in possible_filepaths:
+            if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
+                return (cache_modified, filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')), None)
+
+    current_toolchain_prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
+
+    for entry in cache["system"]:
+        if not check_cache_controls(entry):
+            entry["invalid"] = True
+            cache_modified = True
+            continue
+        if entry["lib"] in possible_filepaths:
+            v = parse_version(entry["version"])
+            if v is None:
+                continue
+            if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
+                if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
+                    return (cache_modified, entry["lib"], entry["include"], v)
+
+    for entry in cache["local"]:
+        if not check_cache_controls(entry):
+            entry["invalid"] = True
+            cache_modified = True
+            continue
+        v = parse_version(entry["version"])
+        if v is None:
+            continue
+        if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
+            if current_toolchain_prefix is not None and current_toolchain_prefix == entry["toolchain-prefix"] and config.target_simplified_architecture == entry["arch"]:
+                if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
+                    return (cache_modified, entry["lib"], entry["include"], v)
+
+    install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, libname)
+    if os.path.isdir(install_path):
+        files = os.listdir(install_path)
+        versions = []
+        for filename in files:
+            v = parse_version(filename)
+            if v is not None:
+                versions.append((filename, v))
+        compatible_versions = filter_versions(versions, min_version, max_version, allow_prerelease=allow_prerelease)
+        for version in compatible_versions:
+            lib_dir = os.path.join(install_path, version[0], "lib")
+            lib = os.path.join(lib_dir, autocomplete_filename(lib_dir, f"lib{libname}.so"))
+            include = os.path.join(install_path, version[0], "include")
+            if check_linker_compat(config, tempdir.name, main_object_path, lib):
+                # update cache
+                cache["local"].append({
+                    "version": str(version[1]),
+                    "arch": config.target_simplified_architecture,
+                    "toolchain-prefix": current_toolchain_prefix,
+                    "lib": lib,
+                    "include": include,
+                    "controls": cache_controls_array(lib)
+                })
+                return (True, lib, include, version[1])
+
+    pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
+    if pacman_result is not None:
+        cache_modified_by_pacman, lib, include, version = pacman_result
+        if cache_modified_by_pacman:
+            cache_modified = True
+        return cache_modified, lib, include, version
 
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
@@ -403,7 +435,12 @@ def find_lib(config: Config, libname: str, install_dir: str, min_version: T.Unio
     cache_filepath = os.path.join(get_cache_dir(), "packages", "installed", f"{libname}.json")
     cache = load_cache_from_file(cache_filepath)
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, min_version, max_version, allow_prerelease, strict_post)
+    min_v = parse_version(min_version) if min_version is not None else None
+    max_v = parse_version(max_version) if max_version is not None else None
+    if not strict_post and max_v is not None and max_v.post_number is None:
+        max_v.post_number = '*'
+
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, min_v, max_v, allow_prerelease)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
