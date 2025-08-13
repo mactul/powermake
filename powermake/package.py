@@ -5,12 +5,78 @@ import tempfile
 import subprocess
 import typing as T
 
+from . import run_another_powermake
 from .config import Config
-from .utils import makedirs
+from .utils import makedirs, join_absolute_paths
 from .architecture import split_toolchain_prefix
 from .display import print_info, print_debug_info
 from .version_parser import Version, parse_version, remove_version_frills, PreType
 from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
+
+
+class GitRepo:
+    def __init__(self, git_url: str, powermake_makefile_path_in_repo: str) -> None:
+        self.code_git_url = git_url
+        self.dst_makefile_path = powermake_makefile_path_in_repo
+        self.src_makefile_path: T.Union[str, None] = None
+        self.makefile_git_url: T.Union[str, None] = None
+
+    def add_external_powermake_makefile(self, powermake_makefile_path: str, git_url: T.Union[str, None]) -> None:
+        self.src_makefile_path = powermake_makefile_path
+        self.makefile_git_url = git_url
+
+    def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
+        try:
+            output = subprocess.check_output(["git", "ls-remote", "-t", "--refs", "-q", self.code_git_url], encoding="utf-8").split("\n")
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
+
+        versions = []
+        for line in output:
+            if "/" not in line:
+                continue
+            tag = line.rsplit("/", maxsplit=1)[1]
+            v = parse_version(remove_version_frills(tag))
+            if v is None:
+                continue
+            versions.append((tag, v))
+
+        return versions
+
+    def download_build_install(self, config: Config, install_path: str, tag: T.Union[str, None] = None) -> None:
+        temp_dir = tempfile.TemporaryDirectory("_powermake_build")
+        if tag is None:
+            cmd = ["git", "clone", "--progress", "--recursive", "--depth=1", "--single-branch", self.code_git_url, temp_dir.name]
+        else:
+            cmd = ["git", "clone", "--progress", "--recursive", "--depth=1", "--branch", tag, "--single-branch", self.code_git_url, temp_dir.name]
+
+        if subprocess.run(cmd).returncode != 0:
+            raise RuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
+
+        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, command_line_args=["--install", install_path])
+
+        temp_dir.cleanup()
+
+
+class DefaultGitRepos(GitRepo):
+    _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None]]] = {
+        "SDL3": ("https://github.com/mactul/konkr.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "SDL3/makefile.py")
+    }
+    def __init__(self) -> None:
+        self.libname: T.Union[str, None] = None
+        super().__init__("", "")
+
+    def set_libname(self, libname: str) -> None:
+        if libname not in self._preconfigured_repos:
+            self.libname = None
+            return
+        self.libname = libname
+        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path = self._preconfigured_repos[libname]
+
+    def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
+        if self.libname is None:
+            return []
+        return super().get_server_versions()
 
 
 _privilege_escalator: T.Union[None, T.List[str]] = None
@@ -35,24 +101,6 @@ def escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]] = No
         return [*_privilege_escalator, shlex.join(command)]
     return [*_privilege_escalator, *command]
 
-
-def git_get_server_versions(git_url: str) -> T.List[T.Tuple[str, Version]]:
-    try:
-        output = subprocess.check_output(["git", "ls-remote", "-t", "--refs", "-q", git_url], encoding="utf-8").split("\n")
-    except subprocess.CalledProcessError:
-        raise RuntimeError(f"Unable to connect to the git repository: {git_url}")
-
-    versions = []
-    for line in output:
-        if "/" not in line:
-            continue
-        tag = line.rsplit("/", maxsplit=1)[1]
-        v = parse_version(remove_version_frills(tag))
-        if v is None:
-            continue
-        versions.append((tag, v))
-
-    return versions
 
 
 def pacman_update_db() -> bool:
@@ -163,7 +211,7 @@ def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory[st
     if compiler is None:
         raise RuntimeError("No C or C++ compiler were found, we need one to check a lib compatibility")
 
-    temp_dir = tempfile.TemporaryDirectory("powermake_test_link")
+    temp_dir = tempfile.TemporaryDirectory("_powermake_test_link")
     with open(os.path.join(temp_dir.name, "main.c"), "w") as empty_main:
         empty_main.write("int main() { return 0; }")
 
@@ -321,7 +369,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
     return None
 
 
-def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
     cache_modified = False
 
     if "system" not in cache:
@@ -333,7 +381,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
 
     possible_filepaths = get_possible_filepaths(config, libname)
-    if min_version is None and max_version is None:
+    if not disable_system_packages and min_version is None and max_version is None:
         # If we find a compatible file installed, no need to search the version number it will be good in any case.
         for filepath in possible_filepaths:
             if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
@@ -346,18 +394,19 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     if current_toolchain_prefix is None:
         current_toolchain_prefix = os.path.basename(config.linker.path)
 
-    for entry in cache["system"]:
-        if not check_cache_controls(entry):
-            entry["invalid"] = True
-            cache_modified = True
-            continue
-        if entry["lib"] in possible_filepaths:
-            v = parse_version(entry["version"])
-            if v is None:
+    if not disable_system_packages:
+        for entry in cache["system"]:
+            if not check_cache_controls(entry):
+                entry["invalid"] = True
+                cache_modified = True
                 continue
-            if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
-                if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                    return (cache_modified, entry["lib"], entry["include"], v)
+            if entry["lib"] in possible_filepaths:
+                v = parse_version(entry["version"])
+                if v is None:
+                    continue
+                if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
+                    if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
+                        return (cache_modified, entry["lib"], entry["include"], v)
 
     for entry in cache["local"]:
         if not check_cache_controls(entry):
@@ -383,6 +432,8 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
         compatible_versions = filter_versions(versions, min_version, max_version, allow_prerelease=allow_prerelease)
         for version in compatible_versions:
             lib_dir = os.path.join(install_path, version[0], "lib")
+            if not os.path.exists(lib_dir):
+                continue
             lib = os.path.join(lib_dir, autocomplete_filename(lib_dir, f"lib{libname}.so"))
             include = os.path.join(install_path, version[0], "include")
             if check_linker_compat(config, tempdir.name, main_object_path, lib):
@@ -397,19 +448,35 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                 })
                 return (True, lib, include, version[1])
 
-    pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
-    if pacman_result is not None:
-        cache_modified_by_pacman, lib, include, lib_version = pacman_result
-        if cache_modified_by_pacman:
-            cache_modified = True
-        return cache_modified, lib, include, lib_version
+    if not disable_system_packages:
+        pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
+        if pacman_result is not None:
+            cache_modified_by_pacman, lib, include, lib_version = pacman_result
+            if cache_modified_by_pacman:
+                cache_modified = True
+            return cache_modified, lib, include, lib_version
 
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
 
+    if git_repo is None:
+        raise RuntimeError("Unable to find any package that meets the requirements.")
+
+    if isinstance(git_repo, DefaultGitRepos):
+        git_repo.set_libname(libname)
+
+    compatible_versions = filter_versions(git_repo.get_server_versions(), min_version, max_version, allow_prerelease)
+    if len(compatible_versions) > 0:
+        download_path = os.path.join(install_path, str(compatible_versions[0][1]))
+        git_repo.download_build_install(config, download_path, compatible_versions[0][0])
+    if min_version is None and max_version is None:
+        download_path = os.path.join(install_path, "no_version")
+        git_repo.download_build_install(config, download_path)
+
     raise RuntimeError("Unable to find any package that meets the requirements.")
 
-def find_lib(config: Config, libname: str, install_dir: str, min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False) -> T.Tuple[str, str, T.Union[Version, None]]:
+
+def find_lib(config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False) -> T.Tuple[str, str, T.Union[Version, None]]:
     # Cache structure example:
     # =======================================================
     # cache = {
@@ -461,7 +528,7 @@ def find_lib(config: Config, libname: str, install_dir: str, min_version: T.Unio
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, min_v, max_v, allow_prerelease)
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, git_repo, min_v, max_v, allow_prerelease, disable_system_packages)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
