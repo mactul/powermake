@@ -328,7 +328,7 @@ def replace_architecture(string: str, new_arch: str) -> str:
 
 
 class Config:
-    def __init__(self, target_name: str, *, args_parsed: argparse.Namespace, compilation_unit: str, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None, pos_args: T.List[str] = []) -> None:
+    def __init__(self, target_name: str, *, args_parsed: argparse.Namespace, compilation_unit: str, debug: bool = False, rebuild: bool = False, verbosity: int = 1, nb_jobs: int = 0, operating_system: T.Union[str, None] = None, arch: T.Union[str, None] = None, single_file: T.Union[str, None] = None, compile_commands_dir: T.Union[str, None] = None, local_config: T.Union[str, None] = "./powermake_config.json", global_config: T.Union[str, None] = None, pos_args: T.List[str] = []) -> None:
         """
         Create an object that loads all configurations files and search for compilers.
 
@@ -357,10 +357,10 @@ class Config:
         self.linker: T.Union[Linker, None] = None
         self.shared_linker: T.Union[SharedLinker, None] = None
 
-        self.target_operating_system: str = ""
+        self.target_operating_system: str = "" if operating_system is None else operating_system
         self.host_operating_system: str = ""
 
-        self.target_architecture: str = ""
+        self.target_architecture: str = "" if arch is None else arch
         self.target_simplified_architecture: str = ""
         self.host_architecture: str = ""
         self.host_simplified_architecture: str = ""

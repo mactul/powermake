@@ -431,7 +431,7 @@ def _get_last_compilation_unit(makefile_path: str) -> T.Union[T.Tuple[str, str],
     except OSError:
         return None
 
-def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = []) -> T.Union[T.List[str], None]:
+def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True) -> T.Union[T.List[str], None]:
     """
     Run a powermake from another directory and returns a list of path to all libraries generated
 
@@ -474,7 +474,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
         nb_jobs = config.nb_jobs
 
     last_comp_unit = _get_last_compilation_unit(path)
-    if last_comp_unit is not None and last_comp_unit[0] == config.compilation_unit:
+    if skip_already_done and last_comp_unit is not None and last_comp_unit[0] == config.compilation_unit:
         print_debug_info(f"PowerMake {path} already run during this compilation unit - skip", config.verbosity)
         return _get_libs_from_folder(last_comp_unit[1])
 
@@ -490,9 +490,30 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if debug:
         command.append("-d")
 
+    env = os.environ.copy()
+    if use_parent_toolchain:
+        if config.c_compiler is not None:
+            env["CC"] = config.c_compiler.path
+        if config.cpp_compiler is not None:
+            env["CXX"] = config.cpp_compiler.path
+        if config.as_compiler is not None:
+            env["AS"] = config.as_compiler.path
+        if config.asm_compiler is not None:
+            env["ASM"] = config.asm_compiler.path
+        if config.rc_compiler is not None:
+            env["RC"] = config.rc_compiler.path
+        if config.archiver is not None:
+            env["AR"] = config.archiver.path
+        if config.linker is not None:
+            env["LD"] = config.linker.path
+        if config.shared_linker is not None:
+            env["SHLD"] = config.shared_linker.path
+
+        command.extend(["--os", config.target_operating_system, "--arch", config.target_architecture])
+
     command.extend(command_line_args)
 
-    lines = _run_command_yield_output(config, command, custom_info_msg=f"Running {path}")
+    lines = _run_command_yield_output(config, command, custom_info_msg=f"Running {path}", env=env)
 
     last_line = None
 

@@ -185,6 +185,8 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
         self.add_argument("-o", "--compile-commands-dir", metavar="DIRECTORY", help="Run the compilation and generate a compile_commands.json file in the directory specified.", default=None)
         self.add_argument("-m", "--makefile", help="Run the compilation and generate a GNU Makefile.", action="store_true")
+        self.add_argument("--os", metavar="OPERATING_SYSTEM", help="Set the target operating system, overwrite the config", default=None)
+        self.add_argument("--arch", metavar="ARCHITECTURE", help="Set the target architecture, overwrite the config", default=None)
         self.add_argument("--retransmit-colors", help="Let all ANSI color codes intact, even if not in a terminal. This option is especially useful in the configuration of an IDE.", action="store_true")
         self.add_argument("--delete-cache", help="Delete the cache, use this if PowerMake act weirdly", action="store_true")
         self.add_argument("--generate-vscode", nargs='?', metavar="VSCODE_FOLDER_PATH", help="Generate a launch.json and a tasks.json for visual studio code.", default=False)
@@ -271,7 +273,8 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         compilation_unit = args_parsed.compilation_unit
     else:
         compilation_unit = uuid.uuid1(random.randint(0, (1 << 48) -1)).hex
-    config = Config(target_name, args_parsed=args_parsed, compilation_unit=compilation_unit, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, pos_args=pos_args)
+
+    config = Config(target_name, args_parsed=args_parsed, compilation_unit=compilation_unit, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, operating_system=args_parsed.os, arch=args_parsed.arch, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, pos_args=pos_args)
 
     return config
 
