@@ -520,6 +520,8 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     for line in lines:
         if isinstance(line, int):
             if line != 0:
+                if last_line is not None:
+                    utils.print_bytes(last_line)
                 raise PowerMakeRuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
             break
         if last_line is not None:
