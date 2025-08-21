@@ -1,9 +1,11 @@
 import os
+import re
 import shlex
 import shutil
 import tempfile
 import subprocess
 import typing as T
+from enum import Enum
 
 from .config import Config
 from . import run_another_powermake
@@ -13,6 +15,23 @@ from .architecture import split_toolchain_prefix
 from .display import print_info, print_debug_info
 from .version_parser import Version, parse_version, remove_version_frills, PreType
 from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
+
+_ExtType = T.TypeVar("_ExtType", bound="ExtType")
+
+class ExtType(Enum):
+    LIB_A = 0
+    LIB_SO = 1
+    LIB_SO_NUM = 2
+    LIB_DLL_A = 3
+    LIB_LIB = 4
+    LIB_DLL = 5
+
+    NO_EXT = 6
+
+    def __lt__(self, other: _ExtType) -> bool:
+        if self.__class__ is other.__class__:
+            return bool(self.value < other.value)
+        raise NotImplementedError()
 
 
 class GitRepo:
@@ -176,14 +195,79 @@ def filter_versions(versions: T.List[T.Tuple[str, Version]], min_version: T.Unio
     return compatible_versions
 
 
-def autocomplete_filename(dir: str, filename: str) -> str:
-    files = os.listdir(dir)
-    if filename in files:
-        return filename
+# def autocomplete_filename(dir: str, filename: str) -> str:
+#     files = os.listdir(dir)
+#     if filename in files:
+#         return filename
+#     for file in files:
+#         if file.startswith(filename):
+#             return file
+#     return filename
+
+
+def remove_version_ext(ext: str) -> str:
+    i = len(ext) - 1
+    while i > 0 and (ext[i].isdigit() or ext[i] == '.'):
+        i -= 1
+    if i <= 0:
+        return ""
+    return ext[:i+1]
+
+
+def search_lib(dir: str, libname: str, get_non_match: bool = True) -> T.Tuple[T.List[str], T.Dict[str, T.Set[str]]]:
+    chosen_libs: T.List[T.Tuple[bool, ExtType, str]] = []
+    non_match: T.Dict[str, T.Set[str]] = {}
+
+    try:
+        files = os.listdir(dir)
+    except FileNotFoundError:
+        return [], {}
+
+    regex = re.compile("(.+)(\\.a|\\.dll|\\.lib|\\.so(?:\\.[0-9]+)*)", re.IGNORECASE)
     for file in files:
-        if file.startswith(filename):
-            return file
-    return filename
+        if file.startswith("lib"):
+            lib_prefix = True
+            name = file[3:]
+        else:
+            lib_prefix = False
+            name = file
+        search = regex.fullmatch(name)
+        if search is None:
+            # Not a lib
+            continue
+        name = str(search.group(1))
+        ext = str(search.group(2)).lower()
+        if name.endswith(".dll"):
+            name = name[:-4]
+            if len(name) == 0:
+                # Not a lib
+                continue
+            ext = ".dll" + ext
+        if name != libname:
+            if get_non_match:
+                if name in non_match:
+                    non_match[name].add(file)
+                else:
+                    non_match[name] = {file}
+        else:
+            current_ext = ExtType.NO_EXT
+            if ext == ".a":
+                current_ext = ExtType.LIB_A
+            elif ext == ".so":
+                current_ext = ExtType.LIB_SO
+            elif remove_version_ext(ext) == ".so":
+                current_ext = ExtType.LIB_SO_NUM
+            elif ext == ".dll.a":
+                current_ext = ExtType.LIB_DLL_A
+            elif ext == ".lib":
+                current_ext = ExtType.LIB_LIB
+            elif ext == ".dll":
+                current_ext = ExtType.LIB_DLL
+
+            chosen_libs.append((not lib_prefix, current_ext, file))
+
+    chosen_libs.sort()
+    return [lib[2] for lib in chosen_libs], non_match
 
 
 def get_possible_filepaths(config: Config, libname: str) -> T.List[str]:
@@ -199,7 +283,17 @@ def get_possible_filepaths(config: Config, libname: str) -> T.List[str]:
 
     filepaths = []
     for dir in filtered_dirs:
-        filepaths.append(os.path.join(dir, autocomplete_filename(dir, f"lib{libname}.so")))
+        libs, _ = search_lib(dir, libname, get_non_match=False)
+        if len(libs) == 0:
+            if config.target_is_mingw():
+                filename = f"lib{libname}.a"
+            elif config.target_is_windows():
+                filename = f"{libname}.lib"
+            else:
+                filename = f"lib{libname}.so"
+        else:
+            filename = libs[0]
+        filepaths.append(os.path.join(dir, filename))
 
     return filepaths
 
@@ -235,15 +329,10 @@ def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str
 def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:
     new_cache: T.Dict[str, T.Any] = {
         "system": [],
-        "local": []
     }
     for entry in cache["system"]:
         if "invalid" not in entry:
             new_cache["system"].append(entry)
-
-    for entry in cache["local"]:
-        if "invalid" not in entry:
-            new_cache["local"].append(entry)
 
     store_cache_to_file(cache_filepath, cache)
 
@@ -379,8 +468,6 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
     if "system" not in cache:
         cache["system"] = []
-    if "local" not in cache:
-        cache["local"] = []
 
     tempdir, main_object_path = create_main_object(config)
 
@@ -416,19 +503,6 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                     if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
                         return (cache_modified, entry["lib"], entry["include"], v)
 
-    for entry in cache["local"]:
-        if not check_cache_controls(entry):
-            entry["invalid"] = True
-            cache_modified = True
-            continue
-        v = parse_version(entry["version"])
-        if v is None:
-            continue
-        if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
-            if current_toolchain_prefix is not None and current_toolchain_prefix == entry["toolchain-prefix"] and config.target_simplified_architecture == entry["arch"]:
-                if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                    return (cache_modified, entry["lib"], entry["include"], v)
-
     install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, libname)
     if os.path.isdir(install_path):
         files = os.listdir(install_path)
@@ -440,21 +514,13 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
         compatible_versions = filter_versions(versions, min_version, max_version, allow_prerelease=allow_prerelease)
         for version in compatible_versions:
             lib_dir = os.path.join(install_path, version[0], "lib")
-            if not os.path.exists(lib_dir):
+            libs, _ = search_lib(lib_dir, libname, get_non_match=False)
+            if len(libs) == 0:
                 continue
-            lib = os.path.join(lib_dir, autocomplete_filename(lib_dir, f"lib{libname}.so"))
+            lib = os.path.join(lib_dir, libs[0])
             include = os.path.join(install_path, version[0], "include")
             if check_linker_compat(config, tempdir.name, main_object_path, lib):
-                # update cache
-                cache["local"].append({
-                    "version": str(version[1]),
-                    "arch": config.target_simplified_architecture,
-                    "toolchain-prefix": current_toolchain_prefix,
-                    "lib": lib,
-                    "include": include,
-                    "controls": cache_controls_array(lib)
-                })
-                return (True, lib, include, version[1])
+                return (cache_modified, lib, include, version[1])
 
     if not disable_system_packages:
         pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
@@ -490,37 +556,21 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     lib = os.path.join(lib_installed_path, "lib")
     if not os.path.isdir(lib):
         raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
-    files = os.listdir(lib)
-    includedirs_to_copy = set()
+
     includedir = os.path.join(lib_installed_path, "include")
-    chosen_lib = ""
-    for file in files:
-        name = file.split('.')[0]
-        if name.startswith("lib"):
-            name = name[3:]
-        if name != libname:
-            if os.path.isfile(os.path.join(lib, file)):
-                path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, name, builded_version_str)
-                makedirs(os.path.join(path, "lib"))
-                includedirs_to_copy.add(os.path.join(path, "include"))
-                shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
-        else:
-            if chosen_lib == "":
-                chosen_lib = file
-            elif file == f"lib{libname}.a":
-                chosen_lib = file
-            elif chosen_lib != f"lib{libname}.a" and file == f"lib{libname}.so":
-                chosen_lib = file
-    for dir in includedirs_to_copy:
-        shutil.copytree(includedir, dir, dirs_exist_ok=True)
+    libs, non_match = search_lib(lib, libname, get_non_match=True)
+    for name in non_match:
+        # We should verify if the directory exists and prompt the user for action to take
+        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, name, builded_version_str)
+        makedirs(os.path.join(path, "lib"))
+        for file in non_match[name]:
+            shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
+        shutil.copytree(includedir, os.path.join(path, "include"), dirs_exist_ok=True)
 
-    if chosen_lib == "":
-        files = os.listdir(lib)
-        if len(files) == 0:
-            raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
-        chosen_lib = files[0]
+    if len(libs) == 0:
+        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
-    return cache_modified, os.path.join(lib, chosen_lib), includedir, builded_version
+    return cache_modified, os.path.join(lib, libs[0]), includedir, builded_version
 
 
 
@@ -552,21 +602,6 @@ def find_lib(config: Config, libname: str, install_dir: str, git_repo: T.Union[G
     #             ]
     #         }
     #     ],
-    #     "local": [
-    #         {
-    #             "version": "1!3.5.2-post1",
-    #             "arch": "arm64",
-    #             "toolchain-prefix": "aarch64-linux-gnu-",
-    #             "lib": "/home/mactul/Documents/libs/arm64/aarch64-linux-gnu-/ssl/1!3.5.2-post1/lib/libssl.so",
-    #             "include": "/home/mactul/Documents/libs/arm64/aarch64-linux-gnu-/ssl/1!3.5.2-post1/include/",
-    #             "controls": [
-    #                 {
-    #                     "filepath": "/home/mactul/Documents/libs/arm64/aarch64-linux-gnu-/ssl/1!3.5.2-post1/lib/libssl.so",
-    #                     "date": 1754818240.4226027
-    #                 }
-    #             ]
-    #         }
-    #     ]
     # }
     cache_filepath = os.path.join(get_cache_dir(), "packages", "installed", f"{libname}.json")
     cache = load_cache_from_file(cache_filepath)
