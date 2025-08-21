@@ -60,7 +60,7 @@ def generate_makefile(config: Config, filepath: str = "Makefile") -> None:
         elif len(operations) != 0:
             global_targets.append(operations[0][1])
         for operation in operations:
-            phony, target, dependencies, command, tool = operation
+            phony, target, dependencies, command, tool, _ = operation
             if phony:
                 file_content += f".PHONY : {target}\n"
             if not isinstance(command, str):

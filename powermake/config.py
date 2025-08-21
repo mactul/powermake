@@ -25,11 +25,11 @@ from .cache import get_cache_dir
 from .display import error_text
 from .exceptions import PowerMakeRuntimeError
 from .search_visual_studio import load_msvc_environment
-from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture
-from .compilers import Compiler, CompilerGNU, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
-from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .linkers import Linker, GenericLinker, get_all_linker_types
+from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
+from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture
+from .compilers import Compiler, CompilerGNU, CompilerClang, CompilerClangPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 
 _Config = T.TypeVar("_Config", bound="Config")
 
@@ -357,6 +357,9 @@ class Config:
         self.linker: T.Union[Linker, None] = None
         self.shared_linker: T.Union[SharedLinker, None] = None
 
+        self._clangd_c_compiler: T.Union[CompilerClang, None] = None
+        self._clangd_cpp_compiler: T.Union[CompilerClangPlusPlus, None] = None
+
         self.target_operating_system: str = "" if operating_system is None else operating_system
         self.host_operating_system: str = ""
 
@@ -597,6 +600,15 @@ class Config:
 
         self.asm_compiler = T.cast(T.Union[Compiler, None], asm_compiler_primer.get_tool(toolchain_prefix, preferences["asm_compiler"], "nasm", "masm"))
         self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, "windres"))
+
+        if args_parsed.clangd_compat:
+            self._clangd_c_compiler = CompilerClang()
+            if not self._clangd_c_compiler.is_available():
+                self._clangd_c_compiler = None
+
+            self._clangd_cpp_compiler = CompilerClangPlusPlus()
+            if not self._clangd_cpp_compiler.is_available():
+                self._clangd_cpp_compiler = None
 
         ## Here, all tools should be loaded or be equal to None if no installed tool was found.
 

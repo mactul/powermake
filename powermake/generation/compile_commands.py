@@ -29,12 +29,21 @@ def generate_compile_commands(config: Config, maybe_incomplete: bool = False) ->
     for operations in generation._makefile_targets:
         # operations = [(phony, target, dependencies, command, tool), ]
         for operation in operations:
-            phony, target, dependencies, command, tool = operation
+            phony, target, dependencies, command, tool, clangd_command = operation
 
-            json_command = {
-                "directory": cwd,
-                "arguments": command,
-            }
+            if len(clangd_command) > 0:
+                command = clangd_command
+
+            if isinstance(command, list):
+                json_command = {
+                    "directory": cwd,
+                    "arguments": command,
+                }
+            else:
+                json_command = {
+                    "directory": cwd,
+                    "command": command,
+                }
             if not phony:
                 json_command["output"] = target
 

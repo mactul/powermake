@@ -184,6 +184,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("-g", "--global-config", metavar="GLOBAL_CONFIG_PATH", help="Set the path for the global config", default=None)
         self.add_argument("-s", "--single-file", metavar="FILE", help="Run the compilation but only compile the specified file.", default=None)
         self.add_argument("-o", "--compile-commands-dir", metavar="DIRECTORY", help="Run the compilation and generate a compile_commands.json file in the directory specified.", default=None)
+        self.add_argument("--clangd-compat", help="Use this with -o, generate the compile_commands.json as if it was compiled with clang to avoid incompatibilities between flags used and the LSP.", action="store_true")
         self.add_argument("-m", "--makefile", help="Run the compilation and generate a GNU Makefile.", action="store_true")
         self.add_argument("--os", metavar="OPERATING_SYSTEM", help="Set the target operating system, overwrite the config", default=None)
         self.add_argument("--arch", metavar="ARCHITECTURE", help="Set the target architecture, overwrite the config", default=None)

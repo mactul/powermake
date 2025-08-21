@@ -117,7 +117,7 @@ class Tool(abc.ABC):
         self.cache["unsupported_flags"].append(f)
         return (False, True)
 
-    def _translate_flag(self, flag: T.Union[str, T.Tuple[str, ...]], output_list: T.List[str], already_translated_flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> bool:
+    def _translate_flag(self, flag: T.Union[str, T.Tuple[str, ...]], output_list: T.List[str], already_translated_flags: T.List[T.Union[str, T.Tuple[str, ...]]], silent_translation: bool = False) -> bool:
         if isinstance(flag, EnforcedFlag):
             output_list.append(flag)
             return False
@@ -150,8 +150,9 @@ class Tool(abc.ABC):
                     for f in flag:
                         enforced_str += f"powermake.EnforcedFlag({json.dumps(f)}), "
                     enforced_str = enforced_str[:-2]
-                    print(warning_text(f"Warning: the combination of flags {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as multiple enforced flags: {enforced_str} instead of {flag}"))
-                else:
+                    if not silent_translation:
+                        print(warning_text(f"Warning: the combination of flags {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as multiple enforced flags: {enforced_str} instead of {flag}"))
+                elif not silent_translation:
                     print(warning_text(f"Warning: the flag {flag} doesn't seems supported by {self.__class__.__name__}(\"{self._name}\")\nIt has been removed, to keep it, register it as powermake.EnforcedFlag({json.dumps(flag)}) instead of {json.dumps(flag)}"))
                 return cache_modified
 
@@ -178,12 +179,12 @@ class Tool(abc.ABC):
 
         return cache_modified
 
-    def translate_flags(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+    def translate_flags(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]], silent_translation: bool = False) -> T.List[str]:
         translated_flags: T.List[str] = []
         already_translated_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
         cache_modified = False
         for flag in flags:
-            cache_modified = self._translate_flag(flag, translated_flags, already_translated_flags) or cache_modified
+            cache_modified = self._translate_flag(flag, translated_flags, already_translated_flags, silent_translation) or cache_modified
 
         if cache_modified:
             store_cache_to_file(self.cache_file, self.cache, self.path, os.path.abspath(__file__))

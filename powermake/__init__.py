@@ -25,6 +25,7 @@ import __main__ as __makefile__
 import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
+from . import compilers
 from .config import Config
 from .utils import makedirs
 from .tools import EnforcedFlag
@@ -194,7 +195,11 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
     asm_args: T.Union[T.List[str], None] = None
     rc_args: T.Union[T.List[str], None] = None
 
+    clangd_c_args: T.Union[T.List[str], None] = None
+    clangd_cpp_args: T.Union[T.List[str], None] = None
+
     for file in files:
+        clangd_command: T.List[str] = []
         output_file = utils.join_absolute_paths(config.obj_build_directory, file)
         makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -210,6 +215,10 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
             output_file += config.c_compiler.obj_extension
             command = config.c_compiler.basic_compile_command(output_file, file, c_args)
             tool = "CC"
+            if config._clangd_c_compiler is not None and isinstance(config.c_compiler, compilers.CompilerGNU):
+                if clangd_c_args is None:
+                    clangd_c_args = config._clangd_c_compiler.format_args(config.defines, config.additional_includedirs, config.c_flags, silent_translation=True)
+                clangd_command = config.c_compiler.basic_compile_command(output_file, file, clangd_c_args)
         elif file.endswith((".cpp", ".cc", ".C")):
             if config.cpp_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No C++ compiler has been specified and the default config didn't find any"))
@@ -218,6 +227,10 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
             output_file += config.cpp_compiler.obj_extension
             command = config.cpp_compiler.basic_compile_command(output_file, file, cpp_args)
             tool = "CXX"
+            if config._clangd_cpp_compiler is not None and isinstance(config.cpp_compiler, compilers.CompilerGNU):
+                if clangd_cpp_args is None:
+                    clangd_cpp_args = config._clangd_cpp_compiler.format_args(config.defines, config.additional_includedirs, config.cpp_flags, silent_translation=True)
+                clangd_command = config.cpp_compiler.basic_compile_command(output_file, file, clangd_cpp_args)
         elif file.endswith((".s", ".S")):
             if config.as_compiler is None:
                 raise PowerMakeRuntimeError(display.error_text("No AS compiler has been specified and the default config didn't find any"))
@@ -244,7 +257,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
             tool = "RC"
         else:
             raise PowerMakeValueError(display.error_text(f"The file extension {os.path.splitext(file)[1]} can't be compiled"))
-        op = Operation(output_file, {file}, config, command, tool)
+        op = Operation(output_file, {file}, config, command, tool, clangd_command)
         if isinstance(files, set):
             T.cast(T.Set[Operation], operations).add(op)
         else:
@@ -257,7 +270,7 @@ def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force
 
     if config._args_parsed is not None and config._args_parsed.makefile or config.compile_commands_dir is not None:
         generation._makefile_targets_mutex.acquire()
-        generation._makefile_targets.append([(False, op.outputfile, op.dependencies, op.command, op.tool) for op in operations])
+        generation._makefile_targets.append([(False, op.outputfile, op.dependencies, op.command, op.tool, op.clangd_command) for op in operations])
         generation._makefile_targets_mutex.release()
 
     stopper = CompilationStopper()

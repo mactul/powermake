@@ -26,8 +26,8 @@ class CompilerGNU(Compiler):
     def __init__(self, path: str = "cc"):
         super().__init__(path)
 
-    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
-        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + self.translate_flags(flags)
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = [], silent_translation: bool = False) -> T.List[str]:
+        return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + self.translate_flags(flags, silent_translation)
 
     def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
         return [self.path, "-c", "-o", outputfile, inputfile, *args]

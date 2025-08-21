@@ -235,7 +235,7 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
 
     if (config._args_parsed is not None and config._args_parsed.makefile or config.compile_commands_dir is not None) and _generate_makefile:
         generation._makefile_targets_mutex.acquire()
-        generation._makefile_targets.append([(phony, target, _dependencies, command, _tool)])
+        generation._makefile_targets.append([(phony, target, _dependencies, command, _tool, [])])
         generation._makefile_targets_mutex.release()
 
     yield returncode
@@ -313,13 +313,13 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
         _print_lock.release()
         if config.compile_commands_dir is not None and _generate_makefile:
             generation._makefile_targets_mutex.acquire()
-            generation._makefile_targets.append([(False, outputfile, dependencies, command, _tool)])
+            generation._makefile_targets.append([(False, outputfile, dependencies, command, _tool, [])])
             generation._makefile_targets_mutex.release()
     return outputfile
 
 
 class Operation:
-    def __init__(self, outputfile: str, dependencies: T.Iterable[str], config: Config, command: T.List[str], tool: str = ""):
+    def __init__(self, outputfile: str, dependencies: T.Iterable[str], config: Config, command: T.List[str], tool: str = "", clangd_command: T.List[str] = []):
         """
         Provide a simple object that can execute a command only if it's needed.
 
@@ -339,6 +339,7 @@ class Operation:
         self.command = command
         self.config = config
         self.tool = tool
+        self.clangd_command = clangd_command
 
     def execute(self, force: T.Union[bool, None] = None, _generate_makefile: bool = True, stopper: T.Union[CompilationStopper, None] = None) -> str:
         """
