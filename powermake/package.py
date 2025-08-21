@@ -19,19 +19,20 @@ from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, ca
 _ExtType = T.TypeVar("_ExtType", bound="ExtType")
 
 class ExtType(Enum):
-    LIB_A = 0
-    LIB_SO = 1
-    LIB_SO_NUM = 2
-    LIB_DLL_A = 3
-    LIB_LIB = 4
-    LIB_DLL = 5
+    LIB_A = "\\.a"
+    "Files ending with .a (ex: libssl.a)"
+    LIB_SO = "\\.so"
+    "Files ending with .so (ex: libssl.so)"
+    LIB_SO_NUM = "\\.so(?:\\.[0-9]+)+"
+    "Files ending with .so.X.X... (ex: libssl.so.2)"
+    LIB_DLL_A = "\\.dll\\.a"
+    "Files ending with .dll.a (ex: libssl.dll.a)"
+    LIB_LIB = "\\.lib"
+    "Files ending with .lib (ex: ssl.lib)"
+    LIB_DLL = "\\.dll"
+    "Files ending with .dll (ex: ssl.dll)"
 
-    NO_EXT = 6
-
-    def __lt__(self, other: _ExtType) -> bool:
-        if self.__class__ is other.__class__:
-            return bool(self.value < other.value)
-        raise NotImplementedError()
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_SO_NUM, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
 
 
 class GitRepo:
@@ -214,8 +215,8 @@ def remove_version_ext(ext: str) -> str:
     return ext[:i+1]
 
 
-def search_lib(dir: str, libname: str, get_non_match: bool = True) -> T.Tuple[T.List[str], T.Dict[str, T.Set[str]]]:
-    chosen_libs: T.List[T.Tuple[bool, ExtType, str]] = []
+def search_lib(dir: str, libname: str, get_non_match: bool = True, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[T.List[str], T.Dict[str, T.Set[str]]]:
+    chosen_libs: T.List[T.Tuple[bool, int, str]] = []
     non_match: T.Dict[str, T.Set[str]] = {}
 
     try:
@@ -223,7 +224,7 @@ def search_lib(dir: str, libname: str, get_non_match: bool = True) -> T.Tuple[T.
     except FileNotFoundError:
         return [], {}
 
-    regex = re.compile("(.+)(\\.a|\\.dll|\\.lib|\\.so(?:\\.[0-9]+)*)", re.IGNORECASE)
+    regex = re.compile(f"(.+)({'|'.join({x.value for x in ext_pref_order}.union({x.value for x in ExtType}))})", re.IGNORECASE)
     for file in files:
         if file.startswith("lib"):
             lib_prefix = True
@@ -236,8 +237,8 @@ def search_lib(dir: str, libname: str, get_non_match: bool = True) -> T.Tuple[T.
             # Not a lib
             continue
         name = str(search.group(1))
-        ext = str(search.group(2)).lower()
-        if name.endswith(".dll"):
+        ext = str(search.group(2))
+        if name.endswith(".dll") and ext == ".a":
             name = name[:-4]
             if len(name) == 0:
                 # Not a lib
@@ -250,27 +251,20 @@ def search_lib(dir: str, libname: str, get_non_match: bool = True) -> T.Tuple[T.
                 else:
                     non_match[name] = {file}
         else:
-            current_ext = ExtType.NO_EXT
-            if ext == ".a":
-                current_ext = ExtType.LIB_A
-            elif ext == ".so":
-                current_ext = ExtType.LIB_SO
-            elif remove_version_ext(ext) == ".so":
-                current_ext = ExtType.LIB_SO_NUM
-            elif ext == ".dll.a":
-                current_ext = ExtType.LIB_DLL_A
-            elif ext == ".lib":
-                current_ext = ExtType.LIB_LIB
-            elif ext == ".dll":
-                current_ext = ExtType.LIB_DLL
+            current_ext = -1
+            for i in range(len(ext_pref_order)):
+                if re.fullmatch(ext_pref_order[i].value, ext, re.IGNORECASE):
+                    current_ext = i
+                    break
 
-            chosen_libs.append((not lib_prefix, current_ext, file))
+            if current_ext != -1:
+                chosen_libs.append((not lib_prefix, current_ext, file))
 
     chosen_libs.sort()
     return [lib[2] for lib in chosen_libs], non_match
 
 
-def get_possible_filepaths(config: Config, libname: str) -> T.List[str]:
+def get_possible_filepaths(config: Config, libname: str, ext_pref_order: T.List[ExtType]) -> T.List[str]:
     if config.linker is None:
         return []
     dirs = config.linker.get_lib_dirs(config.ld_flags)
@@ -283,7 +277,7 @@ def get_possible_filepaths(config: Config, libname: str) -> T.List[str]:
 
     filepaths = []
     for dir in filtered_dirs:
-        libs, _ = search_lib(dir, libname, get_non_match=False)
+        libs, _ = search_lib(dir, libname, get_non_match=False, ext_pref_order=ext_pref_order)
         if len(libs) == 0:
             if config.target_is_mingw():
                 filename = f"lib{libname}.a"
@@ -463,7 +457,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
     return None
 
 
-def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
     cache_modified = False
 
     if "system" not in cache:
@@ -472,7 +466,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     tempdir, main_object_path = create_main_object(config)
 
 
-    possible_filepaths = get_possible_filepaths(config, libname)
+    possible_filepaths = get_possible_filepaths(config, libname, ext_pref_order)
     if not disable_system_packages and min_version is None and max_version is None:
         # If we find a compatible file installed, no need to search the version number it will be good in any case.
         for filepath in possible_filepaths:
@@ -514,13 +508,17 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
         compatible_versions = filter_versions(versions, min_version, max_version, allow_prerelease=allow_prerelease)
         for version in compatible_versions:
             lib_dir = os.path.join(install_path, version[0], "lib")
-            libs, _ = search_lib(lib_dir, libname, get_non_match=False)
-            if len(libs) == 0:
+            if not os.path.exists(lib_dir):
                 continue
-            lib = os.path.join(lib_dir, libs[0])
+            libs, _ = search_lib(lib_dir, libname, get_non_match=False, ext_pref_order=ext_pref_order)
+            if len(libs) == 0:
+                raise PowerMakeRuntimeError("A folder was found with the good version but no lib in the format you ask for was found")
             include = os.path.join(install_path, version[0], "include")
-            if check_linker_compat(config, tempdir.name, main_object_path, lib):
-                return (cache_modified, lib, include, version[1])
+            for lib in libs:
+                libpath = os.path.join(lib_dir, lib)
+                if check_linker_compat(config, tempdir.name, main_object_path, libpath):
+                    return (cache_modified, libpath, include, version[1])
+            raise PowerMakeRuntimeError("A folder was found with the good version and libs in the good format, but none of them is compatible with your linker")
 
     if not disable_system_packages:
         pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
@@ -558,7 +556,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
         raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
     includedir = os.path.join(lib_installed_path, "include")
-    libs, non_match = search_lib(lib, libname, get_non_match=True)
+    libs, non_match = search_lib(lib, libname, get_non_match=True, ext_pref_order=ext_pref_order)
     for name in non_match:
         # We should verify if the directory exists and prompt the user for action to take
         path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, name, builded_version_str)
@@ -574,7 +572,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
 
 
-def find_lib(config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False) -> T.Tuple[str, str, T.Union[Version, None]]:
+def find_lib(config: Config, libname: str, install_dir: str, *, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[str, str, T.Union[Version, None]]:
     # Cache structure example:
     # =======================================================
     # cache = {
@@ -611,7 +609,7 @@ def find_lib(config: Config, libname: str, install_dir: str, git_repo: T.Union[G
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, git_repo, min_v, max_v, allow_prerelease, disable_system_packages)
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
