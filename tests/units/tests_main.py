@@ -3,6 +3,7 @@ import tests_utils
 import tests_cache
 import tests_config
 import tests_version
+import tests_package
 import tests_display
 import tests_operation
 import tests_exceptions
@@ -17,6 +18,7 @@ if __name__ == "__main__":
     tests_cache.run_tests()
     tests_config.run_tests()
     tests_version.run_tests()
+    tests_package.run_tests()
     tests_display.run_tests()
     tests_operation.run_tests()
     tests_exceptions.run_tests()
