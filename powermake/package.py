@@ -83,26 +83,37 @@ class GitRepo:
             makedirs(os.path.join(temp_dir.name, os.path.dirname(self.dst_makefile_path)))
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
-        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, command_line_args=["--install", install_path])
+        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path])
 
         temp_dir.cleanup()
         makefile_temp_dir.cleanup()
 
 
 class DefaultGitRepos(GitRepo):
+    _default_packages = {
+        "ssl": "openssl",
+        "crypto": "openssl",
+    }
     _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None]]] = {
-        "SDL3": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py")
+        "SDL3": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py"),
     }
     def __init__(self) -> None:
         self.libname: T.Union[str, None] = None
         super().__init__("", "")
 
-    def set_libname(self, libname: str) -> None:
-        if libname not in self._preconfigured_repos:
+    def set_libname(self, libname: str, package_name: T.Union[str, None]) -> None:
+        if package_name is None:
+            if libname in self._default_packages:
+                package_name = self._default_packages[libname]
+            else:
+                package_name = libname
+
+        if package_name not in self._preconfigured_repos:
             self.libname = None
             return
+
         self.libname = libname
-        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path = self._preconfigured_repos[libname]
+        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path = self._preconfigured_repos[package_name]
 
     def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         if self.libname is None:
@@ -344,7 +355,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
     pacman_update_db()
 
     available_versions = pacman_get_available_versions(possible_filepaths)
-    found = None
+    found: T.Union[T.Tuple[str, str, Version], None] = None
     installable = []
     upgradable = []
     for libpath, package, installed_version, server_version in available_versions:
@@ -463,7 +474,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
     return None
 
 
-def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
     cache_modified = False
 
     if "system" not in cache:
@@ -489,6 +500,20 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     if len(current_toolchain_prefix) == 0:
         current_toolchain_prefix = "generic"
 
+    if git_repo is not None:
+        if isinstance(git_repo, DefaultGitRepos):
+            git_repo.set_libname(libname, package_name)
+
+        if package_name is None:
+            package_name = os.path.basename(git_repo.code_git_url.split(':')[-1])
+            if package_name.endswith(".git"):
+                package_name = package_name[:-4]
+
+    if package_name is None:
+        package_folder_name = libname
+    else:
+        package_folder_name = package_name
+
     if not disable_system_packages:
         for entry in cache["system"]:
             if not check_cache_controls(entry):
@@ -503,7 +528,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                     if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
                         return (cache_modified, entry["lib"], entry["include"], v)
 
-    install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, libname)
+    install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, libname)
     if os.path.isdir(install_path):
         files = os.listdir(install_path)
         versions = []
@@ -540,8 +565,6 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     if git_repo is None:
         raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
-    if isinstance(git_repo, DefaultGitRepos):
-        git_repo.set_libname(libname)
 
     compatible_versions = filter_versions(git_repo.get_server_versions(), min_version, max_version, allow_prerelease)
     if len(compatible_versions) > 0:
@@ -565,7 +588,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     libs, non_match = search_lib(lib, libname, get_non_match=True, ext_pref_order=ext_pref_order)
     for name in non_match:
         # We should verify if the directory exists and prompt the user for action to take
-        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, name, builded_version_str)
+        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
         makedirs(os.path.join(path, "lib"))
         for file in non_match[name]:
             shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
@@ -578,7 +601,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
 
 
-def find_lib(config: Config, libname: str, install_dir: str, *, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[str, str, T.Union[Version, None]]:
+def find_lib(config: Config, libname: str, install_dir: str, *, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[str, str, T.Union[Version, None]]:
     # Cache structure example:
     # =======================================================
     # cache = {
@@ -615,7 +638,7 @@ def find_lib(config: Config, libname: str, install_dir: str, *, git_repo: T.Unio
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
