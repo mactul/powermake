@@ -16,7 +16,6 @@ from .display import print_info, print_debug_info
 from .version_parser import Version, parse_version, remove_version_frills, PreType
 from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
 
-_ExtType = T.TypeVar("_ExtType", bound="ExtType")
 
 class ExtType(Enum):
     LIB_A = "\\.a"
@@ -74,6 +73,12 @@ class GitRepo:
         if subprocess.run(cmd).returncode != 0:
             raise PowerMakeRuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
 
+        if self.makefile_git_url is not None and self.src_makefile_path is not None:
+            makefile_temp_dir = tempfile.TemporaryDirectory("_powermake_makefile_repo")
+            if subprocess.run(["git", "clone", "--progress", "--recursive", "--depth=1", "--single-branch", self.makefile_git_url, makefile_temp_dir.name]).returncode != 0:
+                raise PowerMakeRuntimeError(f"Unable to connect to the git repository: {self.makefile_git_url}")
+            self.src_makefile_path = os.path.join(makefile_temp_dir.name, self.src_makefile_path)
+
         if self.src_makefile_path is not None:
             makedirs(os.path.join(temp_dir.name, os.path.dirname(self.dst_makefile_path)))
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
@@ -81,6 +86,7 @@ class GitRepo:
         run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, command_line_args=["--install", install_path])
 
         temp_dir.cleanup()
+        makefile_temp_dir.cleanup()
 
 
 class DefaultGitRepos(GitRepo):
