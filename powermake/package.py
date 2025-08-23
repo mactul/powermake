@@ -5,8 +5,9 @@ import tempfile
 import subprocess
 import typing as T
 
-from . import run_another_powermake
 from .config import Config
+from . import run_another_powermake
+from .exceptions import PowerMakeRuntimeError
 from .utils import makedirs, join_absolute_paths
 from .architecture import split_toolchain_prefix
 from .display import print_info, print_debug_info
@@ -21,7 +22,7 @@ class GitRepo:
         self.src_makefile_path: T.Union[str, None] = None
         self.makefile_git_url: T.Union[str, None] = None
 
-    def add_external_powermake_makefile(self, powermake_makefile_path: str, git_url: T.Union[str, None]) -> None:
+    def set_external_powermake_makefile(self, powermake_makefile_path: str, git_url: T.Union[str, None]) -> None:
         self.src_makefile_path = powermake_makefile_path
         self.makefile_git_url = git_url
 
@@ -29,7 +30,7 @@ class GitRepo:
         try:
             output = subprocess.check_output(["git", "ls-remote", "-t", "--refs", "-q", self.code_git_url], encoding="utf-8").split("\n")
         except subprocess.CalledProcessError:
-            raise RuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
+            raise PowerMakeRuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
 
         versions = []
         for line in output:
@@ -51,7 +52,11 @@ class GitRepo:
             cmd = ["git", "clone", "--progress", "--recursive", "--depth=1", "--branch", tag, "--single-branch", self.code_git_url, temp_dir.name]
 
         if subprocess.run(cmd).returncode != 0:
-            raise RuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
+            raise PowerMakeRuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
+
+        if self.src_makefile_path is not None:
+            makedirs(os.path.join(temp_dir.name, os.path.dirname(self.dst_makefile_path)))
+            shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
         run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, command_line_args=["--install", install_path])
 
@@ -60,7 +65,7 @@ class GitRepo:
 
 class DefaultGitRepos(GitRepo):
     _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None]]] = {
-        "SDL3": ("https://github.com/mactul/konkr.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "SDL3/makefile.py")
+        "SDL3": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py")
     }
     def __init__(self) -> None:
         self.libname: T.Union[str, None] = None
@@ -209,7 +214,7 @@ def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory[st
         flags = config.cpp_flags
 
     if compiler is None:
-        raise RuntimeError("No C or C++ compiler were found, we need one to check a lib compatibility")
+        raise PowerMakeRuntimeError("No C or C++ compiler were found, we need one to check a lib compatibility")
 
     temp_dir = tempfile.TemporaryDirectory("_powermake_test_link")
     with open(os.path.join(temp_dir.name, "main.c"), "w") as empty_main:
@@ -222,7 +227,7 @@ def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory[st
 
 def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str, libpath: str) -> bool:
     if config.linker is None:
-        raise RuntimeError("No linker was found, we need one to check a lib compatibility")
+        raise PowerMakeRuntimeError("No linker was found, we need one to check a lib compatibility")
     cmd = config.linker.basic_link_command(os.path.join(tempdir_name, "main"), [main_object_path, libpath], args=config.linker.format_args([], config.ld_flags))
     return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
 
@@ -337,7 +342,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
             print_info("Running pacman as root", verbosity=config.verbosity)
             print_debug_info(cmd, verbosity=config.verbosity)
             if subprocess.run(cmd).returncode != 0:
-                raise RuntimeError("Unable to run pacman as root")
+                raise PowerMakeRuntimeError("Unable to run pacman as root")
 
         if cmd is None or len(cmd) > 0:
             found = None
@@ -388,11 +393,14 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                 return (cache_modified, filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')), None)
 
     if config.linker is None:
-        raise RuntimeError("No linker was found, we need one to check a lib compatibility")
+        raise PowerMakeRuntimeError("No linker was found, we need one to check a lib compatibility")
 
     current_toolchain_prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
     if current_toolchain_prefix is None:
         current_toolchain_prefix = os.path.basename(config.linker.path)
+
+    if len(current_toolchain_prefix) == 0:
+        current_toolchain_prefix = "generic"
 
     if not disable_system_packages:
         for entry in cache["system"]:
@@ -460,20 +468,60 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     # No other choice than to build from sources
 
     if git_repo is None:
-        raise RuntimeError("Unable to find any package that meets the requirements.")
+        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
     if isinstance(git_repo, DefaultGitRepos):
         git_repo.set_libname(libname)
 
     compatible_versions = filter_versions(git_repo.get_server_versions(), min_version, max_version, allow_prerelease)
     if len(compatible_versions) > 0:
-        download_path = os.path.join(install_path, str(compatible_versions[0][1]))
-        git_repo.download_build_install(config, download_path, compatible_versions[0][0])
-    if min_version is None and max_version is None:
-        download_path = os.path.join(install_path, "no_version")
-        git_repo.download_build_install(config, download_path)
+        builded_version = compatible_versions[0][1]
+        builded_version_str = str(compatible_versions[0][1])
+        lib_installed_path = os.path.join(install_path, builded_version_str)
+        git_repo.download_build_install(config, lib_installed_path, compatible_versions[0][0])
+    elif min_version is None and max_version is None:
+        builded_version = None
+        builded_version_str = "no_version"
+        lib_installed_path = os.path.join(install_path, builded_version_str)
+        git_repo.download_build_install(config, lib_installed_path)
+    else:
+        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
-    raise RuntimeError("Unable to find any package that meets the requirements.")
+    lib = os.path.join(lib_installed_path, "lib")
+    if not os.path.isdir(lib):
+        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
+    files = os.listdir(lib)
+    includedirs_to_copy = set()
+    includedir = os.path.join(lib_installed_path, "include")
+    chosen_lib = ""
+    for file in files:
+        name = file.split('.')[0]
+        if name.startswith("lib"):
+            name = name[3:]
+        if name != libname:
+            if os.path.isfile(os.path.join(lib, file)):
+                path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, name, builded_version_str)
+                makedirs(os.path.join(path, "lib"))
+                includedirs_to_copy.add(os.path.join(path, "include"))
+                shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
+        else:
+            if chosen_lib == "":
+                chosen_lib = file
+            elif file == f"lib{libname}.a":
+                chosen_lib = file
+            elif chosen_lib != f"lib{libname}.a" and file == f"lib{libname}.so":
+                chosen_lib = file
+    for dir in includedirs_to_copy:
+        shutil.copytree(includedir, dir, dirs_exist_ok=True)
+
+    if chosen_lib == "":
+        files = os.listdir(lib)
+        if len(files) == 0:
+            raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
+        chosen_lib = files[0]
+
+    return cache_modified, os.path.join(lib, chosen_lib), includedir, builded_version
+
 
 
 def find_lib(config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False) -> T.Tuple[str, str, T.Union[Version, None]]:
