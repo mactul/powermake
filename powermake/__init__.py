@@ -17,6 +17,7 @@ import os
 import sys
 import glob
 import json
+import shlex
 import shutil
 import fnmatch
 import subprocess
@@ -553,3 +554,56 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if not isinstance(metadata, dict):
         raise RuntimeError("PowerMake corrupted; please verify your installation")
     return _get_libs_from_folder(metadata["lib_build_directory"])
+
+
+def run_cmake(config: Config, path: str, *additional_args: str) -> None:
+    cmake_path = shutil.which("cmake")
+    if cmake_path is None:
+        raise PowerMakeRuntimeError("Unable to found cmake executable")
+
+    args = []
+    if config.c_compiler is not None:
+        args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
+        if config.target_simplified_architecture == "x86":
+            args.append(f"-DCMAKE_C_FLAGS={shlex.join(config.c_compiler.translate_flags(["-m32"]))}")
+    if config.cpp_compiler is not None:
+        args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
+        if config.target_simplified_architecture == "x86":
+            args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32"]))}")
+    if config.as_compiler is not None:
+        args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
+        if config.target_simplified_architecture == "x86":
+            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32"]))}")
+    if config.asm_compiler is not None:
+        args.append(f"-DCMAKE_ASM_NASM_COMPILER={config.asm_compiler.path}")
+        args.append(f"-DCMAKE_ASM_MASM_COMPILER={config.asm_compiler.path}")
+
+    if config.target_is_windows():
+        system_name = "Windows"
+    elif config.target_is_linux():
+        system_name = "Linux"
+    elif config.target_is_macos():
+        system_name = "Darwin"
+    else:
+        system_name = config.target_operating_system
+
+    args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={config.target_simplified_architecture}"])
+
+    if config.linker is not None:
+        dirs = config.linker.get_lib_dirs(config.ld_flags)
+        filtered_dirs: T.Set[str] = set()
+        for dir in dirs:
+            if config.target_simplified_architecture == "x86" and "lib32" in dir:
+                filtered_dirs.add(dir)
+        if len(filtered_dirs) == 0:
+            filtered_dirs = dirs
+
+        if len(filtered_dirs) > 0:
+            dir_str = ':'.join(filtered_dirs)
+            pkg_dir_str = ':'.join([os.path.join(dir, "pkgconfig") for dir in filtered_dirs])
+            os.environ["PKG_CONFIG_PATH"] = pkg_dir_str
+            os.environ["PKG_CONFIG_LIBDIR"] = pkg_dir_str
+            args.extend([f"-DCMAKE_LIBRARY_PATH={dir_str}", f"-DCMAKE_FIND_ROOT_PATH={dir_str}", "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY"])
+
+    if run_command(config, [cmake_path, path, *args, *additional_args]) != 0:
+        raise PowerMakeRuntimeError("Unable to run cmake")
