@@ -64,6 +64,13 @@ class GitRepo:
         return versions
 
     def download_build_install(self, config: Config, install_path: str, tag: T.Union[str, None] = None) -> None:
+        print(f"Do you want to download {self.code_git_url} ? It will be compiled and installed in: {install_path}")
+        answer = "a"
+        while answer != "" and answer != "y" and answer != "Y" and answer != "n" and answer != "N":
+            answer = input("[Y/n] ")
+        if answer != "" and answer != "y" and answer != "Y":
+            raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
+
         temp_dir = tempfile.TemporaryDirectory("_powermake_build")
         if tag is None:
             cmd = ["git", "clone", "--progress", "--recursive", "--depth=1", "--single-branch", self.code_git_url, temp_dir.name]
