@@ -40,10 +40,20 @@ class GitRepo:
         self.dst_makefile_path = powermake_makefile_path_in_repo
         self.src_makefile_path: T.Union[str, None] = None
         self.makefile_git_url: T.Union[str, None] = None
+        self.tags_to_exclude: T.Tuple[str, ...] = tuple()
 
     def set_external_powermake_makefile(self, powermake_makefile_path: str, git_url: T.Union[str, None]) -> None:
         self.src_makefile_path = powermake_makefile_path
         self.makefile_git_url = git_url
+
+    def set_tags_to_exclude(self, *regex: str):
+        self.tags_to_exclude = regex
+
+    def _is_tag_excluded(self, tag: str):
+        for regex in self.tags_to_exclude:
+            if re.fullmatch(regex, tag):
+                return True
+        return False
 
     def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         try:
@@ -56,6 +66,8 @@ class GitRepo:
             if "/" not in line:
                 continue
             tag = line.rsplit("/", maxsplit=1)[1]
+            if self._is_tag_excluded(tag):
+                continue
             v = parse_version(remove_version_frills(tag))
             if v is None:
                 continue
@@ -101,8 +113,9 @@ class DefaultGitRepos(GitRepo):
         "ssl": "openssl",
         "crypto": "openssl",
     }
-    _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None]]] = {
-        "SDL3": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py"),
+    _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...]]] = {
+        "SDL3": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
+        "boringssl": ("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*")),
     }
     def __init__(self) -> None:
         self.libname: T.Union[str, None] = None
@@ -120,7 +133,7 @@ class DefaultGitRepos(GitRepo):
             return
 
         self.libname = libname
-        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path = self._preconfigured_repos[package_name]
+        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path, self.tags_to_exclude = self._preconfigured_repos[package_name]
 
     def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         if self.libname is None:
