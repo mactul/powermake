@@ -30,3 +30,7 @@ class Linker(Tool, abc.ABC):
     @abc.abstractmethod
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
         return []
+
+    @abc.abstractmethod
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
+        return set()

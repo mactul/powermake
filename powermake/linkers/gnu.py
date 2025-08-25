@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import subprocess
 import typing as T
 
@@ -91,6 +92,22 @@ class LinkerGNU(Linker):
         else:
             return subprocess.run([self.path, arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
+        try:
+            output = subprocess.check_output([self.path, *self.translate_flags(flags), "-print-search-dirs"], encoding="utf-8").split("\n")
+        except subprocess.CalledProcessError:
+            return set()
+
+        libraries = set()
+        for line in output:
+            if line.startswith("libraries: ="):
+                libs = line[len("libraries: ="):].split(':')
+                for lib in libs:
+                    dir = os.path.realpath(lib)
+                    if os.path.isdir(dir) and "lib" in os.path.basename(dir):
+                        libraries.add(dir)
+        return libraries
+
 
 
 class LinkerLD(LinkerGNU):
@@ -105,6 +122,23 @@ class LinkerLD(LinkerGNU):
         else:
             return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
+        try:
+            output = subprocess.check_output([self.path, *self.translate_flags(flags), "--verbose"], encoding="utf-8").split("\n")
+        except subprocess.CalledProcessError:
+            return set()
+
+        libraries = set()
+        for line in output:
+            if line.startswith("SEARCH_DIR"):
+                search_dirs = line.split(';')
+                for d in search_dirs:
+                    if len(d.strip()) == 0:
+                        continue
+                    dir = os.path.realpath(d.strip()[len('SEARCH_DIR("'):-2])
+                    if os.path.isdir(dir) and "lib" in os.path.basename(dir):
+                        libraries.add(dir)
+        return libraries
 
 
 class LinkerGCC(LinkerGNU):
