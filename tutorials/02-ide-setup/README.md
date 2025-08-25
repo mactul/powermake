@@ -121,6 +121,6 @@ Choosing the debugger will start your debugging session, to start it the next ti
 >
 > You can for example remove the config you are not using in `~/.powermake/vscode_templates/launch.json` to never be bothered by it again.
 >
-> If you want to regenerate one of these templates from the default, just delete the file then run `python makefile.py --generate-vscode`
+> If you want to regenerate one of these templates from the default, just delete the file then run `python makefile.py --generate-vscode`.
 
 ### [-> Next tutorial (Cross-platform library)](../03-crossplatform-library/README.md)

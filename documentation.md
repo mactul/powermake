@@ -106,6 +106,10 @@
     - [powermake.run\_command](#powermakerun_command)
     - [powermake.Operation (deprecated)](#powermakeoperation-deprecated)
       - [execute()](#execute)
+    - [powermake.version\_parser](#powermakeversion_parser)
+      - [powermake.version\_parser.Version](#powermakeversion_parserversion)
+      - [powermake.version\_parser.parse\_version](#powermakeversion_parserparse_version)
+      - [powermake.version\_parser.remove\_version\_frills](#powermakeversion_parserremove_version_frills)
     - [Having more control than what powermake.run offers](#having-more-control-than-what-powermakerun-offers)
       - [powermake.ArgumentParser](#powermakeargumentparser)
         - [add\_argument()](#add_argument)
@@ -2033,6 +2037,73 @@ Run the `command` if `outputfile` is not up-to-date.
 
 If `force` is True, the command is run in any case.
 
+
+### powermake.version_parser
+
+Powermake have a very powerful version parser that you can use in your projects to compare 2 version strings together.
+
+For example, it can tell you that "v2.3.5-alpha1" is newer than "v2.3.4" but older than "v2.3.5".
+
+This parser can handle almost every versionning format you can think of, you can check [version_parser unit tests](./tests/units/tests_version.py) to have a rough idea of the kind of weird versionning formats are supported.
+
+Example:
+```py
+import powermake.version_parser as vp
+
+print(vp.parse_version("v3_2.1.0:b34:12_d3"))  # "3!2.1.0-beta34-post12-dev3"
+
+print(vp.parse_version("v3_2.1.0:a34:12_d3") == vp.parse_version("v3!2.1.0alpha34p12dev3"))  # True
+
+print(vp.parse_version("3.2.3") > vp.parse_version("v3.2.3-alpha"))  # True
+
+print(vp.parse_version("3.2.3-alpha").pre_type)  # PreType.ALPHA
+
+# It can also handle versions with wildcard in them
+
+print(vp.parse_version("v3.*") == vp.parse_version("v3.3.6"))  # True
+
+print(vp.parse_version("v3.*-12") != vp.parse_version("v3.3.6"))  # True
+print(vp.parse_version("v3.*-12") == vp.parse_version("3.3.6-12"))  # True
+
+# If you have versions strings with a lot of frills with them, you can remove them before parsing the version
+
+print(vp.remove_version_frills("15.1.1+r500+gb1b8d8ce3eea-1") == "15.1.1-1")
+```
+
+#### powermake.version_parser.Version
+```py
+powermake.version_parser.Version(epoch: str = '1', release: tuple[str, ...] = ('0', ), pre_type: powermake.version_parser.PreType = powermake.version_parser.PreType.NOT_PRE, pre_number: str | None = None, post_number: str | None = None, dev_number: str | None = None) -> powermake.version_parser.Version
+```
+
+This is the object returned by [powermake.version_parser.parse_version](#powermakeversion_parserparse_version), it can also be instanciated directly.
+
+The main point of this object is that 2 `powermake.version_parser.Version` can be compared with ==, !=, <, >, <=, >=.
+
+#### powermake.version_parser.parse_version
+```py
+powermake.version_parser.parse_version(string: str) -> powermake.version_parser.Version | None
+```
+
+Transform a version string in the corresponding Version object.
+
+The version should not have any frills or the function will return None,
+for example `foo-1.1.1` will be rejected and will return None.  
+You can call `remove_version_frills` prior to this function to remove
+everything that is not related to the function number.  
+However, keep in mind that a random string containing isolated numbers
+can become a valid version because of remove_version_frills.
+
+The version can start with the letter v, like `v1.2.3`.
+
+#### powermake.version_parser.remove_version_frills
+```py
+remove_version_frills(string: str) -> str
+```
+
+Remove everything that will not be understood by the version parser.  
+For example Linux-6.12.3-hardened-1 will be transformed in 6.12.3-1.
+
+Please pay attention that not_a_release_3 will be transformed in "3", which will be interpreted as the version 3.
 
 ### Having more control than what powermake.run offers
 
