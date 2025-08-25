@@ -8,6 +8,7 @@ import typing as T
 from enum import Enum
 
 from .config import Config
+from .operation import run_command
 from . import run_another_powermake
 from .exceptions import PowerMakeRuntimeError
 from .utils import makedirs, join_absolute_paths
@@ -46,10 +47,10 @@ class GitRepo:
         self.src_makefile_path = powermake_makefile_path
         self.makefile_git_url = git_url
 
-    def set_tags_to_exclude(self, *regex: str):
+    def set_tags_to_exclude(self, *regex: str) -> None:
         self.tags_to_exclude = regex
 
-    def _is_tag_excluded(self, tag: str):
+    def _is_tag_excluded(self, tag: str) -> bool:
         for regex in self.tags_to_exclude:
             if re.fullmatch(regex, tag):
                 return True
@@ -89,12 +90,12 @@ class GitRepo:
         else:
             cmd = ["git", "clone", "--progress", "--recursive", "--depth=1", "--branch", tag, "--single-branch", self.code_git_url, temp_dir.name]
 
-        if subprocess.run(cmd).returncode != 0:
+        if run_command(config, cmd) != 0:
             raise PowerMakeRuntimeError(f"Unable to connect to the git repository: {self.code_git_url}")
 
         if self.makefile_git_url is not None and self.src_makefile_path is not None:
             makefile_temp_dir = tempfile.TemporaryDirectory("_powermake_makefile_repo")
-            if subprocess.run(["git", "clone", "--progress", "--recursive", "--depth=1", "--single-branch", self.makefile_git_url, makefile_temp_dir.name]).returncode != 0:
+            if run_command(config, ["git", "clone", "--progress", "--recursive", "--depth=1", "--single-branch", self.makefile_git_url, makefile_temp_dir.name]) != 0:
                 raise PowerMakeRuntimeError(f"Unable to connect to the git repository: {self.makefile_git_url}")
             self.src_makefile_path = os.path.join(makefile_temp_dir.name, self.src_makefile_path)
 
@@ -103,6 +104,15 @@ class GitRepo:
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
         run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path])
+
+        lib_path = os.path.join(install_path, "lib")
+        if not os.path.exists(lib_path):
+            if os.path.exists(os.path.join(install_path, "lib32")):
+                os.symlink(os.path.join(install_path, "lib32"), lib_path, target_is_directory=True)
+            elif os.path.exists(os.path.join(install_path, "lib64")):
+                os.symlink(os.path.join(install_path, "lib64"), lib_path, target_is_directory=True)
+            else:
+                raise PowerMakeRuntimeError("The library was compiled and installed but no lib folder was found")
 
         temp_dir.cleanup()
         makefile_temp_dir.cleanup()
@@ -137,7 +147,7 @@ class DefaultGitRepos(GitRepo):
 
     def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         if self.libname is None:
-            return []
+            raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
         return super().get_server_versions()
 
 
@@ -255,6 +265,8 @@ def remove_version_ext(ext: str) -> str:
 def search_lib(dir: str, libname: str, get_non_match: bool = True, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[T.List[str], T.Dict[str, T.Set[str]]]:
     chosen_libs: T.List[T.Tuple[bool, int, str]] = []
     non_match: T.Dict[str, T.Set[str]] = {}
+    name_references: T.Dict[str, T.Set[str]] = {}
+    files_parsed: T.Dict[str, T.Tuple[bool, str, str]] = {}
 
     try:
         files = os.listdir(dir)
@@ -281,13 +293,25 @@ def search_lib(dir: str, libname: str, get_non_match: bool = True, ext_pref_orde
                 # Not a lib
                 continue
             ext = ".dll" + ext
+
+        files_parsed[file] = (lib_prefix, name, ext)
+
+        base_file = os.path.basename(os.path.realpath(os.path.join(dir, file)))
+        if base_file in name_references:
+            name_references[base_file].add(name)
+        else:
+            name_references[base_file] = {name}
+
+    for file in files_parsed:
+        lib_prefix, name, ext = files_parsed[file]
+
         if name != libname:
             if get_non_match:
                 if name in non_match:
                     non_match[name].add(file)
                 else:
                     non_match[name] = {file}
-        else:
+        if name == libname or file in name_references and libname in name_references[file]:
             current_ext = -1
             for i in range(len(ext_pref_order)):
                 if re.fullmatch(ext_pref_order[i].value, ext, re.IGNORECASE):
@@ -611,7 +635,19 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
         path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
         makedirs(os.path.join(path, "lib"))
         for file in non_match[name]:
-            shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
+            full_filepath = os.path.join(lib, file)
+            if os.path.islink(full_filepath):
+                real_path = os.path.realpath(full_filepath)
+                relpath_from_lib = os.path.relpath(real_path, lib)
+                shutil.copy(full_filepath, os.path.join(path, "lib", relpath_from_lib), follow_symlinks=True)
+    # We use 2 loops to make sure all copies following symlink are done before moving the file referenced
+    for name in non_match:
+        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
+        for file in non_match[name]:
+            if file in libs:
+                shutil.copy(os.path.join(lib, file), os.path.join(path, "lib", file), follow_symlinks=False)
+            else:
+                shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
         shutil.copytree(includedir, os.path.join(path, "include"), dirs_exist_ok=True)
 
     if len(libs) == 0:
