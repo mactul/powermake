@@ -120,13 +120,33 @@ class GitRepo:
 
 class DefaultGitRepos(GitRepo):
     _default_packages = {
+        "SDL2": "SDL",
+        "SDL3": "SDL",
+        "SDL2_ttf": "SDL_ttf",
+        "SDL3_ttf": "SDL_ttf",
         "ssl": "openssl",
         "crypto": "openssl",
+        "jpeg": "libjpeg-turbo",
+        "turbojpeg": "libjpeg-turbo",
+        "png": "libpng",
+        "zip": "libzip",
+        "glfw3": "glfw",
+        "mariadb": "mariadb-connector-c"
     }
     _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...]]] = {
-        "SDL3": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
+        "SDL": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
+        "SDL_ttf": ("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
         "boringssl": ("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*")),
+        "libressl": ("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple()),
+        "openssl": ("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*")),
+        "libjpeg-turbo": ("https://github.com/libjpeg-turbo/libjpeg-turbo", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("jpeg.*", )),
+        "libpng": ("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*")),
+        "libzip": ("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", )),
+        "glfw": ("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
+        "json-c": ("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "j/json-c/json-c_makefile.py", tuple()),
+        "mariadb-connector-c": ("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*")),
     }
+
     def __init__(self) -> None:
         self.libname: T.Union[str, None] = None
         super().__init__("", "")
