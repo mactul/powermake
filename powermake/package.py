@@ -243,6 +243,7 @@ def pacman_get_package_installed_version(package_name: str) -> T.Union[Version, 
             return parse_version(remove_version_frills(version))
     return None
 
+
 def pacman_get_available_versions(libpaths: T.List[str]) -> T.List[T.Tuple[str, str, T.Union[Version, None], Version]]:
     output = []
     for libpath in libpaths:
@@ -261,16 +262,6 @@ def filter_versions(versions: T.List[T.Tuple[str, Version]], min_version: T.Unio
 
     compatible_versions.sort(reverse=True, key=lambda x:x[1])
     return compatible_versions
-
-
-# def autocomplete_filename(dir: str, filename: str) -> str:
-#     files = os.listdir(dir)
-#     if filename in files:
-#         return filename
-#     for file in files:
-#         if file.startswith(filename):
-#             return file
-#     return filename
 
 
 def remove_version_ext(ext: str) -> str:
@@ -511,7 +502,6 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
         if cmd is None or len(cmd) > 0:
             found = None
             available_versions = pacman_get_available_versions(possible_filepaths)
-            found = None
             for libpath, package, installed_version, server_version in available_versions:
                 if installed_version is not None:
                     include = os.path.realpath(os.path.join(os.path.dirname(libpath), '..', 'include'))
@@ -536,6 +526,56 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
                 return (cache_modified, *found)
 
     return None
+
+
+def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package_folder_name: str, config: Config, libname: str, install_dir: str, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Union[T.Tuple[str, str, T.Union[Version, None]], None]:
+    if git_repo is None:
+        return None
+
+    compatible_versions = filter_versions(git_repo.get_server_versions(), min_version, max_version, allow_prerelease)
+    if len(compatible_versions) > 0:
+        builded_version = compatible_versions[0][1]
+        builded_version_str = str(compatible_versions[0][1])
+        lib_installed_path = os.path.join(install_path, builded_version_str)
+        git_repo.download_build_install(config, lib_installed_path, compatible_versions[0][0])
+    elif min_version is None and max_version is None:
+        builded_version = None
+        builded_version_str = "no_version"
+        lib_installed_path = os.path.join(install_path, builded_version_str)
+        git_repo.download_build_install(config, lib_installed_path)
+    else:
+        return None
+
+    lib = os.path.join(lib_installed_path, "lib")
+    if not os.path.isdir(lib):
+        return None
+
+    includedir = os.path.join(lib_installed_path, "include")
+    libs, non_match = search_lib(lib, libname, get_non_match=True, ext_pref_order=ext_pref_order)
+    for name in non_match:
+        # We should verify if the directory exists and prompt the user for action to take
+        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
+        makedirs(os.path.join(path, "lib"))
+        for file in non_match[name]:
+            full_filepath = os.path.join(lib, file)
+            if os.path.islink(full_filepath):
+                real_path = os.path.realpath(full_filepath)
+                relpath_from_lib = os.path.relpath(real_path, lib)
+                shutil.copy(full_filepath, os.path.join(path, "lib", relpath_from_lib), follow_symlinks=True)
+    # We use 2 loops to make sure all copies following symlink are done before moving the file referenced
+    for name in non_match:
+        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
+        for file in non_match[name]:
+            if file in libs:
+                shutil.copy(os.path.join(lib, file), os.path.join(path, "lib", file), follow_symlinks=False)
+            else:
+                shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
+        shutil.copytree(includedir, os.path.join(path, "include"), dirs_exist_ok=True)
+
+    if len(libs) == 0:
+        return None
+
+    return os.path.join(lib, libs[0]), includedir, builded_version
 
 
 def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
@@ -626,54 +666,11 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
 
-    if git_repo is None:
+    git_result = _find_lib_with_git(install_path, current_toolchain_prefix, package_folder_name, config, libname, install_dir, git_repo, min_version, max_version, allow_prerelease, ext_pref_order)
+    if git_result is None:
         raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
-
-    compatible_versions = filter_versions(git_repo.get_server_versions(), min_version, max_version, allow_prerelease)
-    if len(compatible_versions) > 0:
-        builded_version = compatible_versions[0][1]
-        builded_version_str = str(compatible_versions[0][1])
-        lib_installed_path = os.path.join(install_path, builded_version_str)
-        git_repo.download_build_install(config, lib_installed_path, compatible_versions[0][0])
-    elif min_version is None and max_version is None:
-        builded_version = None
-        builded_version_str = "no_version"
-        lib_installed_path = os.path.join(install_path, builded_version_str)
-        git_repo.download_build_install(config, lib_installed_path)
-    else:
-        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
-
-    lib = os.path.join(lib_installed_path, "lib")
-    if not os.path.isdir(lib):
-        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
-
-    includedir = os.path.join(lib_installed_path, "include")
-    libs, non_match = search_lib(lib, libname, get_non_match=True, ext_pref_order=ext_pref_order)
-    for name in non_match:
-        # We should verify if the directory exists and prompt the user for action to take
-        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
-        makedirs(os.path.join(path, "lib"))
-        for file in non_match[name]:
-            full_filepath = os.path.join(lib, file)
-            if os.path.islink(full_filepath):
-                real_path = os.path.realpath(full_filepath)
-                relpath_from_lib = os.path.relpath(real_path, lib)
-                shutil.copy(full_filepath, os.path.join(path, "lib", relpath_from_lib), follow_symlinks=True)
-    # We use 2 loops to make sure all copies following symlink are done before moving the file referenced
-    for name in non_match:
-        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
-        for file in non_match[name]:
-            if file in libs:
-                shutil.copy(os.path.join(lib, file), os.path.join(path, "lib", file), follow_symlinks=False)
-            else:
-                shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
-        shutil.copytree(includedir, os.path.join(path, "include"), dirs_exist_ok=True)
-
-    if len(libs) == 0:
-        raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
-
-    return cache_modified, os.path.join(lib, libs[0]), includedir, builded_version
+    return (cache_modified, *git_result)
 
 
 
