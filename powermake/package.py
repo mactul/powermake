@@ -31,9 +31,9 @@ def escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]] = No
     if _privilege_escalator is None:
         return None
 
-    if auth[0] == "su":
-        return [*auth, shlex.join(command)]
-    return [*auth, *command]
+    if _privilege_escalator[0] == "su":
+        return [*_privilege_escalator, shlex.join(command)]
+    return [*_privilege_escalator, *command]
 
 
 def git_get_server_versions(git_url: str) -> T.List[T.Tuple[str, Version]]:
@@ -88,7 +88,7 @@ def pacman_get_server_versions(libpath: str) -> T.List[T.Tuple[str, Version]]:
     return versions
 
 
-def pacman_get_package_installed_version(package_name: str):
+def pacman_get_package_installed_version(package_name: str) -> T.Union[Version, None]:
     try:
         output = subprocess.check_output(["pacman", "-Qi", package_name], encoding="utf-8", stderr=subprocess.DEVNULL).split("\n")
     except subprocess.CalledProcessError:
@@ -103,7 +103,7 @@ def pacman_get_package_installed_version(package_name: str):
             return parse_version(remove_version_frills(version))
     return None
 
-def pacman_get_available_versions(libpaths: T.List[str]) -> T.List[T.Tuple[str, str, T.Union[Version, None], T.Union[Version, None]]]:
+def pacman_get_available_versions(libpaths: T.List[str]) -> T.List[T.Tuple[str, str, T.Union[Version, None], Version]]:
     output = []
     for libpath in libpaths:
         server_versions = pacman_get_server_versions(libpath)
@@ -134,11 +134,13 @@ def autocomplete_filename(dir: str, filename: str) -> str:
 
 
 def get_possible_filepaths(config: Config, libname: str) -> T.List[str]:
+    if config.linker is None:
+        return []
     dirs = config.linker.get_lib_dirs(config.ld_flags)
-    filtered_dirs = []
+    filtered_dirs: T.Set[str] = set()
     for dir in dirs:
         if config.target_simplified_architecture == "x86" and "lib32" in dir:
-            filtered_dirs.append(dir)
+            filtered_dirs.add(dir)
     if len(filtered_dirs) == 0:
         filtered_dirs = dirs
 
@@ -148,23 +150,37 @@ def get_possible_filepaths(config: Config, libname: str) -> T.List[str]:
 
     return filepaths
 
-def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory, str]:
+def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory[str], str]:
+    compiler = None
+    flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
+    if config.c_compiler is not None:
+        compiler = config.c_compiler
+        flags = config.c_flags
+    elif config.cpp_compiler is not None:
+        compiler = config.cpp_compiler
+        flags = config.cpp_flags
+
+    if compiler is None:
+        raise RuntimeError("No C or C++ compiler were found, we need one to check a lib compatibility")
+
     temp_dir = tempfile.TemporaryDirectory("powermake_test_link")
     with open(os.path.join(temp_dir.name, "main.c"), "w") as empty_main:
         empty_main.write("int main() { return 0; }")
 
-    cmd = config.c_compiler.basic_compile_command(os.path.join(temp_dir.name, "main.o"), os.path.join(temp_dir.name, "main.c"), args=config.c_compiler.format_args([], [], config.c_flags))
+    cmd = compiler.basic_compile_command(os.path.join(temp_dir.name, "main.o"), os.path.join(temp_dir.name, "main.c"), args=compiler.format_args([], [], flags))
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     return temp_dir, os.path.join(temp_dir.name, "main.o")
 
-def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str, libpath: str):
+def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str, libpath: str) -> bool:
+    if config.linker is None:
+        raise RuntimeError("No linker was found, we need one to check a lib compatibility")
     cmd = config.linker.basic_link_command(os.path.join(tempdir_name, "main"), [main_object_path, libpath], args=config.linker.format_args([], config.ld_flags))
     return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
 
 
 def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:
-    new_cache = {
+    new_cache: T.Dict[str, T.Any] = {
         "system": [],
         "local": []
     }
@@ -323,7 +339,12 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
             if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
                 return (cache_modified, filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')), None)
 
+    if config.linker is None:
+        raise RuntimeError("No linker was found, we need one to check a lib compatibility")
+
     current_toolchain_prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
+    if current_toolchain_prefix is None:
+        current_toolchain_prefix = os.path.basename(config.linker.path)
 
     for entry in cache["system"]:
         if not check_cache_controls(entry):
@@ -378,10 +399,10 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
     pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
     if pacman_result is not None:
-        cache_modified_by_pacman, lib, include, version = pacman_result
+        cache_modified_by_pacman, lib, include, lib_version = pacman_result
         if cache_modified_by_pacman:
             cache_modified = True
-        return cache_modified, lib, include, version
+        return cache_modified, lib, include, lib_version
 
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
