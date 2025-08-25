@@ -552,9 +552,23 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
 
     includedir = os.path.join(lib_installed_path, "include")
     libs, non_match = search_lib(lib, libname, get_non_match=True, ext_pref_order=ext_pref_order)
+    non_match_to_ignore = set()
     for name in non_match:
-        # We should verify if the directory exists and prompt the user for action to take
         path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
+        if os.path.exists(path):
+            print(f"The folder {path} already exists and the compilation generated files that belong in this folder.")
+            print("What do you want to do ?\n")
+            print("1: delete the folder and recreate it from scratch")
+            print("2: copy the files, overwriting the existing ones")
+            print("3: Don't install any more file in this folder\n")
+            answer = "4"
+            while answer not in {"1", "2", "3"}:
+                answer = input("[1/2/3] ")
+            if answer == "1":
+                shutil.rmtree(path, ignore_errors=True)
+            elif answer == "3":
+                non_match_to_ignore.add(name)
+                continue
         makedirs(os.path.join(path, "lib"))
         for file in non_match[name]:
             full_filepath = os.path.join(lib, file)
@@ -564,6 +578,8 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
                 shutil.copy(full_filepath, os.path.join(path, "lib", relpath_from_lib), follow_symlinks=True)
     # We use 2 loops to make sure all copies following symlink are done before moving the file referenced
     for name in non_match:
+        if name in non_match_to_ignore:
+            continue
         path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
         for file in non_match[name]:
             if file in libs:
