@@ -18,6 +18,20 @@ from .common import SharedLinker
 from .gnu import SharedLinkerGNU, SharedLinkerGCC, SharedLinkerClang, SharedLinkerGPlusPlus, SharedLinkerClangPlusPlus, SharedLinkerLD, SharedLinkerMinGW, SharedLinkerMinGWPlusPlus, SharedLinkerMinGWLD
 from .msvc import SharedLinkerMSVC, SharedLinkerClang_CL
 
+__all__ = [
+    "SharedLinker",
+    "SharedLinkerGNU",
+    "SharedLinkerLD",
+    "SharedLinkerGCC",
+    "SharedLinkerClang",
+    "SharedLinkerGPlusPlus"
+    "SharedLinkerClangPlusPlus",
+    "SharedLinkerMinGW",
+    "SharedLinkerMinGWPlusPlus",
+    "SharedLinkerMinGWLD",
+    "SharedLinkerMSVC",
+    "SharedLinkerClang_CL"
+]
 
 _shared_linker_types: T.Dict[str, T.Callable[[], SharedLinker]] = {
     "default": SharedLinkerGNU,

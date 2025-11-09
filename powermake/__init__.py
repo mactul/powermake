@@ -36,6 +36,30 @@ from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
 from .operation import Operation, needs_update, run_command, run_command_get_output, _run_command_yield_output, run_command_if_needed, CompilationStopper
 from .args_parser import run, default_on_clean, default_on_install, default_on_test, ArgumentParser, generate_config, run_callbacks
 
+__all__ = [
+    "compilers",
+    "Config",
+    "makedirs",
+    "EnforcedFlag"
+    "utils",
+    "print_info",
+    "print_debug_info",
+    "warning_text",
+    "PowerMakeRuntimeError",
+    "PowermakeValueError",
+    "Operation",
+    "needs_update",
+    "run_command",
+    "run_command_get_output",
+    "run_command_if_needed",
+    "run",
+    "default_on_clean",
+    "default_on_install",
+    "default_on_test",
+    "ArgumentParser",
+    "generate_config",
+    "run_callbacks"
+]
 
 if hasattr(__makefile__, '__file__'):
     # Change the cwd to the directory of the makefile.
@@ -136,6 +160,12 @@ def _file_in_files_set(file: str, files_set: T.Iterable[str]) -> bool:
             return True
     return False
 
+
+@T.overload
+def compile_files(config: Config, files: T.Set[str], force: T.Union[bool, None] = None) -> T.Set[str]: ...
+
+@T.overload
+def compile_files(config: Config, files: T.List[str], force: T.Union[bool, None] = None) -> T.List[str]: ...
 
 def compile_files(config: Config, files: T.Union[T.Set[str], T.List[str]], force: T.Union[bool, None] = None) -> T.Union[T.Set[str], T.List[str]]:
     """

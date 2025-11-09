@@ -20,6 +20,22 @@ from .asm import CompilerNASM, CompilerMASM
 from .msvc import CompilerMSVC, CompilerClang_CL
 from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus, CompilerMinGW, CompilerMinGWPlusPlus
 
+__all__ = [
+    "Compiler",
+    "CompilerWindRes",
+    "CompilerNASM",
+    "CompilerMASM",
+    "CompilerMSVC",
+    "CompilerClang_CL",
+    "CompilerGNU",
+    "CompilerGNUPlusPlus",
+    "CompilerGCC",
+    "CompilerGPlusPlus",
+    "CompilerClang",
+    "CompilerClangPlusPlus",
+    "CompilerMinGW",
+    "CompilerMinGWPlusPlus"
+]
 
 _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gnu": CompilerGNU,

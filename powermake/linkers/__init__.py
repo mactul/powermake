@@ -18,6 +18,20 @@ from .common import Linker
 from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus, LinkerMinGW, LinkerMinGWPlusPlus, LinkerMinGWLD
 from .msvc import LinkerMSVC, LinkerClang_CL
 
+__all__ = [
+    "Linker",
+    "LinkerGNU",
+    "LinkerLD",
+    "LinkerGCC",
+    "LinkerClang",
+    "LinkerGPlusPlus"
+    "LinkerClangPlusPlus",
+    "LinkerMinGW",
+    "LinkerMinGWPlusPlus",
+    "LinkerMinGWLD",
+    "LinkerMSVC",
+    "LinkerClang_CL"
+]
 
 _linker_types: T.Dict[str, T.Callable[[], Linker]] = {
     "default": LinkerGNU,

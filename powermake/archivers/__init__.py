@@ -18,6 +18,14 @@ from .common import Archiver
 from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR, ArchiverMinGW
 from .msvc import ArchiverMSVC
 
+__all__ = [
+    "Archiver",
+    "ArchiverGNU",
+    "ArchiverAR",
+    "ArchiverLLVM_AR",
+    "ArchiverMinGW",
+    "ArchiverMSVC"
+]
 
 _archiver_types: T.Dict[str, T.Callable[[], Archiver]] = {
     "default": ArchiverGNU,
