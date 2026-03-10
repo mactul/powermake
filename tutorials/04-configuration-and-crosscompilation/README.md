@@ -1,3 +1,4 @@
+<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Configuration and Cross-compilation
 
 ### [<- Previous tutorial (Multiple Targets)](../03-multiple-targets/README.md)
