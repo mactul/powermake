@@ -1,3 +1,4 @@
+<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # PowerMake
 
 <img alt="ubuntu x64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20ubuntu%20x64/badge.svg">

@@ -1,3 +1,4 @@
+<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Cross-platform Library
 
 ### [<- Previous tutorial (First PowerMake)](../01-first-powermake/README.md)

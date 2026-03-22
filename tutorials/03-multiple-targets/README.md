@@ -1,3 +1,4 @@
+<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Multiple Targets
 
 ### [<- Previous tutorial (Cross-platform Library)](../02-crossplatform-library/README.md)
