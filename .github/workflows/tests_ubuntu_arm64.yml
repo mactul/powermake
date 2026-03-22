@@ -1,4 +1,4 @@
-name: Run tests on macos x64
+name: Run tests on ubuntu arm64
 
 
 on:
@@ -8,20 +8,20 @@ on:
 
 jobs:
   tests:
-    name: Install toolchains and run tests on macos x64
-    runs-on: macos-26-intel
+    name: Install toolchains and run tests on ubuntu arm64
+    runs-on: ubuntu-22.04-arm
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
+    - name: install nasm
+      run: >-
+        sudo apt-get update && sudo apt-get install -y nasm
     - name: Install colorama
       run: >-
         python -m pip install colorama
-    - name: install nasm
-      run: >-
-        brew install nasm
     - name: run tests
       run: >-
         ./tests/nocross_tests.sh

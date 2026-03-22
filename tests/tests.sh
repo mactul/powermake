@@ -20,7 +20,7 @@ coverage run ./units/tests_main.py || failure
 if [ "$1" != "weak" ]
 then
     echo "Checking typing"
-    mypy ../powermake --check-untyped-defs --python-version=3.8 --strict --implicit-reexport || failure
+    mypy ../powermake --check-untyped-defs --python-version=3.9 --strict --implicit-reexport || failure
 fi
 
 echo "checking multiplatform makefile with default, clang and MinGW toolchains"

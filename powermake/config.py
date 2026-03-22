@@ -410,6 +410,8 @@ class Config:
         self.exe_build_directory: str = ""
         self.lib_build_directory: str = ""
 
+        self.debug_optimization: str = ""
+
         self.defines: T.List[str] = []
         self.shared_libs: T.List[str] = []
         self.additional_includedirs: T.List[str] = []
@@ -481,6 +483,9 @@ class Config:
 
                     if self.compile_commands_dir is None and "compile_commands_dir" in conf:
                         self.compile_commands_dir = conf["compile_commands_dir"]
+
+                    if self.debug_optimization == "" and "debug_optimization" in conf:
+                        self.debug_optimization = conf["debug_optimization"]
 
                     if "defines" in conf and isinstance(conf["defines"], list):
                         for define in conf["defines"]:
@@ -585,6 +590,9 @@ class Config:
 
         if self.nb_jobs == 0:
             self.nb_jobs = os.cpu_count() or 8
+
+        if self.debug_optimization == "":
+            self.debug_optimization = "-Og"
 
         target_os_autodetected = False
         if self.target_operating_system == "":
@@ -784,7 +792,7 @@ class Config:
             self.remove_defines("NDEBUG")
             self.add_c_cpp_as_asm_flags("-g")
             if reset_optimization:
-                self.set_optimization("-Og")
+                self.set_optimization(self.debug_optimization)
         else:
             self.add_defines("NDEBUG")
             self.remove_defines("DEBUG")

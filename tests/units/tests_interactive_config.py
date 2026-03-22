@@ -17,10 +17,10 @@ def fake_input(*answers: str):
 
 def run_tests():
     powermake.delete_files_from_disk("./powermake_config.json")
-    with mock.patch("powermake.interactive_config.input", new=fake_input("1", "3", "2", "2", "3", "4", "2", "/usr/bin/echo", "1", "1", "3", "8", "4", "1")):
+    with mock.patch("powermake.interactive_config.input", new=fake_input("1", "3", "2", "2", "3", "4", "2", "/usr/bin/echo", "1", "1", "3", "8", "5", "1")):
         powermake.interactive_config.InteractiveConfig()
 
-    with mock.patch("powermake.interactive_config.input", new=fake_input("1", "3", "2", "2", "3", "1", "2", "/usr/bin/clang", "1", "1", "3", "8", "4", "1", "1")):
+    with mock.patch("powermake.interactive_config.input", new=fake_input("1", "3", "2", "2", "3", "1", "2", "/usr/bin/clang", "1", "1", "3", "8", "5", "1", "1")):
         powermake.interactive_config.InteractiveConfig()
 
     config = powermake.generate_config("test")
@@ -28,7 +28,7 @@ def run_tests():
     assert(config.c_compiler.type == "clang")  # Profit to test whether the auto-toolchain works as expected
     assert(config.c_compiler.path == "/usr/bin/clang" and config.asm_compiler.path == "/usr/bin/echo")  # merge was successful
 
-    with mock.patch("powermake.interactive_config.input", new=fake_input("1", "3", "2", "4", "3", "2", "2", "/usr/bin/i686-w64-mingw32-g++", "1", "1", "3", "8", "4", "1", "2", "y")):
+    with mock.patch("powermake.interactive_config.input", new=fake_input("1", "3", "2", "4", "3", "2", "2", "/usr/bin/i686-w64-mingw32-g++", "1", "1", "3", "8", "5", "1", "2", "y")):
         powermake.interactive_config.InteractiveConfig()
 
     config = powermake.generate_config("test")

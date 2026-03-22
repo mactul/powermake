@@ -3,6 +3,9 @@ import powermake.compilers
 
 def run_tests():
     for compiler in (powermake.compilers.CompilerGCC(), powermake.compilers.CompilerGPlusPlus(), powermake.compilers.CompilerClang(), powermake.compilers.CompilerClangPlusPlus(), powermake.compilers.CompilerMinGW(), powermake.compilers.CompilerMinGWPlusPlus()):
+        if not compiler.is_available():
+            print(powermake.display.warning_text(f"compiler {type(compiler)} is not installed, test incomplete"))
+            continue
         assert(compiler.translate_flags(["-Wall", "-Wextra", ('-isystem', '/usr/include')]) == ["-Wall", "-Wextra", "-isystem", "/usr/include"])
 
         # verify cache

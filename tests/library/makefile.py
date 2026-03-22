@@ -5,11 +5,11 @@ def on_build(config: powermake.Config):
 
     if config.target_is_windows():
         if config.asm_compiler is not None and config.asm_compiler.type == "masm":
-            asm_file = "subtract_windows_masm.asm"
+            asm_file = f"subtract_windows_masm.asm"
         else:
-            asm_file = "subtract_windows.asm"
+            asm_file = f"subtract_windows.asm"
         if config.target_is_mingw():
-            files = {"my_lib.c", asm_file, "multiply_windows.s"}
+            files = {"my_lib.c", asm_file, f"multiply_windows.s"}
         else:
             files = {"my_lib.c", asm_file}
             config.add_defines("DISABLE_GNU_AS")
@@ -19,7 +19,10 @@ def on_build(config: powermake.Config):
         else:
             files = {"my_lib.c", "multiply_macos.s", "subtract_macos.asm"}
     else:
-        files = {"my_lib.c", "multiply_linux.s", "subtract_linux.asm"}
+        if config.target_simplified_architecture == "arm64":
+            files = {"my_lib.c", "multiply_linux_arm.s", "subtract_linux_arm.s"}
+        else:
+            files = {"my_lib.c", "multiply_linux.s", "subtract_linux.asm"}
 
     objects = powermake.compile_files(config, files)
 

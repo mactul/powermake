@@ -16,30 +16,28 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
-    - name: Install colorama & coverage
+    - name: Install mypy & colorama & coverage
       run: >-
-        python -m pip install colorama coverage
+        python -m pip install colorama coverage mypy types-colorama
     - name: Update
       run: >-
         sudo apt-get update
-    - name: install mingw
+    - name: install mingw & clang
       run: >-
-        sudo apt-get install mingw-w64
+        sudo apt-get install -y mingw-w64 clang
     - name: what the actual fuck ?
       run: >-  # This will be removed by the installation of aarch64-linux-gnu-gcc, but some dependencies will be kept. I should search what exact dependencies I need, but at this point the debian/ubuntu packaging makes me crazy...
-        sudo apt-get install g++-multilib
+        sudo apt-get install -y g++-multilib
     - name: install aarch64-linux-gnu-gcc
       run: >-
-        sudo apt-get install g++-aarch64-linux-gnu
+        sudo apt-get install -y g++-aarch64-linux-gnu
     - name: install gcc libs for i386
       run: >-
-        sudo dpkg --add-architecture i386 && sudo apt update && sudo apt-get install linux-libc-dev:i386
-    - name: install nasm
-      run: >-
-        sudo apt-get install nasm
+        sudo dpkg --add-architecture i386 && sudo apt update && sudo apt-get install -y linux-libc-dev:i386
+    - name: install nasm & wine
+      run: |
+        sudo apt-get install -y nasm wine wine-binfmt binfmt-support
+        sudo update-binfmts --enable wine
     - name: run tests
       run: >-
-        ./tests/tests.sh weak
-    - name: Update Coverage Badge
-      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-      uses: we-cli/coverage-badge-action@main
+        ./tests/tests.sh

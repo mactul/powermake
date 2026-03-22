@@ -102,6 +102,7 @@ class InteractiveConfig:
     def __init__(self, global_config: T.Union[str, None] = None, local_config: str = "./powermake_config.json"):
         self.target_architecture: T.Union[str, None] = None
         self.target_operating_system: T.Union[str, None] = None
+        self.debug_optimization: T.Union[str, None] = None
         self.c_compiler: T.List[T.Union[str, None]] = [None, None]
         self.cpp_compiler: T.List[T.Union[str, None]] = [None, None]
         self.as_compiler: T.List[T.Union[str, None]] = [None, None]
@@ -113,11 +114,12 @@ class InteractiveConfig:
         self.global_config = global_config
         self.local_config = local_config
         answer = 0
-        while answer != 4:
+        while answer != 5:
             choices: T.List[T.Union[str, None]] = [
                 f"Target operating system ({dp(self.target_operating_system)})",
                 f"Target architecture ({dp(self.target_architecture)})",
-                "Toolchain\n",
+                "Toolchain",
+                f"Debug optimization ({dp(self.debug_optimization)})\n",
                 "Save configuration"
             ]
             answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices) + 1)])
@@ -130,6 +132,10 @@ class InteractiveConfig:
                 self.target_architecture = multiple_choices("Select the target architecture", [None, "x86", "x64", "arm32", "arm64"])
             elif answer == 3:
                 self.toolchain_menu()
+            elif answer == 4:
+                self.debug_optimization = multiple_choices("Select the debug optimization level", [None, "-Og (better to raise more warnings)", "-O0 (better to put precise breakpoints)", "Write my own string"], [None, "-Og", "-O0", "Write my own string"])
+                if self.debug_optimization == "Write my own string":
+                    self.debug_optimization = input("Optimization flag: ")
 
         answer = multiple_choices("In which configuration do you want to write this ?", ["Local config", "Global config"], [1, 2])
         if answer == 1:
@@ -206,6 +212,9 @@ class InteractiveConfig:
 
         if self.target_architecture is not None:
             config["target_architecture"] = self.target_architecture
+
+        if self.debug_optimization is not None:
+            config["debug_optimization"] = self.debug_optimization
 
         add_tool_dict(config, self.c_compiler, "c_compiler")
         add_tool_dict(config, self.cpp_compiler, "cpp_compiler")
