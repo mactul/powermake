@@ -62,7 +62,16 @@ from ..utils import makedirs, _get_makefile_path, handle_filename_conflict
 __default_launch = """{
     "configurations": [
         {
-            "name": "PowerMake Debug",
+            "name": "PowerMake Debug (lldb)",
+            "type": "cppdbg",
+            "preLaunchTask": "powermake_compile",
+            "request": "launch",
+            "program": "${powermakeProgram}",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "PowerMake Debug (microsoft C/C++)",
             "type": "cppdbg",
             "preLaunchTask": "powermake_compile",
             "request": "launch",
@@ -85,7 +94,7 @@ __default_launch = """{
 __default_tasks = """{
     "tasks": [
         {
-            "type": "cppbuild",  /* The cppbuild type will tell the C/C++ extension to parse the stderr output of this command to put errors and warnings in the "problems" tab. */
+            "type": "shell",
             "label": "powermake_compile",  /* identifies the task in the launch.json file */
             "command": "${powermakePythonPath}",  /* This is the command executed, under Windows it will be "py", under debian 10 it will be "python3". */
             "args": [
@@ -93,7 +102,8 @@ __default_tasks = """{
                 "-rvd",  /* We activate the debug code, we rebuild everything so the warnings will not disappear and we use the verbose mode so it's easy to see the flags put by PowerMake */
                 "-o",  /* This option tells powermake to generate a compile_commands.json in the .vscode folder. */
                 "${powermakeVscodeFolderPath}",
-                "--retransmit-colors"  /* If the type at the top had been “shell” instead of cppbuild we wouldn't have needed this, but now powermake and GCC detect that they're being executed by a program that parses their output and by default disable color formatting codes. */
+                "--clangd-compat",  /* This is to provide full compatibility with clangd in the compile_commands.json and avoid "unknown arguments" warnings */
+                "--retransmit-colors"  /* Since the type at the top is “shell” we don't really need this, but if it was cppbuild, powermake and GCC would detect that they're being executed by a program that parses their output and by default disable color formatting codes. */
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -101,7 +111,7 @@ __default_tasks = """{
         },
         {
             /* This task should be mapped to a key, like Ctrl+F7 for example */
-            "type": "cppbuild",
+            "type": "shell",
             "label": "powermake_compile_single_file",
             "command": "${powermakePythonPath}",
             "args": [
@@ -121,7 +131,10 @@ __default_tasks = """{
 """
 
 __default_settings = """{
-    "C_Cpp.default.compileCommands": ".vscode/compile_commands.json"
+    "C_Cpp.default.compileCommands": ".vscode/compile_commands.json",
+    "clangd.arguments": [
+        "--compile-commands-dir=.vscode",
+    ],
 }
 """
 

@@ -55,8 +55,9 @@ import os
 import json
 import typing as T
 
-from ..config import Config
 from .. import generation
+from ..config import Config
+from ..utils import makedirs
 
 
 def generate_compile_commands(config: Config, maybe_incomplete: bool = False) -> None:
@@ -93,6 +94,8 @@ def generate_compile_commands(config: Config, maybe_incomplete: bool = False) ->
 
                 json_commands.append(json_command)
             # else it's not standard
+
+    makedirs(config.compile_commands_dir)
 
     if maybe_incomplete:
         old_json_commands = []
