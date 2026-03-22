@@ -143,9 +143,9 @@ If you really want to install from sources, we suggest you to checkout to the la
 ```sh
 pip install -U build twine
 git clone https://github.com/mactul/powermake
+cd powermake
 # Checkout to the latest tag
 git checkout $(git tag | tail -n1)
-cd powermake
 sed -i "s/{{VERSION_PLACEHOLDER}}/0.0.0/g" pyproject.toml
 rm -rf ./dist/
 python -m build
@@ -2129,7 +2129,7 @@ We especially recommend gcc and the `-fanalyzer` option, it's one of the most po
 
 > [!TIP]  
 > You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accross translation units.
-> Simply writing `config.add_flags('-fanalyzer')` in the beginning of your build callback will ensure that.
+> Simply writing `config.add_flags('-fanalyzer', '-flto')` in the beginning of your build callback will ensure that.
 
 
 ### LLVM CodeChecker

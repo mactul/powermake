@@ -1,7 +1,7 @@
 <!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Configuration and Cross-compilation
 
-### [<- Previous tutorial (Multiple Targets)](../03-multiple-targets/README.md)
+### [<- Previous tutorial (Multiple Targets)](../04-multiple-targets/README.md)
 
 > [!IMPORTANT]  
 > This tutorial assumes that you have followed at least the first one: [First Powermake](../01-first-powermake/README.md)
@@ -37,7 +37,7 @@ Even if your project is in C++, if you specify `CC=clang`, with no other informa
 
 Here are all the environment variables you can set.
 - `CC`: The path of the C compiler
-- `CXX`: The of the C++ compiler
+- `CXX`: The path of the C++ compiler
 - `AS`: The path of the assembler for .s and .S files
 - `ASM` The path of the assembler for .asm files
 - `RC` The path of the Windows resources compiler
@@ -51,7 +51,7 @@ But you can do very strange things like compiling with GCC and linking with clan
 CC=gcc LD=clang++ python makefile.py -rv
 ```
 
-If you specify a cross-compiler, PowerMake handle everything for you.
+If you specify a cross-compiler, PowerMake handles everything for you.
 For example:
 ```sh
 CC=i686-w64-mingw32-gcc python makefile.py -rv
@@ -82,7 +82,7 @@ The idea is that each configuration stage overwrite the fields of the last one.
 For example, specifying that you want to compile in 32 bits with clang in the global configuration and then specifying that you want to compile in 64 bits in the local config will result in a final configuration that specify clang/64 bits.
 
 > [!IMPORTANT]  
-> As seen above, PowerMake is able to infers all unspecified fields to find a value coherent with what you specifically specified.  
+> As seen above, PowerMake is able to infer all unspecified fields to find a value coherent with what you specifically specified.  
 > However, it will ***never*** infer a field that you have specified somewhere. For example if you specify in the global config that your C++ compiler is clang++ and then you try to compile with:
 > ```sh
 > CC=i686-w64-mingw32-gcc python makefile.py -rv
@@ -115,7 +115,7 @@ Once you are in the tool, press 3 for Toolchain configuration.
 Then press 1 to edit the C Compiler configuration.
 
 
-You will have two choices, the compiler type and the compiler type.
+You will have two choices, the compiler type and the compiler path.
 
 The compiler type is here to tell PowerMake what does the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
 
@@ -128,20 +128,21 @@ The compiler type is here to tell PowerMake what does the compiler command line 
 Try to change the C Compiler.  
 Once this is done, go all the way back to the main menu by pressing 3 and then 8.
 
-Finally, you can save your new configuration.
+Finally, you can save your new configuration.  
+Save the config localy if it's just for the test, it will be easier to delete like that.
 
 ### Local configuration file
 
-The local configuration must be a `powermake_config.json` just next to your makefile.py.  
+The local configuration must be a `powermake_config.json` just next to your makefile.py. (In fact it can be renamed and passed as an argument but it's beyond the scope of this tutorial).  
 Just like the global config file, you can edit it by hand, but it's easier to just do this with `powermake -f` as described in [Global configuration file](#global-configuration-file).
 
 
 ## Setting a compiler directly in the makefile.py
 
-In some rare case, something can only be compiled by a very specific compiler.  
+In some rare cases, something can only be compiled by a very specific compiler.  
 For example, compiling a LLVM libfuzzer script can only be done using clang (In fact, it can also be done with MSVC on Windows, but for the example, let's say the program is not compatible with MSVC and we have no point using any other compiler than clang.).
 
-In this situation, you directly invoke a specific compiler during your compilation.  
+In this situation, you can directly invoke a specific compiler during your compilation.  
 Here is an example with a fuzzer.
 
 ```py
@@ -165,3 +166,6 @@ def on_build(config: powermake.Config):
 
 powermake.run("fuzzer", build_callback=on_build)
 ```
+
+> [!NOTE]  
+> If set your compiler like that in the code, PowerMake can't infer the other tools, it's too late; so you must set every tool you use.

@@ -1,7 +1,7 @@
 <!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Cross-platform Library
 
-### [<- Previous tutorial (First PowerMake)](../01-first-powermake/README.md)
+### [<- Previous tutorial (First PowerMake)](../02-ide-setup/README.md)
 
 > [!IMPORTANT]  
 > This tutorial assumes that you have followed the first one: [First Powermake](../01-first-powermake/README.md)
@@ -86,7 +86,7 @@ For this library we have 2 new challenges.
 
 Let's first address the second issue.
 
-Later, we would do `files = powermake.get_files("**/*.c")`, but here, we must have a condition.  
+Earlier, we would do `files = powermake.get_files("**/*.c")`, but here, we must have a condition.  
 Something like this:
 ```py
 if config.target_is_windows():
@@ -150,7 +150,7 @@ powermake.run("my_time", build_callback=on_build)
 
 You can see that we added `config.add_includedirs("./include/")`, that is required for `time_linux.c` and `time_windows.c` to found the `my_time.h` file.
 
-In the last chapter we haven't talked about the first parameter of `powermake.run`, here it's `"my_time"`.  
+In the previous chapter we haven't talked about the first parameter of `powermake.run`, here it's `"my_time"`.  
 This parameter is the name of the project and it is used for link operations to automatically give a name to the binary.  
 For example here, we haven't specified the output name for `powermake.archive_files` (yes it's possible to do so, we will see later), so the name will be automatically attributed and will be `libmy_time.a`
 
@@ -218,7 +218,7 @@ in the library directory, an `install` folder will be created, with a subfolder 
 
 However, you may want to add an `include/` folder in this install directory and probably change the default install location.
 
-Here, exporting the `include/` folder would be easy because we already have separated the headers and the sources, but PowerMake can export public headers even if they are mixed with sources, we just have to specify which header need to be exported.
+Here, exporting the `include/` folder would be easy because we already have separated the headers and the sources, but PowerMake can export public headers even if they are mixed with sources, we just have to specify which header needs to be exported.
 
 We do that by overwriting the install callback
 
@@ -287,4 +287,4 @@ And to run the program:
 LD_LIBRARY_PATH=/usr/local/lib python makefile.py -t
 ```
 
-### [-> Next tutorial (Multiple Targets)](../03-multiple-targets/README.md)
+### [-> Next tutorial (Multiple Targets)](../04-multiple-targets/README.md)

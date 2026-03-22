@@ -1,7 +1,7 @@
 <!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Multiple Targets
 
-### [<- Previous tutorial (Cross-platform Library)](../02-crossplatform-library/README.md)
+### [<- Previous tutorial (Cross-platform Library)](../03-crossplatform-library/README.md)
 
 > [!IMPORTANT]  
 > This tutorial assumes that you have followed at least the first one: [First PowerMake](../01-first-powermake/README.md)
@@ -187,4 +187,4 @@ if args_parsed.ml_hardened:
 powermake.run("my_lib", build_callback=on_build, args_parsed=args_parsed)
 ```
 
-### [-> Next tutorial (Configuration and Cross-compilation)](../04-configuration-and-crosscompilation/README.md)
+### [-> Next tutorial (Configuration and Cross-compilation)](../05-configuration-and-crosscompilation/README.md)

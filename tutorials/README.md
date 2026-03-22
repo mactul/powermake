@@ -15,6 +15,7 @@ This section is not meant to show every argument of every function, the idea is 
 
 
 - [First Powermake](./01-first-powermake/README.md)
-- [Crossplatform Library](./02-crossplatform-library/README.md)
-- [Multiple Targets](./03-multiple-targets/README.md)
-- [Configuration and Crosscompilation](./04-configuration-and-crosscompilation/README.md)
+- [Set up your IDE](./02-ide-setup/README.md)
+- [Crossplatform Library](./03-crossplatform-library/README.md)
+- [Multiple Targets](./04-multiple-targets/README.md)
+- [Configuration and Crosscompilation](./05-configuration-and-crosscompilation/README.md)
