@@ -91,7 +91,7 @@ If you chose the Microsoft C/C++ extension, it's easier to just use the debugger
 
 If you are feeling a bit adventurous, you can try [codelldb-enhanced](https://github.com/mactul/codelldb-enhanced) which is a fork of codelldb maintained by me to implement better hovering of complex variables (like `vertices[i].position.x`).
 
-Once you have your extension is installed, everything comes down to a single command:
+Once you have your extension installed, everything comes down to a single command:
 
 ```sh
 python makefile.py --generate-vscode
@@ -101,13 +101,13 @@ This will generates 3 files, `.vscode/settings.json`, `.vscode/tasks.json` and `
 
 - If you have set up clangd (or C/C++) in your user settings, you don't care about the `.vscode/settings.json`, you can delete it.
 
-- `.vscode/tasks.json` describe how the compilation should be run, by default powermake put `-o` and `--clang-compat` to generate a good `compile_commands.json`.
+- `.vscode/tasks.json` describe how the compilation should be run, by default powermake put `-o` and `--clangd-compat` to generate a good `compile_commands.json`.
 
 - `.vscode/launch.json` set up the tool to debug when `<F5>` is pressed and call the compilation in `tasks.json`.  
     By default, powermake generates 3 configs in this file:
     - One to debug python (if you need to debug powermake)
     - One for debugging using codelldb
-    - One for debuggin using Microsoft C/C++
+    - One for debugging using Microsoft C/C++
 
 Once all that is set up, you will be able to put a breakpoint in your main.c file using `<F9>`.
 
