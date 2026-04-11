@@ -76,7 +76,10 @@ class CompilerGNU(Compiler):
     obj_extension: T.ClassVar = ".o"
 
     def __init__(self, path: str = "cc"):
+        self._verif_flags = []
         super().__init__(path)
+        if self.is_available():
+            self._verif_flags = self.translate_flags(["-Werror=unknown-warning-option", "-Werror=unused-command-line-argument"], silent_translation=True)
 
     def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = [], silent_translation: bool = False) -> T.List[str]:
         return [f"-D{define}" for define in defines] + [f"-I{includedir}" for includedir in includedirs] + self.translate_flags(flags, silent_translation)
@@ -86,24 +89,27 @@ class CompilerGNU(Compiler):
 
     def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
         if isinstance(arg, tuple):
-            return subprocess.run([self.path, *arg, "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+            return subprocess.run([self.path, *arg, *self._verif_flags, "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
         else:
-            return subprocess.run([self.path, arg, "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+            return subprocess.run([self.path, arg, *self._verif_flags, "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class CompilerGNUPlusPlus(CompilerGNU):
     type: T.ClassVar = "gnu++"
 
     def __init__(self, path: str = "c++"):
+        self._verif_flags = []
         super().__init__(path)
-        not_supported = {'-Wjump-misses-init', '-Wmissing-prototypes', '-Wmissing-variable-declarations', '-Wnested-externs', '-Wstrict-prototypes', '-Wunsuffixed-float-constants', '-Wbad-function-cast', "-Wc++-compat"}
-        self.translation_dict["-Weverything"] = list(filter(lambda x: x not in not_supported, self.translation_dict["-Weverything"]))
+        if self.is_available():
+            not_supported = {'-Wjump-misses-init', '-Wmissing-prototypes', '-Wmissing-variable-declarations', '-Wnested-externs', '-Wstrict-prototypes', '-Wunsuffixed-float-constants', '-Wbad-function-cast', "-Wc++-compat"}
+            self.translation_dict["-Weverything"] = list(filter(lambda x: x not in not_supported, self.translation_dict["-Weverything"]))
+            self._verif_flags = self.translate_flags(["-Werror=unknown-warning-option", "-Werror=unused-command-line-argument"])
 
     def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
         if isinstance(arg, tuple):
-            return subprocess.run([self.path, *arg, "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+            return subprocess.run([self.path, *arg, *self._verif_flags, "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
         else:
-            return subprocess.run([self.path, arg, "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+            return subprocess.run([self.path, arg, *self._verif_flags, "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
 
 class CompilerGCC(CompilerGNU):
@@ -140,21 +146,9 @@ class CompilerClang(CompilerGNU):
     def __init__(self, path: str = "clang"):
         super().__init__(path)
 
-    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
-        if isinstance(arg, tuple):
-            return subprocess.run([self.path, *arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
-        else:
-            return subprocess.run([self.path, arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
-
 
 class CompilerClangPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "clang++"
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)
-
-    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
-        if isinstance(arg, tuple):
-            return subprocess.run([self.path, *arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
-        else:
-            return subprocess.run([self.path, arg, "-Werror=unknown-warning-option", "-Werror=unused-command-line-argument", "-E", "-x", "c++", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0

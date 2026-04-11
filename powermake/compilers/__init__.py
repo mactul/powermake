@@ -141,6 +141,12 @@ def GenericCompiler(compiler_type: str) -> T.Union[T.Callable[[], Compiler], Non
         return None
     return _compiler_types[compiler_type]
 
+def default_path_from_type(compiler_type: str) -> T.Union[str, None]:
+    compiler = GenericCompiler(compiler_type)
+    if compiler is None:
+        return None
+    return compiler()._name or None
+
 
 def get_all_compiler_types() -> T.Set[str]:
     return set(_compiler_types.keys())

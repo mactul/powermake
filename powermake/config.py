@@ -67,7 +67,7 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture
-from .compilers import Compiler, CompilerGNU, CompilerClang, CompilerClangPlusPlus, GenericCompiler, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
+from .compilers import Compiler, CompilerGNU, CompilerClang, CompilerClangPlusPlus, GenericCompiler, default_path_from_type, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 
 _Config = T.TypeVar("_Config", bound="Config")
 
@@ -624,6 +624,12 @@ class Config:
                 self.target_simplified_architecture = arch
 
         preferences = auto_toolchain({key: get_type_pref(primers_dict[key]) for key in primers_dict})
+
+        if preferences["c_compiler"] is not None:
+            os.environ["CCC_CC"] = default_path_from_type(preferences["c_compiler"]) or ""
+        if preferences["cpp_compiler"] is not None:
+            os.environ["CCC_CXX"] = default_path_from_type(preferences["cpp_compiler"]) or ""
+
 
         ## For each tool, we try to load many types of the tool, until we found one that is installed on the host.
         ## We start by trying to load the ideal tool (the preference calculated) and if not found, we continue with the list in order.

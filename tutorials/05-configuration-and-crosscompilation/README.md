@@ -117,12 +117,10 @@ Then press 1 to edit the C Compiler configuration.
 
 You will have two choices, the compiler type and the compiler path.
 
-The compiler type is here to tell PowerMake what does the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
-
-> [!TIP]  
-> On some systems like macOS, gcc is in fact clang and PowerMake is not able to detect that automatically. That's no big deal because GCC and Clang have very similar syntax, but this might create small inconveniences with advanced flags translation.  
-> On these systems, it might be a good idea to set the C compiler type to clang in the global config.  
-> Don't set the compiler path though, just setting the compiler type will give you way fewer annoyances when you will try to change the compiler.
+> [!NOTE]  
+> The compiler type is here to tell PowerMake what does the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
+>
+> Most of the time, PowerMake will detect the type based on the path (it will be the case for `i386-elf-gcc`), but it may be required for a tool like `emcc`.
 
 
 Try to change the C Compiler.  
