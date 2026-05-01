@@ -389,6 +389,8 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
     output_file = os.path.join(config.lib_build_directory, archive_name + config.archiver.static_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
+    if config.rebuild or needs_update(output_file, object_files, config.additional_includedirs):
+        delete_files_from_disk(output_file)
     return Operation(output_file, object_files, config, command, "AR").execute(force=force)
 
 
