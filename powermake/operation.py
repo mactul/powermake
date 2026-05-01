@@ -234,7 +234,6 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
     """
     global _commands_counter
 
-    returncode = 0
     pipe = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=stderr, **kwargs)
 
     _print_lock.acquire()
@@ -258,9 +257,7 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
 
         yield line
 
-    ret = pipe.poll()
-    if ret is not None:
-        returncode = ret
+    returncode = pipe.wait()
 
     if returncode != 0 and stopper is not None:
         stopper.stop = True
