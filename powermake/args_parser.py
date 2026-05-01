@@ -174,14 +174,25 @@ def default_on_test(config: Config, args: T.List[str]) -> None:
     except FileNotFoundError:
         print("Nothing to run")
         return
+    candidate_files: T.List[T.Tuple[str, int]] = []
     for file in files:
         filepath = os.path.join(config.exe_build_directory, file)
         if os.path.isfile(filepath) and stat.S_IXUSR & os.stat(filepath)[stat.ST_MODE]:
-            print_debug_info([filepath, *args], config.verbosity)
-            if subprocess.run([filepath, *args]).returncode != 0:
-                raise PowerMakeRuntimeError(error_text(f"Unable to run the file {filepath}"))
-            return
-    print("Nothing to run")
+            score = 0
+            if config.target_name in file:
+                score += 1
+            if file.startswith(config.target_name):
+                score += 1
+            if file == config.target_name:
+                score += 1
+            candidate_files.append((filepath, score))
+    if len(candidate_files) == 0:
+        print("Nothing to run")
+        return
+    filepath, _ = max(candidate_files, key=lambda x:x[1])
+    print_debug_info([filepath, *args], config.verbosity)
+    if subprocess.run([filepath, *args]).returncode != 0:
+        raise PowerMakeRuntimeError(error_text(f"Unable to run the file {filepath}"))
 
 
 def get_version_str() -> str:
