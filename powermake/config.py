@@ -1008,3 +1008,6 @@ class Config:
         for exported_header in exported_headers:
             if (exported_header, subfolder) in self.exported_headers:
                 self.exported_headers.remove((exported_header, subfolder))
+
+    def get_cmdline_additional_flags(self) -> T.List[T.Union[str, T.Tuple[str, ...]]]:
+        return [tuple(flag.split(' ')) if ' ' in flag else flag for flag in self._args_parsed.add_flag]

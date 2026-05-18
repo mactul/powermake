@@ -4,6 +4,7 @@ import powermake
 
 prog_test = True
 assert_cc = None
+propagate_cmdline_add_flag = True
 
 def on_build(config: powermake.Config):
     config.add_flags("-Wsecurity")
@@ -17,14 +18,14 @@ def on_build(config: powermake.Config):
 
     objects = powermake.compile_files(config, {"main.c"})
 
-    powermake.run_another_powermake(config, "../library/makefile.py")
+    powermake.run_another_powermake(config, "../library/makefile.py", propagate_cmdline_add_flag=propagate_cmdline_add_flag)
 
-    powermake.run_another_powermake(config, "../lib_intermediate/makefile.py")
+    powermake.run_another_powermake(config, "../lib_intermediate/makefile.py", propagate_cmdline_add_flag=propagate_cmdline_add_flag)
 
     start_time = time.time()
-    archives = powermake.run_another_powermake(config, "../library/makefile.py")
+    archives = powermake.run_another_powermake(config, "../library/makefile.py", propagate_cmdline_add_flag=propagate_cmdline_add_flag)
     if time.time() - start_time > 0.05:
-        print("run_another_makefile was too long, it should have been instant")
+        print("run_another_powermake was too long, it should have been instant")
         exit(1)
 
     exe = powermake.link_files(config, objects, archives=archives)
@@ -41,10 +42,13 @@ def on_build(config: powermake.Config):
 parser = powermake.ArgumentParser()
 parser.add_argument("--no-prog-test", action="store_true")
 parser.add_argument("--assert-cc", metavar="CC")
+parser.add_argument("--no-propagate-cmdline-add-flag", action="store_true")
 
 args_parsed = parser.parse_args()
 if args_parsed.no_prog_test:
     prog_test = False
+if args_parsed.no_propagate_cmdline_add_flag:
+    propagate_cmdline_add_flag = False
 assert_cc = args_parsed.assert_cc
 
 powermake.run("test", build_callback=on_build, args_parsed=args_parsed)

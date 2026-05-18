@@ -59,6 +59,8 @@ coverage run -a ./parent/makefile.py -rv || failure
 echo "testing lib compilation and link accross powermake makefiles, in release and in debug"
 coverage run -a ./lib_depend/makefile.py -rv || failure
 CC=x86_64-w64-mingw32-gcc coverage run -a ./lib_depend/makefile.py -rvd --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
+coverage run -a ./lib_depend/makefile.py -rv --add-flag='-fsanitize=address' --add-flag='-Wsecurity' | grep "ASAN propagated, MAGIC=zJgH_V5s2" || failure
+coverage run -a ./lib_depend/makefile.py -rv --add-flag='-fsanitize=address' --add-flag='-Wsecurity' --no-propagate-cmdline-add-flag | grep "ASAN propagated, MAGIC=zJgH_V5s2" && failure
 
 coverage run -a ./library/makefile.py || failure
 

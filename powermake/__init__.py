@@ -63,7 +63,7 @@ import __main__ as __makefile__
 import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
-from . import compilers
+from . import compilers, linkers, archivers, shared_linkers
 from .config import Config
 from .utils import makedirs
 from .tools import EnforcedFlag
@@ -76,6 +76,10 @@ from .args_parser import run, default_on_clean, default_on_install, default_on_t
 
 __all__ = [
     "compilers",
+    "linkers",
+    "archivers",
+    "shared_linkers",
+    "EnforcedFlag",
     "Config",
     "makedirs",
     "EnforcedFlag"
@@ -514,7 +518,7 @@ def _get_last_compilation_unit(makefile_path: str) -> T.Union[T.Tuple[str, str],
     except OSError:
         return None
 
-def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True) -> T.Union[T.List[str], None]:
+def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True, propagate_cmdline_add_flag: bool = True) -> T.Union[T.List[str], None]:
     """
     Run a powermake from another directory and returns a list of path to all libraries generated
 
@@ -572,6 +576,10 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     if debug:
         command.append("-d")
+    
+    if propagate_cmdline_add_flag:
+        for flag in config._args_parsed.add_flag:
+            command.append(f"--add-flag={flag}")
 
     env = os.environ.copy()
     if use_parent_toolchain:

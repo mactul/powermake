@@ -1,6 +1,9 @@
 import powermake
 
 def on_build(config: powermake.Config):
+    if "-fsanitize=address" in config.c_flags:
+        print("ASAN propagated, MAGIC=zJgH_V5s2")
+
     config.add_flags("-Wsecurity")
 
     if config.target_is_windows():
