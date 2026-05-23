@@ -153,7 +153,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
 
 def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_includedirs: T.List[str]) -> bool:
     """
-    Returns whether or not `outputfile` is up to date with all his dependencies
+    Returns whether or not `outputfile` is up to date with all its dependencies
 
     If `dependencies` includes C/C++ files and headers, all headers these files include recursively will be add as hidden dependencies.
 
@@ -169,7 +169,7 @@ def needs_update(outputfile: str, dependencies: T.Iterable[str], additional_incl
     Returns
     -------
     bool
-        True if `outputfile` is **not** up to date with all his dependencies and hidden dependencies.
+        True if `outputfile` is **not** up to date with all its dependencies and hidden dependencies.
     """
     try:
         output_date = os.path.getmtime(outputfile)
@@ -378,7 +378,7 @@ class Operation:
 
     def execute(self, force: T.Union[bool, None] = None, _generate_makefile: bool = True, stopper: T.Union[CompilationStopper, None] = None) -> str:
         """
-        Verify if the outputfile is up to date with his dependencies and if not, execute the command.
+        Verify if the outputfile is up to date with its dependencies and if not, execute the command.
 
         Parameters
         ----------

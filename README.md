@@ -71,7 +71,7 @@ If you don't exactly understand why PowerMake is different from Make, CMake, XMa
 
 Powermake is a utility that compiles C/C++/AS/ASM code, just like Make, Ninja, cmake, or xmake.
 
-His goal is to give full power to the user, while being cross-platform and easier to use than Make.
+Its goal is to give full power to the user, while being cross-platform and easier to use than Make.
 
 Powermake extends what is possible to do during the compilation by providing a lot of functions to manipulate your files and a lot of freedom on the way you will implement your makefile.  
 Powermake is entirely configurable, but for every behavior you haven't explicitly defined, PowerMake will do most of the job for you by detecting installed toolchains, translating compiler flags, etc...

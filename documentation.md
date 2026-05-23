@@ -89,6 +89,7 @@
         - [remove\_shared\_linker\_flags()](#remove_shared_linker_flags)
         - [add\_exported\_headers()](#add_exported_headers)
         - [remove\_exported\_headers()](#remove_exported_headers)
+        - [get\_cmdline\_additional\_flags()](#get_cmdline_additional_flags)
         - [copy()](#copy)
         - [empty\_copy()](#empty_copy)
     - [powermake.default\_on\_clean](#powermakedefault_on_clean)
@@ -104,7 +105,8 @@
     - [powermake.run\_command\_if\_needed](#powermakerun_command_if_needed)
     - [powermake.needs\_update](#powermakeneeds_update)
     - [powermake.run\_command](#powermakerun_command)
-    - [powermake.Operation (deprecated)](#powermakeoperation-deprecated)
+    - [powermake.run\_command\_get\_output](#powermakerun_command_get_output)
+    - [powermake.Operation](#powermakeoperation)
       - [execute()](#execute)
     - [powermake.version\_parser](#powermakeversion_parser)
       - [powermake.version\_parser.Version](#powermakeversion_parserversion)
@@ -116,6 +118,12 @@
         - [parse\_args()](#parse_args)
       - [powermake.generate\_config](#powermakegenerate_config)
       - [powermake.run\_callbacks](#powermakerun_callbacks)
+    - [PowerMake toolchains internally](#powermake-toolchains-internally)
+      - [powermake.compilers.Compiler](#powermakecompilerscompiler)
+      - [powermake.archivers.Archiver](#powermakearchiversarchiver)
+      - [powermake.linkers.Linker](#powermakelinkerslinker)
+      - [powermake.shared\_linkers.SharedLinker](#powermakeshared_linkerssharedlinker)
+      - [Creating you own compiler](#creating-you-own-compiler)
   - [Compatibility with other tools](#compatibility-with-other-tools)
     - [Scan-Build](#scan-build)
     - [LLVM CodeChecker](#llvm-codechecker)
@@ -399,7 +407,7 @@ The `install_callback` takes 2 arguments: The [powermake.Config](#powermakeconfi
 >     powermake.default_on_install(config, location)
 > 
 > 
-> powermake.run("my_lib", build_callback=on_build, install_callback=on_clean)
+> powermake.run("my_lib", build_callback=on_build, install_callback=on_install)
 > ```
 
 
@@ -424,7 +432,7 @@ powermake.run("my_project", build_callback=on_build, test_callback=on_test)
 ```
 
 
-The `args_parsed` argument should be left to None in most cases, to understand his purpose, see [powermake.ArgumentsParser.parse_args](#parse_args)
+The `args_parsed` argument should be left to None in most cases, to understand its purpose, see [powermake.ArgumentsParser.parse_args](#parse_args)
 
 ### powermake.Config
 
@@ -584,6 +592,8 @@ config.compile_commands_dir: str | None
 ```
 If this is set, [powermake.compile_files](#powermakecompile_files) will generate a `compile_commands.json` in the directory specified by this parameter.
 
+It's the same as specifying `-o` on the command line, you can specify this value in the local or global json config if you want to always generate a `compile_commands.json` at the same relative path each time (for example inside the `.vscode/` folder).
+
 
 ##### host_operating_system
 ```py
@@ -650,11 +660,11 @@ In the json config, it's defined as an object with 2 fields, like this:
 ```
 If the `"path"` field is omitted, the compiler corresponding to the type is searched in the path. For example if `"type"` is `"msvc"`, the compiler "cl.exe" is searched in the path.
 
-If the `"type"` field is omitted, his value is determined based on the name of the executable and the rest of the toolchain.
+If the `"type"` field is omitted, its value is determined based on the name of the executable and the rest of the toolchain.
 
 
 - The `"type"` field can have the value `"gnu"`, `"gcc"`, `"clang"`, `"mingw"`, `"msvc"` or `"clang-cl"`.  
-  It determines the syntax that should be used. For example, if you are using afl-gcc, the syntax of the compiler is the same as the `gcc` syntax.  
+  It determines the syntax that should be used. For example, if you are using afl-gcc, the syntax of the compiler is the same as the `gcc` syntax, if you are using `cc` you should use `"gnu"` because you don't know if it will be gcc or clang (with newer PowerMake versions it doesn't matter that much, gcc and clang are treated the same anyway.)  
   For mingw on Windows, our compiler should be set like this:
   ```json
   "c_compiler" {
@@ -1623,7 +1633,7 @@ def on_install(config: powermake.Config, location: str):
     powermake.default_on_install(config, location)
 
 
-powermake.run("my_lib", build_callback=on_build, install_callback=on_clean)
+powermake.run("my_lib", build_callback=on_build, install_callback=on_install)
 ```
 
 </details>
@@ -1636,6 +1646,14 @@ config.remove_exported_headers(*exported_headers: str, subfolder: str = None)
 Remove exported headers from [config.exported_headers](#exported_headers) if they exist.  
 This method is variadic so you can put as many headers as you want.  
 The list order is preserved.
+
+
+##### get_cmdline_additional_flags()
+```py
+config.get_cmdline_additional_flags()
+```
+
+Returns a list of the flags given with the `--add-flag` command line option, this list can be used for example to know which flags will be propagated by [powermake.run_another_powermake](#powermakerun_another_powermake) if `propagate_cmdline_add_flag` is `True` (the default).
 
 
 ##### copy()
@@ -1681,6 +1699,44 @@ config.empty_copy(local_config: str = None) -> powermake.Config
 
 Generate a new fresh config object without anything inside. By default, even the local config file isn't loaded.  
 It can be very helpful if you have a local config file specifying a cross-compiler but you want to have the default compiler at some point during the compilation step.
+
+`local_config`: A path to a config file to use.
+
+<details>
+<summary>Example</summary>
+
+```py
+import powermake
+
+def compile_scr_modifier_tool(config: powermake.Config):
+    config.add_flags("-Wall", "-Wextra")
+
+    files = powermake.get_files("tools/src_modifier/*.c")
+
+    objects = powermake.compile_files(config, files)
+
+    return powermake.link_files(config, objects)
+
+def on_build(config: powermake.Config):
+    config.add_flags("-Wall", "-Wextra", "-fanalyzer")
+
+    config.c_compiler = powermake.compilers.CompilerGNU("emcc")
+    config.linker = powermake.compilers.CompilerGNU("emcc")
+
+    # Here we make an empty copy of the config so the tool is compiled with the host toolchain.
+    tool_path = compile_scr_modifier_tool(config.empty_copy())
+
+    powermake.run_command(config, [tool_path], check=True)
+
+    files = powermake.get_files("src/*.c")
+    objects.update(powermake.compile_files(config, files))
+
+    powermake.link_files(config, objects)
+
+powermake.run("my_emscripten_project", build_callback=on_build)
+```
+
+</details>
 
 
 ### powermake.default_on_clean
@@ -1746,7 +1802,7 @@ def on_install(config: powermake.Config, location: str):
     powermake.default_on_install(config, location)
 
 
-powermake.run("my_lib", build_callback=on_build, install_callback=on_clean)
+powermake.run("my_lib", build_callback=on_build, install_callback=on_install)
 ```
 
 </details>
@@ -1885,7 +1941,7 @@ This function is a wrapper of lower-level powermake functions.
 From a set of `.o` (or compiler equivalent) filepaths, maybe the one returned by [powermake.compile_files](#powermakecompile_files) and a [powermake.Config](#powermakeconfig) object, it runs the command to create an executable with the appropriate linker and options in `config`.
 
 - if `executable_name` is None, the `config.target_name` is used with the extension given by the type of linker.
-- if `executable_name` is not None, his value is concatenated with the extension.
+- if `executable_name` is not None, its value is concatenated with the extension.
 
 - If `force` is True, the executable is re-created, even if it's up-to-date.
 - If `force` is False, the executable is created only if not up-to-date.
@@ -1928,7 +1984,7 @@ This function is variadic.
 
 ### powermake.run_another_powermake
 ```py
-powermake.run_another_powermake(config: powermake.Config, path: str, debug: bool = None, rebuild: bool = None, verbosity: int = None, nb_jobs: int = None, command_line_args: T.List[str] = []) -> list
+powermake.run_another_powermake(config: Config, path: str, debug: bool | None = None, rebuild: T.Union: bool | None = None, verbosity: T.Union: int | None = None, nb_jobs: int | None = None, command_line_args: list[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True, propagate_cmdline_add_flag: bool = True) -> list[str] | None
 ```
 
 Run a powermake from another directory and return a list of paths to all libraries generated.
@@ -1938,7 +1994,11 @@ These parameters are passed to the other powermake.
 
 You can pass any other parameter that you want in the list `command_line_args`.
 
-This function ensure that if a powermake A depends on powermakes B and C and the powermake B and the powermake C both depends on the powermake D, the powermake D will not be run twice, even if the flag `-r` is provided.
+By default, the parent toolchain is used, you can disable this behavior by setting `use_parent_toolchain` to False.  
+By default, flags added via the command line with `--add-flags` are propagated to the children makefiles, you can disable this behavior by setting `propagate_cmdline_add_flag` to False.  
+
+This function ensure that if a powermake A depends on powermakes B and C and the powermake B and the powermake C both depends on the powermake D, the powermake D will not be run twice, even if the flag `-r` is provided.  
+To disable this behavior, set `skip_already_done` to False.
 
 > [!WARNING]  
 > This function is not thread safe for now.
@@ -1978,7 +2038,7 @@ powermake.needs_update(outputfile: str, dependencies: set, additional_includedir
 > [!NOTE]  
 > This function is low-level.
 
-Returns whether `outputfile` is up-to-date with all his dependencies.  
+Returns whether `outputfile` is up-to-date with all its dependencies.  
 If `dependencies` include C/C++ files and headers, all headers these files include recursively will be added as hidden dependencies.
 
 The `additional_includedirs` list is required to discover hidden dependencies. You must set this to the additional includedirs used during the compilation of `outputfile`. You can use [config.additional_includedirs](#additional_includedirs) if needed.
@@ -2006,10 +2066,22 @@ If `shell` is `False`:
 `target` is currently only been used to print the name of the file generated, but in the future, it might be used to generate a Makefile.
 
 
-`**kwargs` is passed to `powermake.run`
+`**kwargs` is passed to `subprocess.run`
 
 
-### powermake.Operation (deprecated)
+
+### powermake.run_command_get_output
+```py
+powermake.run_command_get_output(config: powermake.Config, command: list[str] | str, shell: bool = False, target: str | None = None, stderr: int | T.IO[T.Any] | None = subprocess.STDOUT, **kwargs) -> tuple[int, bytes]
+```
+
+> [!NOTE]  
+> This function is low-level.
+
+This is exactly like [powermake.run_command](#powermakerun_command) but instead of printing the output in the terminal, you get the output in a variable.
+
+
+### powermake.Operation
 ```py
 powermake.Operation(outputfile: str, dependencies: set, config: Config, command: list)
 ```
@@ -2023,7 +2095,7 @@ It can be used to easily parallelize multiple commands.
 > You can use [powermake.compile_files](#powermakecompile_files) which does that for you, but only for C/C++/AS/ASM files.
 
 > [!WARNING]  
-> Directly using powermake.Operation is deprecated
+> You should not be directly using powermake.Operation, for most use cases, calling [powermake.run_command](#powermakerun_command), [powermake.run_command_if_needed](#powermakerun_command_if_needed) or [powermake.run_command_check_output](#powermakerun_command_get_output) should be better suited.
 
 The command should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
 This list is then directly passed to `subprocess.run`
@@ -2185,6 +2257,103 @@ config = powermake.generate_config("program_test")
 powermake.run_callbacks(config, build_callback=on_build)
 ```
 
+### PowerMake toolchains internally
+
+> [!NOTE]  
+> This section is advanced.
+
+In the config object, we find `config.c_compiler`, `config.cpp_compiler`, `config.as_compiler`, `config.asm_compiler`, `config.rc_compiler`, `config.archiver`, `config.linker` and `config.shared_linker`.  
+Most of the time you don't have to interact with them directly, they are an internal representation of the compilers, linkers, etc. for PowerMake. But sometimes, you want to hardcode a specific compiler in your makefile, or worse, define your own unsupported compiler. For that, understanding their working principle is crucial.
+
+All these members are categorized internally by PowerMake as tools and inherit from the private class `powermake.tools.Tool`.  
+There are 4 classes of tools, `powermake.compilers.Compiler`, `powermake.archivers.Archiver`, `powermake.linkers.Linker` and `powermake.shared_linkers.SharedLinker`. Each tool must implement every method required by its tool class. These methods will then be called by functions like [powermake.compile_files](#powermakecompile_files), [powermake.archive_files](#powermakearchive_files), [powermake.link_files](#powermakelink_files), [powermake.link_shared_lib](#powermakelink_shared_lib).
+
+#### powermake.compilers.Compiler
+
+There is 13 predefined compilers:
+```py
+powermake.compilers.CompilerWindRes
+powermake.compilers.CompilerNASM
+powermake.compilers.CompilerMASM
+powermake.compilers.CompilerMSVC
+powermake.compilers.CompilerClang_CL
+powermake.compilers.CompilerGNU
+powermake.compilers.CompilerGNUPlusPlus
+powermake.compilers.CompilerGCC
+powermake.compilers.CompilerGPlusPlus
+powermake.compilers.CompilerClang
+powermake.compilers.CompilerClangPlusPlus
+powermake.compilers.CompilerMinGW
+powermake.compilers.CompilerMinGWPlusPlus
+```
+
+A compiler instance can be created by calling any of these constructors with either no argument, or the path/name of the program.
+
+For example, you can create an instance of an emscripten C compiler like that:
+```py
+config.c_compiler = powermake.compilers.CompilerGNU("emcc")
+```
+Or with a complete path:
+```py
+config.c_compiler = powermake.compilers.CompilerGNU("/usr/lib/emscripten/emcc")
+```
+
+If you want to create an instance of clang, you can use `powermake.compilers.CompilerClang("/usr/bin/clang")` like below or let powermake use the default path for clang:
+```py
+config.c_compiler = powermake.compilers.CompilerClang()
+```
+
+#### powermake.archivers.Archiver
+
+There is 5 predefined archivers, that can be instanciated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
+```py
+powermake.archivers.ArchiverGNU
+powermake.archivers.ArchiverAR
+powermake.archivers.ArchiverLLVM_AR
+powermake.archivers.ArchiverMinGW
+powermake.archivers.ArchiverMSVC
+```
+
+#### powermake.linkers.Linker
+
+There is 11 predefined linkers, that can be instanciated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
+```py
+powermake.linkers.LinkerGNU
+powermake.linkers.LinkerLD
+powermake.linkers.LinkerGCC
+powermake.linkers.LinkerClang
+powermake.linkers.LinkerGPlusPlu
+powermake.linkers.LinkerClangPlusPlus
+powermake.linkers.LinkerMinGW
+powermake.linkers.LinkerMinGWPlusPlus
+powermake.linkers.LinkerMinGWLD
+powermake.linkers.LinkerMSVC
+powermake.linkers.LinkerClang_CL
+```
+
+#### powermake.shared_linkers.SharedLinker
+
+There is 11 predefined shared linkers, that can be instanciated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
+```py
+powermake.shared_linkers.SharedLinkerGNU
+powermake.shared_linkers.SharedLinkerLD
+powermake.shared_linkers.SharedLinkerGCC
+powermake.shared_linkers.SharedLinkerClang
+powermake.shared_linkers.SharedLinkerGPlusPlu
+powermake.shared_linkers.SharedLinkerClangPlusPlus
+powermake.shared_linkers.SharedLinkerMinGW
+powermake.shared_linkers.SharedLinkerMinGWPlusPlus
+powermake.shared_linkers.SharedLinkerMinGWLD
+powermake.shared_linkers.SharedLinkerMSVC
+powermake.shared_linkers.SharedLinkerClang_CL
+```
+
+#### Creating you own compiler
+
+> [!CAUTION] 
+> This section is very advanced
+
+Documentation not yet available
 
 <!-- include:README.md#compatibility_with_other_tools -->
 ## Compatibility with other tools

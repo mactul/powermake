@@ -108,7 +108,7 @@ def default_on_install(config: Config, location: T.Union[str, None]) -> None:
     You can directly give this function as a callback to `powermake.run` (it's the default behavior), but it's even better to call it from your own implementation of the install_callback.
     Like that, you can do work before this function, especially adding exported headers to the config with `config.add_exported_headers`
 
-    If `location` is None, his default value is `./install/`
+    If `location` is None, its default value is `./install/`
 
     For each exported header, if it has been exported with a None subfolder, it is simply copied into `include/`. If it has been exported with a subfolder, it is copied into `include/{subfolder}/`
 
@@ -355,7 +355,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
         The function that will be called when cleaning. This callback takes a single parameter: config
     install_callback : T.Callable[[Config, T.Union[str, None]], None], optional
         The function that will be called when installing. This callback takes 2 parameters: config and location.  
-        If the location is not provided on the command line, his value is None
+        If the location is not provided on the command line, its value is None
     test_callback : Callable[[Config], None], optional
         The function that will be called when testing. This callback takes a single parameter: config
     """
@@ -452,7 +452,7 @@ def run(target_name: str, *, build_callback: T.Callable[[Config], None], clean_c
         The function that will be called when cleaning. This callback takes a single parameter: config
     install_callback : T.Callable[[Config, T.Union[str, None]], None], optional
         The function that will be called when installing. This callback takes 2 parameters: config and location.  
-        If the location is not provided on the command line, his value is None
+        If the location is not provided on the command line, its value is None
     test_callback : Callable[[Config], None], optional
         The function that will be called when testing. This callback takes a single parameter: config
     args_parsed : argparse.Namespace | optional
