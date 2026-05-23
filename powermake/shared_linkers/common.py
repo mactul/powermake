@@ -60,7 +60,7 @@ from ..tools import Tool
 class SharedLinker(Tool, abc.ABC):
     shared_lib_extension: T.ClassVar = ""
 
-    def __init__(self, path: str, translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None) -> None:
+    def __init__(self, path: T.Union[str, T.List[str]], translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None) -> None:
         Tool.__init__(self, path, translation_dict)
 
     @abc.abstractmethod

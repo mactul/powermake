@@ -115,7 +115,7 @@ _powermake_flags_to_ld_flags: T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.U
 class LinkerGNU(Linker):
     type: T.ClassVar = "gnu"
 
-    def __init__(self, path: str = "c++", translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None):
+    def __init__(self, path: T.Union[str, T.List[str]] = "c++", translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None):
         super().__init__(path, translation_dict)
 
     def format_args(self, shared_libs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
@@ -135,7 +135,7 @@ class LinkerGNU(Linker):
 class LinkerLD(LinkerGNU):
     type: T.ClassVar = "ld"
 
-    def __init__(self, path: str = "ld"):
+    def __init__(self, path: T.Union[str, T.List[str]] = "ld"):
         super().__init__(path, _powermake_flags_to_ld_flags)
 
     def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
@@ -177,17 +177,20 @@ class LinkerClangPlusPlus(LinkerGNU):
 class LinkerMinGW(LinkerGNU):
     type: T.ClassVar = "mingw"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-gcc"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-gcc", "gcc.exe"]):
         super().__init__(path)
 
 class LinkerMinGWPlusPlus(LinkerGNU):
     type: T.ClassVar = "mingw++"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-g++", "g++.exe"]):
         super().__init__(path)
 
 class LinkerMinGWLD(LinkerLD):
     type: T.ClassVar = "mingw-ld"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-ld"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-ld", "ld.exe"]):
         super().__init__(path)

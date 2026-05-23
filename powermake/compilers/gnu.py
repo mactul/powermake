@@ -75,7 +75,7 @@ class CompilerGNU(Compiler):
     type: T.ClassVar = "gnu"
     obj_extension: T.ClassVar = ".o"
 
-    def __init__(self, path: str = "cc"):
+    def __init__(self, path: T.Union[str, T.List[str]] = "cc"):
         self._verif_flags = []
         super().__init__(path)
         if self.is_available():
@@ -97,7 +97,7 @@ class CompilerGNU(Compiler):
 class CompilerGNUPlusPlus(CompilerGNU):
     type: T.ClassVar = "gnu++"
 
-    def __init__(self, path: str = "c++"):
+    def __init__(self, path: T.Union[str, T.List[str]] = "c++"):
         self._verif_flags = []
         super().__init__(path)
         if self.is_available():
@@ -129,14 +129,16 @@ class CompilerGPlusPlus(CompilerGNUPlusPlus):
 class CompilerMinGW(CompilerGNU):
     type: T.ClassVar = "mingw"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-gcc"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-gcc", "gcc.exe"]):
         super().__init__(path)
 
 
 class CompilerMinGWPlusPlus(CompilerGNUPlusPlus):
     type: T.ClassVar = "mingw++"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-g++", "g++.exe"]):
         super().__init__(path)
 
 

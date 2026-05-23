@@ -69,6 +69,9 @@ coverage run -a ./lib_depend/makefile.py -c || failure
 coverage run -a ./lib_intermediate/makefile.py -c || failure
 coverage run -a ./library/makefile.py -c || failure
 
+coverage run -a ./library/makefile.py --shared-lib || failure
+CC=x86_64-w64-mingw32-gcc coverage run -a ./library/makefile.py --shared-lib || failure
+
 coverage report
 
 if [ -f "$GITHUB_ENV" ]

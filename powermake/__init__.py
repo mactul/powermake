@@ -476,7 +476,10 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         force = config.rebuild
 
     if lib_name is None:
-        lib_name = "lib" + config.target_name
+        if config.target_is_mingw():
+            lib_name = config.target_name
+        else:
+            lib_name = "lib" + config.target_name
 
     if config.shared_linker is None:
         raise PowerMakeRuntimeError(display.error_text("No shared linker has been specified and the default config didn't find any"))

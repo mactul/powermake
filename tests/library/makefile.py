@@ -1,4 +1,7 @@
+import os
 import powermake
+
+shared_lib = False
 
 def on_build(config: powermake.Config):
     if "-fsanitize=address" in config.c_flags:
@@ -29,11 +32,27 @@ def on_build(config: powermake.Config):
 
     objects = powermake.compile_files(config, files)
 
-    powermake.archive_files(config, objects)
+    if shared_lib:
+        powermake.link_shared_lib(config, objects)
+        if config.target_is_mingw():
+            assert(os.path.exists(os.path.join(config.lib_build_directory, f"{config.target_name}.dll")))
+            assert(os.path.exists(os.path.join(config.lib_build_directory, f"{config.target_name}.dll.a")))
+        else:
+            assert(os.path.exists(os.path.join(config.lib_build_directory, f"lib{config.target_name}.so")))
+    else:
+        powermake.archive_files(config, objects)
 
     print("print utf-8 french \"e accent grave\" to test decoding: è")
 
     print("print non-utf8 byte to test decoding")
     powermake.utils.print_bytes(b"\xf8")
 
-powermake.run("my_lib", build_callback=on_build)
+
+parser = powermake.ArgumentParser()
+parser.add_argument("--shared-lib", action="store_true")
+args_parsed = parser.parse_args()
+
+if args_parsed.shared_lib:
+    shared_lib = True
+
+powermake.run("my_lib", build_callback=on_build, args_parsed=args_parsed)

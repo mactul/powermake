@@ -63,7 +63,7 @@ class SharedLinkerGNU(SharedLinker):
     type: T.ClassVar = "gnu"
     shared_lib_extension: T.ClassVar = ".so"
 
-    def __init__(self, path: str = "c++", translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None):
+    def __init__(self, path: T.Union[str, T.List[str]] = "c++", translation_dict: T.Union[T.Dict[T.Union[str, T.Tuple[str, ...]], T.List[T.Union[str, T.Tuple[str, ...]]]], None] = None):
         super().__init__(path, translation_dict)
 
     def format_args(self, shared_libs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
@@ -82,7 +82,7 @@ class SharedLinkerGNU(SharedLinker):
 class SharedLinkerLD(SharedLinkerGNU):
     type: T.ClassVar = "ld"
 
-    def __init__(self, path: str = "ld"):
+    def __init__(self, path: T.Union[str, T.List[str]] = "ld"):
         super().__init__(path, _powermake_flags_to_ld_flags)
 
     def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
@@ -122,18 +122,30 @@ class SharedLinkerClangPlusPlus(SharedLinkerGNU):
 
 class SharedLinkerMinGW(SharedLinkerGNU):
     type: T.ClassVar = "mingw"
+    shared_lib_extension: T.ClassVar = ".dll"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-gcc"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-gcc", "gcc.exe"]):
         super().__init__(path)
 
-class SharedLinkerMinGWPlusPlus(SharedLinkerGNU):
+    def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
+        return [self.path, "-shared", "-o", outputfile, f"-Wl,--out-implib,{outputfile}.a", *objectfiles, *archives, *args]
+
+
+class SharedLinkerMinGWPlusPlus(SharedLinkerMinGW):
     type: T.ClassVar = "mingw++"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-g++"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-g++", "g++.exe"]):
         super().__init__(path)
 
 class SharedLinkerMinGWLD(SharedLinkerLD):
     type: T.ClassVar = "mingw-ld"
+    shared_lib_extension: T.ClassVar = ".dll"
 
-    def __init__(self, path: str = "x86_64-w64-mingw32-ld"):
+    # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
+    def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-ld", "ld.exe"]):
         super().__init__(path)
+
+    def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
+        return [self.path, "-shared", "-o", outputfile, f"--out-implib={outputfile}.a", *objectfiles, *archives, *args]
