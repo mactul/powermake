@@ -215,7 +215,7 @@ class ArgumentParser(argparse.ArgumentParser):
             description = f"PowerMake {__version__}"
         super().__init__(prog=prog, description=description, **kwargs)
 
-        self.add_argument("action", help='Can be "build", "clean", "install", "test" or "config"', nargs='?')
+        self.add_argument("action", help='Can be "build", "rebuild", "clean", "install", "test" or "config"', nargs='?')
         self.add_argument("install_location", nargs='?', help="Only if the action is set to install, indicate in which folder the installation should be")
         self.add_argument('test_params', nargs='*', help="Only if the action is set to test or if -t (--test) is provided, will be passed to the tested program. You may want to use -- in front of those arguments, like this: python makefile.py -t -- arg1 -option1 arg2 -option2", default=[])
         self.add_argument("--version", help="display PowerMake version", action="store_true")
@@ -268,24 +268,44 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
         parser = ArgumentParser()
         args_parsed = parser.parse_args()
 
-    if args_parsed.action is None:
-        pos_args = []
-    else:
+    test_params = []
+    if args_parsed.action is not None:
         if args_parsed.test:
-            pos_args = [args_parsed.action]
-        else:
-            pos_args = []
-        if args_parsed.install_location is not None:
-            pos_args += [args_parsed.install_location] + args_parsed.test_params
+            i = 1
+            action_after = True
+            install_location_after = True
+            while i < len(sys.argv) and sys.argv[i] != '-t' and sys.argv[i] != '--test':
+                if sys.argv[i] == args_parsed.action:
+                    action_after = False
+                if sys.argv[i] == args_parsed.install_location:
+                    install_location_after = False
+                i += 1
+            if action_after:
+                test_params.append(args_parsed.action)
+                args_parsed.action = None
+            if args_parsed.install_location is not None and install_location_after:
+                test_params.append(args_parsed.install_location)
+                args_parsed.install_location = None
+        elif args_parsed.action == "test" and args_parsed.install_location is not None:
+            test_params.append(args_parsed.install_location)
+            args_parsed.install_location = None
 
-    if len(pos_args) > 0 and args_parsed.action != "install" and args_parsed.action != "test" and not args_parsed.test:
-        print(f"Unexpected positional argument {pos_args[0]} with an action different than 'install' and 'test", file=sys.stderr)
+        test_params.extend(args_parsed.test_params)
+
+    if args_parsed.action is not None and args_parsed.action not in {"build", "rebuild", "clean", "install", "test", "config"}:
+        print(f"Unexpected positional argument {args_parsed.action}", file=sys.stderr)
         if parser is not None:
             parser.print_usage(file=sys.stderr)
         exit(1)
 
-    if args_parsed.action == "install" and len(pos_args) > 1:
-        print("install takes a single argument", file=sys.stderr)
+    if args_parsed.install_location is not None and not args_parsed.action == "install":
+        print(f"Unexpected positional argument {args_parsed.install_location}", file=sys.stderr)
+        if parser is not None:
+            parser.print_usage(file=sys.stderr)
+        exit(1)
+
+    if len(test_params) > 0 and args_parsed.action != "test" and not args_parsed.test:
+        print(f"Unexpected positional argument {test_params[0]}", file=sys.stderr)
         if parser is not None:
             parser.print_usage(file=sys.stderr)
         exit(1)
@@ -327,7 +347,9 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
     else:
         compilation_unit = uuid.uuid1(random.randint(0, (1 << 48) -1)).hex
 
-    config = Config(target_name, args_parsed=args_parsed, compilation_unit=compilation_unit, verbosity=verbosity, debug=args_parsed.debug, rebuild=args_parsed.rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, operating_system=args_parsed.os, arch=args_parsed.arch, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, pos_args=pos_args)
+    rebuild = args_parsed.rebuild or args_parsed.action == "rebuild"
+
+    config = Config(target_name, args_parsed=args_parsed, compilation_unit=compilation_unit, verbosity=verbosity, debug=args_parsed.debug, rebuild=rebuild, local_config=args_parsed.local_config, global_config=args_parsed.global_config, operating_system=args_parsed.os, arch=args_parsed.arch, nb_jobs=args_parsed.jobs, single_file=args_parsed.single_file, compile_commands_dir=args_parsed.compile_commands_dir, test_params=test_params)
 
     config.add_flags(*config.get_cmdline_additional_flags())
 
@@ -379,7 +401,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
 
     if config._args_parsed.action == "clean" or config._args_parsed.clean:
         clean = True
-    if config._args_parsed.action == "build" or config._args_parsed.build or config._args_parsed.rebuild:
+    if config._args_parsed.action == "build" or config._args_parsed.action == "rebuild" or config._args_parsed.build or config._args_parsed.rebuild:
         build = True
     if config._args_parsed.action == "install" or config._args_parsed.install is not False or config._args_parsed.i:
         install = True
@@ -399,7 +421,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
             else:
                 install_callback(config, config._args_parsed.install or None)
         if test:
-            test_callback(config, config._pos_args)
+            test_callback(config, config._test_params)
     except PowerMakeException as e:
         if config.compile_commands_dir is not None:
             # try to update the compile_commands.json file as much as possible

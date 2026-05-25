@@ -12,9 +12,9 @@ cd "$(dirname "$0")"
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)/../
 
-python3 ./multiplatform/makefile.py --delete-cache
+coverage run ./multiplatform/makefile.py --delete-cache
 
-coverage run ./units/tests_main.py || failure
+coverage run -a ./units/tests_main.py || failure
 
 # coverage report && coverage html && firefox htmlcov/index.html
 # exit 0
@@ -101,6 +101,46 @@ if [ ! -f "./multiplatform/install/bin/test" ]
 then
     failure
 fi
+
+coverage run -a ./multiplatform/makefile.py -bvt | grep "Hello" || failure
+
+coverage run -a ./multiplatform/makefile.py test | grep "Hello" || failure
+
+coverage run -a ./multiplatform/makefile.py clean || failure
+coverage run -a ./multiplatform/makefile.py test | grep "Nothing to run" || failure
+
+coverage run -a ./multiplatform/makefile.py build -t | grep "Hello" || failure
+coverage run -a ./multiplatform/makefile.py build -t | grep "build" && failure
+coverage run -a ./multiplatform/makefile.py clean || failure
+coverage run -a ./multiplatform/makefile.py -t build | grep "Nothing to run" || failure
+coverage run -a ./multiplatform/makefile.py build -t foo bar | grep "build" && failure
+coverage run -a ./multiplatform/makefile.py rebuild -t foo bar | grep -Pzo 'foo\nbar' || failure
+coverage run -a ./multiplatform/makefile.py -t build | grep "build" || failure
+rm -rf ./multiplatform/install
+coverage run -a ./multiplatform/makefile.py install ./install -t build | grep "build" || failure
+if [ ! -f "./multiplatform/install/bin/test" ]
+then
+    failure
+fi
+rm -rf ./multiplatform/install
+coverage run -a ./multiplatform/makefile.py --test install ./install build | grep -Pzo 'install\n./install\nbuild' || failure
+if [ -f "./multiplatform/install/bin/test" ]
+then
+    failure
+fi
+
+coverage run -a ./multiplatform/makefile.py foo bar something 2>&1 | grep "Unexpected positional argument foo" || failure
+
+coverage run -a ./multiplatform/makefile.py build bar something 2>&1 | grep "Unexpected positional argument bar" || failure
+
+coverage run -a ./multiplatform/makefile.py install ./install something 2>&1 | grep "Unexpected positional argument something" || failure
+
+coverage run -a ./multiplatform/makefile.py test foo bar 2>&1 | grep -Pzo 'foo\nbar' || failure
+coverage run -a ./multiplatform/makefile.py test foo bar 2>&1 | grep -E "^test$" && failure
+
+coverage run -a ./multiplatform/makefile.py -qv 2>&1 | grep "Passing --quiet and --verbose arguments in the same time doesn't make any sense." || failure
+
+coverage run -a ./multiplatform/makefile.py --version | grep "Apache-2.0" || failure
 
 coverage report
 
