@@ -1,3 +1,4 @@
+import tests_init
 import tests_utils
 import tests_cache
 import tests_config
@@ -10,6 +11,7 @@ import tests_flags_translation
 import tests_interactive_config
 
 if __name__ == "__main__":
+    tests_init.run_tests()
     tests_utils.run_tests()
     tests_cache.run_tests()
     tests_config.run_tests()

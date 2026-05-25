@@ -100,7 +100,7 @@ def run_tests():
     file = open(filepath, "rb")
     assert(file.read() == b"")
     file.close()
-    # Test get_empty_file is /dev/null doesn't exists
+    # Test get_empty_file if /dev/null doesn't exists
     with mock.patch("powermake.utils.os.path.exists", new=path_exists_forget_devnull):
         filepath = powermake.utils.get_empty_file()
         assert(filepath != "/dev/null")
