@@ -58,7 +58,6 @@ import json
 import shutil
 import fnmatch
 import subprocess
-import importlib.util
 import __main__ as __makefile__
 import typing as T
 from concurrent.futures import ThreadPoolExecutor
@@ -111,33 +110,6 @@ if hasattr(__makefile__, '__file__'):
     if not os.path.samefile(_cwd, os.getcwd()):
         _use_absolute_path = True
         os.chdir(_cwd)
-
-
-def import_module(module_name: str, module_path: T.Union[str, None] = None) -> T.Any:
-    """
-    Import a custom module from a path
-
-    You can do this instead of a regular `import` and updating the `PYTHONPATH` env variable.
-
-    Parameters
-    ----------
-    module_name : str
-        The name of the module once it will be imported
-    module_path : str | None, optional
-        The path of the module, if None, it takes the module_name as a path.
-
-    Returns
-    -------
-    module : module
-        A module object, that you can use as a namespace
-    """
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    if spec is None or spec.loader is None:
-        return None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    return module
 
 
 def get_files(*patterns: str) -> T.Set[str]:
