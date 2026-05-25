@@ -604,6 +604,18 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
             env["SHLD"] = config.shared_linker.path
 
         command.extend(["--os", config.target_operating_system, "--arch", config.target_architecture])
+    else:
+        # Don't propagate already existing env variables, otherwise, if
+        # A run B with parent toolchain but B run C without parent toolchain,
+        # the toolchain is still propagated to C.
+        env.pop("CC", None)
+        env.pop("CXX", None)
+        env.pop("AS", None)
+        env.pop("ASM", None)
+        env.pop("RC", None)
+        env.pop("AR", None)
+        env.pop("LD", None)
+        env.pop("SHLD", None)
 
     command.extend(command_line_args)
 
