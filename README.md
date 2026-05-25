@@ -7,7 +7,7 @@
 <img alt="macos x64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20macos%20x64/badge.svg">
 <img alt="macos arm64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20macos%20arm64/badge.svg">
 
-[![Code Coverage](https://mactul.github.io/powermake/badges/coverage.svg)](https://github.com/mactul/powermake/actions)
+[![Code Coverage](./coverage.svg)](https://github.com/mactul/powermake/actions)
 
 - [PowerMake](#powermake)
   - [__TLDR__](#tldr)

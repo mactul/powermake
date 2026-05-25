@@ -48,6 +48,11 @@ def on_build(config: powermake.Config):
     powermake.utils.print_bytes(b"\xf8")
 
 
+def on_install(config: powermake.Config, location: str | None):
+    config.add_exported_headers("my_lib.h", subfolder="my_lib")
+
+    powermake.default_on_install(config, location)
+
 parser = powermake.ArgumentParser()
 parser.add_argument("--shared-lib", action="store_true")
 args_parsed = parser.parse_args()
@@ -55,4 +60,4 @@ args_parsed = parser.parse_args()
 if args_parsed.shared_lib:
     shared_lib = True
 
-powermake.run("my_lib", build_callback=on_build, args_parsed=args_parsed)
+powermake.run("my_lib", build_callback=on_build, install_callback=on_install, args_parsed=args_parsed)

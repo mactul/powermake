@@ -16,6 +16,8 @@ python3 ./multiplatform/makefile.py --delete-cache
 
 coverage run ./units/tests_main.py || failure
 
+# coverage report && coverage html && firefox htmlcov/index.html
+# exit 0
 
 if [ "$1" != "weak" ]
 then
@@ -72,14 +74,41 @@ coverage run -a ./library/makefile.py -c || failure
 coverage run -a ./library/makefile.py --shared-lib || failure
 CC=x86_64-w64-mingw32-gcc coverage run -a ./library/makefile.py --shared-lib || failure
 
-coverage report
-
-if [ -f "$GITHUB_ENV" ]
+rm -rf ./multiplatform/.vscode
+coverage run -a ./multiplatform/makefile.py --generate-vscode || failure
+if [ ! -f "./multiplatform/.vscode/launch.json" ] || [ ! -f "./multiplatform/.vscode/tasks.json" ]
 then
-    coverage json -o ../coverage.json
+    failure
 fi
 
-if [ "$1" = "strict" ] && COV=$(coverage report | tail -n 1 | awk -F " " '{print $4}' | sed 's/.$//') && [ "$COV" -lt 90 ]
+rm -rf ./multiplatform/build
+coverage run -a ./multiplatform/makefile.py -s test.c || failure
+if [ ! -f "./multiplatform/build/.objs/Linux/x64/release/test.c.o" ] || [ -f "./multiplatform/build/.objs/Linux/x64/release/main.cpp.o" ]
+then
+    failure
+fi
+
+rm -rf ./library/install
+coverage run -a ./library/makefile.py -cri || failure
+if [ ! -f "./library/install/lib/libmy_lib.a" ] || [ ! -f "./library/install/include/my_lib/my_lib.h" ]
+then
+    failure
+fi
+
+rm -rf ./multiplatform/install
+coverage run -a ./multiplatform/makefile.py -cri || failure
+if [ ! -f "./multiplatform/install/bin/test" ]
+then
+    failure
+fi
+
+coverage report
+
+COV=$(coverage report | tail -n 1 | awk -F " " '{print $4}' | sed 's/.$//')
+
+python generate_badge.py $COV
+
+if [ "$1" = "strict" ] && [ "$COV" -lt 90 ]
 then
     printf "\033[31;1mYou don't have enough test coverage ($COV%% < 90%%) !\033[0m\n"
     which firefox
