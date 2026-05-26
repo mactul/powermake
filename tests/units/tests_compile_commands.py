@@ -19,6 +19,10 @@ def build_will_fail(config: powermake.Config):
 def build_empty(config: powermake.Config):
     return
 
+def build_fanalyzer(config: powermake.Config):
+    config.add_flags("-fanalyzer")
+    powermake.compile_files(config, {"../multiplatform/main.cpp", "../library/my_lib.c"})
+
 def fail(_):
     raise NotImplementedError("test")
 
@@ -54,6 +58,29 @@ def run_succeeding_compilation():
 
     assert(len(compile_commands) == 0)
 
+def run_succeeding_compilation_clangd():
+    parser = powermake.ArgumentParser()
+    powermake.run("test", build_callback=build_fanalyzer, args_parsed=parser.parse_args(["-o", ".", "--clangd-compat"]))
+
+    compile_commands = []
+    with open("compile_commands.json", "r") as file:
+        compile_commands = json.load(file)
+
+    assert(len(compile_commands) == 2)
+    assert("-fanalyzer" not in compile_commands[0]["arguments"])
+
+
+    parser = powermake.ArgumentParser()
+    powermake.run("test", build_callback=build_fanalyzer, args_parsed=parser.parse_args(["-o", "."]))
+
+    compile_commands = []
+    with open("compile_commands.json", "r") as file:
+        compile_commands = json.load(file)
+
+    assert(len(compile_commands) == 2)
+    assert("-fanalyzer" in compile_commands[0]["arguments"])
+
+
 def run_tests():
     powermake.delete_files_from_disk("compile_commands.json")
     run_failing_compilation()  # Test if compile_commands.json doesn't exists
@@ -64,6 +91,8 @@ def run_tests():
     run_failing_compilation()  # Test merging a missing file in compile_commands.json
 
     run_succeeding_compilation()  # Verify that a succeeding compilation was not merged with the old compile_commands.json
+
+    run_succeeding_compilation_clangd()
 
     powermake.delete_files_from_disk("compile_commands.json")
     cc.generate_compile_commands(powermake.generate_config("test"))

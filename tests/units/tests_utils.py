@@ -37,6 +37,9 @@ def run_tests():
     powermake.utils._store_makefile_path("foor/bar.py")
     assert(powermake.utils._get_makefile_path() == "foor/bar.py")
 
+    # Restore it for the other tests
+    powermake.utils._store_makefile_path(__main__.__file__)
+
     # Testing handle_filename_conflict
     powermake.delete_files_from_disk("test_file_conflict*")
     assert(not os.path.exists("test_file_conflict"))

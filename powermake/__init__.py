@@ -102,11 +102,11 @@ __all__ = [
     "run_callbacks"
 ]
 
+_use_absolute_path = False
 if hasattr(__makefile__, '__file__'):
     # Change the cwd to the directory of the makefile.
     utils._store_run_path(os.path.abspath(os.getcwd()))
     _cwd = os.path.dirname(os.path.realpath(__makefile__.__file__))
-    _use_absolute_path = False
     if not os.path.samefile(_cwd, os.getcwd()):
         _use_absolute_path = True
         os.chdir(_cwd)
