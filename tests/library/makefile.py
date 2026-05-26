@@ -36,7 +36,7 @@ def on_build(config: powermake.Config):
         powermake.link_shared_lib(config, objects)
         if config.target_is_mingw():
             assert(os.path.exists(os.path.join(config.lib_build_directory, f"{config.target_name}.dll")))
-            assert(os.path.exists(os.path.join(config.lib_build_directory, f"{config.target_name}.dll.a")))
+            assert(os.path.exists(os.path.join(config.lib_build_directory, f"lib{config.target_name}.dll.a")))
         else:
             assert(os.path.exists(os.path.join(config.lib_build_directory, f"lib{config.target_name}.so")))
     else:

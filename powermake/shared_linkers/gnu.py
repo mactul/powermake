@@ -51,6 +51,7 @@
 # ---------------------------------------------------------------------------
 
 
+import os
 import subprocess
 import typing as T
 
@@ -129,7 +130,8 @@ class SharedLinkerMinGW(SharedLinkerGNU):
         super().__init__(path)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
-        return [self.path, "-shared", "-o", outputfile, f"-Wl,--out-implib,{outputfile}.a", *objectfiles, *archives, *args]
+        implib = os.path.join(os.path.dirname(outputfile), "lib" + os.path.basename(outputfile)) + ".a"
+        return [self.path, "-shared", "-o", outputfile, f"-Wl,--out-implib,{implib}", *objectfiles, *archives, *args]
 
 
 class SharedLinkerMinGWPlusPlus(SharedLinkerMinGW):
@@ -148,4 +150,5 @@ class SharedLinkerMinGWLD(SharedLinkerLD):
         super().__init__(path)
 
     def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
-        return [self.path, "-shared", "-o", outputfile, f"--out-implib={outputfile}.a", *objectfiles, *archives, *args]
+        implib = os.path.join(os.path.dirname(outputfile), "lib" + os.path.basename(outputfile)) + ".a"
+        return [self.path, "-shared", "-o", outputfile, f"--out-implib={implib}", *objectfiles, *archives, *args]

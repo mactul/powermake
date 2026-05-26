@@ -358,7 +358,10 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         force = config.rebuild
 
     if archive_name is None:
-        archive_name = "lib" + config.target_name
+        if config.target_is_windows() and not config.target_is_mingw():
+            archive_name = config.target_name
+        else:
+            archive_name = "lib" + config.target_name
 
     if config.archiver is None:
         raise PowerMakeRuntimeError(display.error_text("No archiver has been specified and the default config didn't find any"))
@@ -448,7 +451,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
         force = config.rebuild
 
     if lib_name is None:
-        if config.target_is_mingw():
+        if config.target_is_windows():
             lib_name = config.target_name
         else:
             lib_name = "lib" + config.target_name
