@@ -98,6 +98,10 @@ def print_debug_info(string: T.Any, verbosity: int) -> None:
         print(colorama.Fore.LIGHTBLACK_EX + str(string) + colorama.Style.RESET_ALL)
 
 
+def hint_text(string: str) -> str:
+    return colorama.Fore.GREEN + string + colorama.Style.RESET_ALL
+
+
 def warning_text(string: str) -> str:
     return colorama.Fore.YELLOW + string + colorama.Style.RESET_ALL
 

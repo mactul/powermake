@@ -1,0 +1,95 @@
+#compdef -default-
+
+
+_python_powermake_global() {
+    local script i
+
+    [[ $curcontext == :complete:python:* ]] && return 1
+
+    # Walk the command line to find the python script
+    for (( i = 1; i <= ${#words}; i++ )); do
+        if [[ ${words[i]} != -* && -f ${words[i]} ]]; then
+            script=${words[i]}
+            break
+        fi
+    done
+
+    _powermake_add_flag() {
+        local -a flags=(
+            "-Wall"               "-Wextra"              "-Wpedantic"
+            "-Werror"             "-fsanitize=address"   "-fsanitize=undefined"
+            "-fsanitize=thread"   "-fanalyzer"           "-flto"
+            "-fPIC"               "-fPIE"                "-march=native"
+            "-std=c99"            "-std=c11"             "-std=c17"
+            "-std=c23"            "-std=gnu17"           "-std=gnu23"
+            "-std=c++11"          "-std=c++14"           "-std=c++17"
+            "-std=c++20"          "-std=c++23"           "-fsecurity"
+            "-Weverything"        "-Wsecurity"           ""
+        )
+        compadd -Q -P "'" -S "'" -a flags
+    }
+
+    _powermake_test_option() {
+        compadd -Q -- --
+    }
+
+    # If we're past the script name and it imports powermake, take over completion
+    if [[ -n $script ]] && (( CURRENT > i )); then
+        local header
+        header=$(head -c 1024 "$script" 2>/dev/null)
+        if [[ $header == *"import powermake"* ]]; then
+
+            if (( CURRENT == i + 1 )); then
+                compadd build rebuild clean install test config
+            fi
+            if (( CURRENT == i + 2 )) && [[ ${words[i+1]} == test ]]; then
+                compadd -Q -- --
+            else
+                local oldpwd=$PWD
+                builtin cd -- $(realpath ${script:h})
+                _arguments -s -S -A "(build|rebuild|clean|install|test|config)" \
+                    {-h,--help}'[display the help]' \
+                    '--version[display PowerMake version]' \
+                    {-d,--debug}'[trigger build in debug mode]' \
+                    {-b,--build}'[trigger the build callback]' \
+                    {-r,--rebuild}'[trigger build with rebuild set to True]' \
+                    {-c,--clean}'[trigger the clean callback]' \
+                    '-i[trigger install callback]' \
+                    '--install=[trigger install callback]::location:_directories' \
+                    {-t,--test}'[trigger the test callback]: :_powermake_test_option' \
+                    {-f,--config}'[interactive configuration mode]' \
+                    {-q,--quiet}'[disable all messages]' \
+                    {-v,--verbose}'[display every command run]' \
+                    {-j+,--jobs=}'[parallelization threads]:threads:' \
+                    {-l+,--local-config=}'[local config path]:config:_files -g "*.json"' \
+                    {-g+,--global-config=}'[global config path]:config:_files -g "*.json"' \
+                    {-s+,--single-file=}'[compile single file]:file:_files -g "*.(c|cpp|cc|C|s|S|asm|rc)"' \
+                    {-o+,--compile-commands-dir=}'[compile_commands.json output dir]:dir:_directories' \
+                    '--clangd-compat[clang-compatible compile_commands.json]' \
+                    {-m,--makefile}'[generate a GNU Makefile]' \
+                    '--os=[target operating system]:os:(Windows Linux macOS)' \
+                    '--arch=[target architecture]:arch:(x64 x86 arm64 arm32)' \
+                    '*--add-flag=-[add a compiler/linker flag]:flag:_powermake_add_flag' \
+                    '--retransmit-colors[keep ANSI color codes intact]' \
+                    '--delete-cache[delete the cache]' \
+                    '--generate-vscode=-[generate VSCode config]:path:_directories' \
+                    '--always-overwrite[skip overwrite prompts]' \
+                    '--get-probable-bin-path[print probable binary path]'
+                builtin cd -- "$oldpwd"
+            fi
+            return 0
+        fi
+    fi
+
+    # Not a powermake script, fall back to default python completion
+    if (( $+functions[_python-argcomplete] )); then
+        _python-argcomplete
+    else
+        _default
+    fi
+    # Grab -default- back
+    compdef _python_powermake_global -default-
+}
+
+autoload -Uz is-at-least
+_python_powermake_global

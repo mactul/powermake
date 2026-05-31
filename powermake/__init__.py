@@ -62,7 +62,7 @@ import __main__ as __makefile__
 import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
-from . import compilers, linkers, archivers, shared_linkers
+from . import compilers, linkers, archivers, shared_linkers, zsh_completions
 from .config import Config
 from .utils import makedirs
 from .tools import EnforcedFlag
