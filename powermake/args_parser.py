@@ -274,7 +274,7 @@ def generate_config(target_name: str, args_parsed: T.Union[argparse.Namespace, N
             i = 1
             action_after = True
             install_location_after = True
-            while i < len(sys.argv) and sys.argv[i] != '-t' and sys.argv[i] != '--test':
+            while i < len(sys.argv) and (sys.argv[i][0] != '-' or 't' not in sys.argv[i]) and sys.argv[i] != '--test':
                 if sys.argv[i] == args_parsed.action:
                     action_after = False
                 if sys.argv[i] == args_parsed.install_location:

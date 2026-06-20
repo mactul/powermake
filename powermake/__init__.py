@@ -87,7 +87,7 @@ __all__ = [
     "print_debug_info",
     "warning_text",
     "PowerMakeRuntimeError",
-    "PowermakeValueError",
+    "PowerMakeValueError",
     "Operation",
     "needs_update",
     "run_command",

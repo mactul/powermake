@@ -137,6 +137,9 @@ coverage run -a ./multiplatform/makefile.py install ./install something 2>&1 | g
 
 coverage run -a ./multiplatform/makefile.py test foo bar 2>&1 | grep -Pzo 'foo\nbar' || failure
 coverage run -a ./multiplatform/makefile.py test foo bar 2>&1 | grep -E "^test$" && failure
+coverage run -a ./multiplatform/makefile.py -rt foo bar 2>&1 | grep -Pzo 'foo\nbar' || failure
+coverage run -a ./multiplatform/makefile.py -rt foo bar 2>&1 | grep -E "^test$" && failure
+
 
 coverage run -a ./multiplatform/makefile.py -qv 2>&1 | grep "Passing --quiet and --verbose arguments in the same time doesn't make any sense." || failure
 
