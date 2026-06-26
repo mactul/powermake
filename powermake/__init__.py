@@ -367,6 +367,12 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         raise PowerMakeRuntimeError(display.error_text("No archiver has been specified and the default config didn't find any"))
     output_file = os.path.join(config.lib_build_directory, archive_name + config.archiver.static_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    if type(object_files) != set:
+        # We don't want to consume twice an iterable
+        # We don't convert set to list for performances because that is what is used the most
+        object_files = list(object_files)
+
     command = config.archiver.basic_archive_command(output_file, object_files, config.ar_flags)
     if config.rebuild or needs_update(output_file, object_files, config.additional_includedirs):
         delete_files_from_disk(output_file)
@@ -415,6 +421,15 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
     output_file = os.path.join(config.exe_build_directory, executable_name + extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
+
+    if type(object_files) != set:
+        # We don't want to consume twice an iterable
+        # We don't convert set to list for performances because that is what is used the most
+        object_files = list(object_files)
+
+    archives = list(archives)  # It shouldn't be an iterable, but it's easy to get confused,
+                               # for safety always conevrt to list before use
+
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "LD").execute(force=force)
 
@@ -461,6 +476,15 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
     output_file = os.path.join(config.lib_build_directory, lib_name + config.shared_linker.shared_lib_extension)
     makedirs(os.path.dirname(output_file), exist_ok=True)
     args = config.shared_linker.format_args(shared_libs=config.shared_libs, flags=config.shared_linker_flags)
+
+    if type(object_files) != set:
+        # We don't want to consume twice an iterable
+        # We don't convert set to list for performances because that is what is used the most
+        object_files = list(object_files)
+
+    archives = list(archives)  # It shouldn't be an iterable, but it's easy to get confused,
+                               # for safety always conevrt to list before use
+
     command = config.shared_linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "SHLD").execute(force=force)
 

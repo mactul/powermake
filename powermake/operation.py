@@ -332,10 +332,12 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
     """
     global _commands_counter
 
+    dependencies_set = set(dependencies)  # The iterable is used multiple time, we can't consume it twice
+
     if force is None:
         force = config.rebuild
-    if force or needs_update(outputfile, dependencies, additional_includedirs=config.additional_includedirs):
-        if run_command(config, command, shell=shell, target=outputfile, _dependencies=dependencies, _generate_makefile=_generate_makefile, _tool=_tool, stopper=stopper, **kwargs) != 0:
+    if force or needs_update(outputfile, dependencies_set, additional_includedirs=config.additional_includedirs):
+        if run_command(config, command, shell=shell, target=outputfile, _dependencies=dependencies_set, _generate_makefile=_generate_makefile, _tool=_tool, stopper=stopper, **kwargs) != 0:
             command_ex = ""
             if isinstance(command, list) and len(command) > 0:
                 command_ex = command[0]
@@ -348,7 +350,7 @@ def run_command_if_needed(config: Config, outputfile: str, dependencies: T.Itera
         _print_lock.release()
         if config.compile_commands_dir is not None and _generate_makefile:
             generation._makefile_targets_mutex.acquire()
-            generation._makefile_targets.append([(False, outputfile, dependencies, command, _tool, [])])
+            generation._makefile_targets.append([(False, outputfile, dependencies_set, command, _tool, [])])
             generation._makefile_targets_mutex.release()
     return outputfile
 
