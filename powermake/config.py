@@ -58,7 +58,7 @@ import argparse
 import platform
 import typing as T
 
-from .tools import ToolPrimer, split_toolchain_prefix, EnforcedType
+from .tools import ToolPrimer, EnforcedType
 from .cache import get_cache_dir
 from .display import error_text
 from .exceptions import PowerMakeRuntimeError
@@ -66,7 +66,7 @@ from .search_visual_studio import load_msvc_environment
 from .linkers import Linker, GenericLinker, get_all_linker_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
-from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture
+from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture, split_toolchain_prefix
 from .compilers import Compiler, CompilerGNU, CompilerClang, CompilerClangPlusPlus, GenericCompiler, default_path_from_type, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 
 _Config = T.TypeVar("_Config", bound="Config")

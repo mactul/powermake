@@ -648,7 +648,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     return _get_libs_from_folder(metadata["lib_build_directory"])
 
 
-def run_cmake(config: Config, path: str, *additional_args: str) -> None:
+def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False) -> None:
     cmake_path = shutil.which("cmake")
     if cmake_path is None:
         raise PowerMakeRuntimeError("Unable to found cmake executable")
@@ -680,6 +680,9 @@ def run_cmake(config: Config, path: str, *additional_args: str) -> None:
         system_name = config.target_operating_system
 
     args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={config.target_simplified_architecture}"])
+
+    if prefer_static:
+        args.extend(['-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.lib"'])
 
     if config.linker is not None:
         dirs = config.linker.get_lib_dirs(config.ld_flags)

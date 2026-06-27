@@ -77,6 +77,7 @@ class GitRepo:
         return versions
 
     def download_build_install(self, config: Config, install_path: str, tag: T.Union[str, None] = None) -> None:
+        makefile_temp_dir: tempfile.TemporaryDirectory[str] | None = None
         print(f"Do you want to download {self.code_git_url} ? It will be compiled and installed in: {install_path}")
         answer = "a"
         while answer != "" and answer != "y" and answer != "Y" and answer != "n" and answer != "N":
@@ -108,14 +109,23 @@ class GitRepo:
         lib_path = os.path.join(install_path, "lib")
         if not os.path.exists(lib_path):
             if os.path.exists(os.path.join(install_path, "lib32")):
-                os.symlink(os.path.join(install_path, "lib32"), lib_path, target_is_directory=True)
+                try:
+                    os.symlink(os.path.join(install_path, "lib32"), lib_path, target_is_directory=True)
+                except OSError:
+                    # On Winslop, symlink requires admin rights or dev mode
+                    os.rename(os.path.join(install_path, "lib32"), lib_path)
             elif os.path.exists(os.path.join(install_path, "lib64")):
-                os.symlink(os.path.join(install_path, "lib64"), lib_path, target_is_directory=True)
+                try:
+                    os.symlink(os.path.join(install_path, "lib64"), lib_path, target_is_directory=True)
+                except OSError:
+                    # On Winslop, symlink requires admin rights or dev mode
+                    os.rename(os.path.join(install_path, "lib64"), lib_path)
             else:
                 raise PowerMakeRuntimeError("The library was compiled and installed but no lib folder was found")
 
         temp_dir.cleanup()
-        makefile_temp_dir.cleanup()
+        if makefile_temp_dir is not None:
+            makefile_temp_dir.cleanup()
 
 
 class DefaultGitRepos(GitRepo):
@@ -124,6 +134,8 @@ class DefaultGitRepos(GitRepo):
         "SDL3": "SDL",
         "SDL2_ttf": "SDL_ttf",
         "SDL3_ttf": "SDL_ttf",
+        "SDL2_image": "SDL_image",
+        "SDL3_image": "SDL_image",
         "ssl": "openssl",
         "crypto": "openssl",
         "jpeg": "libjpeg-turbo",
@@ -136,6 +148,7 @@ class DefaultGitRepos(GitRepo):
     _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...]]] = {
         "SDL": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
         "SDL_ttf": ("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
+        "SDL_image": ("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
         "boringssl": ("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*")),
         "libressl": ("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple()),
         "openssl": ("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*")),
@@ -172,7 +185,7 @@ class DefaultGitRepos(GitRepo):
 
 
 _privilege_escalator: T.Union[None, T.List[str]] = None
-def escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]] = None) -> T.Union[None, T.List[str]]:
+def linux_escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]] = None) -> T.Union[None, T.List[str]]:
     global _privilege_escalator
 
     if os.getuid() == 0:
@@ -381,7 +394,8 @@ def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory[st
         empty_main.write("int main() { return 0; }")
 
     cmd = compiler.basic_compile_command(os.path.join(temp_dir.name, "main.o"), os.path.join(temp_dir.name, "main.c"), args=compiler.format_args([], [], flags))
-    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+        raise PowerMakeRuntimeError(f"Enable to compile an empty main program with {compiler}")
 
     return temp_dir, os.path.join(temp_dir.name, "main.o")
 
@@ -400,7 +414,7 @@ def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:
         if "invalid" not in entry:
             new_cache["system"].append(entry)
 
-    store_cache_to_file(cache_filepath, cache)
+    store_cache_to_file(cache_filepath, new_cache)
 
 
 def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, main_object_path: str, cache: T.Dict[str, T.Any], config: Config, min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False) -> T.Union[T.Tuple[bool, str, str, T.Union[Version, None]], None]:
@@ -454,7 +468,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
             print("Do you want to upgrade your entire system ? (will run `pacman -Syu` as root)")
             answer = input("[Y/n] ")
             if answer == "" or answer == "y" or answer == "Y":
-                cmd = escalate_command(["pacman", "-Syu"])
+                cmd = linux_escalate_command(["pacman", "-Syu"])
             else:
                 cmd = []
         else:
@@ -468,7 +482,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
                 while not answer.isdigit() or int(answer) < 0 or int(answer) > len(installable):
                     answer = input(f"[0-{len(installable)}] ")
                 if answer != "0":
-                    cmd = escalate_command(["pacman", "-S", installable[int(answer)-1][0]])
+                    cmd = linux_escalate_command(["pacman", "-S", installable[int(answer)-1][0]])
                 else:
                     cmd = []
             else:
@@ -476,7 +490,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
                 print(f"Do you want to install it ? (will run `pacman -S {shlex.quote(installable[0][0])}` as root)")
                 answer = input("[Y/n] ")
                 if answer == "" or answer == "y" or answer == "Y":
-                    cmd = escalate_command(["pacman", "-S", installable[0][0]])
+                    cmd = linux_escalate_command(["pacman", "-S", installable[0][0]])
                 else:
                     cmd = []
 
@@ -727,7 +741,7 @@ def find_lib(config: Config, libname: str, install_dir: str, *, package_name: T.
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, install_dir, package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, os.path.abspath(install_dir), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
