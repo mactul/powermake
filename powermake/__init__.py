@@ -63,18 +63,20 @@ import __main__ as __makefile__
 import typing as T
 from concurrent.futures import ThreadPoolExecutor
 
-from . import compilers, linkers, archivers, shared_linkers, zsh_completions
+from . import compilers, linkers, archivers, shared_linkers, zsh_completions, package
 from .config import Config
 from .utils import makedirs
 from .tools import EnforcedFlag
 from .__version__ import __version__
 from . import utils, display, generation
+from .run_another import run_another_powermake
 from .display import print_info, print_debug_info, warning_text
 from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
-from .operation import Operation, needs_update, run_command, run_command_get_output, _run_command_yield_output, run_command_if_needed, CompilationStopper
+from .operation import Operation, needs_update, run_command, run_command_get_output, run_command_if_needed, CompilationStopper
 from .args_parser import run, default_on_clean, default_on_install, default_on_test, ArgumentParser, generate_config, run_callbacks
 
 __all__ = [
+    "package",
     "compilers",
     "linkers",
     "archivers",
@@ -100,7 +102,8 @@ __all__ = [
     "default_on_test",
     "ArgumentParser",
     "generate_config",
-    "run_callbacks"
+    "run_callbacks",
+    "run_another_powermake"
 ]
 
 _use_absolute_path = False
@@ -505,150 +508,7 @@ def delete_files_from_disk(*patterns: str) -> None:
                 os.remove(filepath)
 
 
-def _get_libs_from_folder(lib_build_folder: str) -> T.Union[T.List[str], None]:
-    if lib_build_folder != "" and os.path.exists(lib_build_folder):
-        return [os.path.join(lib_build_folder, file) for file in os.listdir(lib_build_folder)]
-    return None
-
-def _get_last_compilation_unit(makefile_path: str) -> T.Union[T.Tuple[str, str], None]:
-    try:
-        file = open(os.path.join(os.path.dirname(makefile_path), "build/.info/last_compilation_unit"), "r")
-        lines = file.read().strip().split('\n')
-        file.close()
-        if len(lines) != 2:
-            return None
-        return (lines[0], lines[1])
-    except OSError:
-        return None
-
-def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True, propagate_cmdline_add_flag: bool = True) -> T.Union[T.List[str], None]:
-    """
-    Run a powermake from another directory and returns a list of path to all libraries generated
-
-    Parameters
-    ----------
-    config : powermake.Config
-        A powermake.Config object, containing all directives for the compilation. Either the one given to the build_callback or a modified copy.
-    path : str
-        The path of the powermake to run.
-    debug : bool | None, optional
-        Whether the other powermake should be run in debug mode.  
-        If not specified, this parameter takes the value of config.debug
-    rebuild : bool | None, optional
-        Whether the other powermake should be run in rebuild mode.  
-        If not specified, this parameter takes the value of config.rebuild
-    verbosity : int | None, optional
-        With which verbosity level the other powermake should be run.  
-        If not specified, this parameter takes the value of config.verbosity
-    nb_jobs : int | None, optional
-        With how many threads the other powermake should be run.  
-        If not specified, this parameter takes the value of config.nb_jobs
-
-    Returns
-    -------
-    paths: list[str] | None
-        A list of path to all libraries generated
-
-    Raises
-    ------
-    PowerMakeRuntimeError
-        If the other powermake fails.
-    """
-    if debug is None:
-        debug = config.debug
-    if rebuild is None:
-        rebuild = config.rebuild
-    if verbosity is None:
-        verbosity = config.verbosity
-    if nb_jobs is None:
-        nb_jobs = config.nb_jobs
-
-    last_comp_unit = _get_last_compilation_unit(path)
-    if skip_already_done and last_comp_unit is not None and last_comp_unit[0] == config.compilation_unit:
-        print_debug_info(f"PowerMake {path} already run during this compilation unit - skip", config.verbosity)
-        return _get_libs_from_folder(last_comp_unit[1])
-
-    command = [sys.executable, path, "--compilation-unit", config.compilation_unit, "--get-compilation-metadata", "--retransmit-colors", "-j", str(nb_jobs)]
-    if verbosity == 0:
-        command.append("-q")
-    elif verbosity >= 2:
-        command.append("-v")
-
-    if rebuild:
-        command.append("-r")
-
-    if debug:
-        command.append("-d")
-    
-    if propagate_cmdline_add_flag:
-        for flag in config._args_parsed.add_flag:
-            command.append(f"--add-flag={flag}")
-
-    env = os.environ.copy()
-    if use_parent_toolchain:
-        if config.c_compiler is not None:
-            env["CC"] = config.c_compiler.path
-        if config.cpp_compiler is not None:
-            env["CXX"] = config.cpp_compiler.path
-        if config.as_compiler is not None:
-            env["AS"] = config.as_compiler.path
-        if config.asm_compiler is not None:
-            env["ASM"] = config.asm_compiler.path
-        if config.rc_compiler is not None:
-            env["RC"] = config.rc_compiler.path
-        if config.archiver is not None:
-            env["AR"] = config.archiver.path
-        if config.linker is not None:
-            env["LD"] = config.linker.path
-        if config.shared_linker is not None:
-            env["SHLD"] = config.shared_linker.path
-
-        command.extend(["--os", config.target_operating_system, "--arch", config.target_architecture])
-    else:
-        # Don't propagate already existing env variables, otherwise, if
-        # A run B with parent toolchain but B run C without parent toolchain,
-        # the toolchain is still propagated to C.
-        env.pop("CC", None)
-        env.pop("CXX", None)
-        env.pop("AS", None)
-        env.pop("ASM", None)
-        env.pop("RC", None)
-        env.pop("AR", None)
-        env.pop("LD", None)
-        env.pop("SHLD", None)
-
-    command.extend(command_line_args)
-
-    lines = _run_command_yield_output(config, command, custom_info_msg=f"Running {path}", env=env)
-
-    last_line = None
-
-    for line in lines:
-        if isinstance(line, int):
-            if line != 0:
-                if last_line is not None:
-                    utils.print_bytes(last_line)
-                raise PowerMakeRuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
-            break
-        if last_line is not None:
-            utils.print_bytes(last_line)
-        last_line = line
-
-    if last_line is None:
-        raise RuntimeError("PowerMake corrupted; please verify your installation")
-
-    decoded_last_line = last_line.decode("utf-8").strip()
-
-    if decoded_last_line == "":
-        raise RuntimeError("PowerMake corrupted; --get-compilation-metadata didn't return anything, if you use powermake.generate_config, make sure to also use powermake.run_callbacks")
-
-    metadata = json.loads(decoded_last_line)
-    if not isinstance(metadata, dict):
-        raise RuntimeError("PowerMake corrupted; please verify your installation")
-    return _get_libs_from_folder(metadata["lib_build_directory"])
-
-
-def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False) -> None:
+def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False, dependencies: T.Iterable[package.Lib] = []) -> None:
     cmake_path = shutil.which("cmake")
     if cmake_path is None:
         raise PowerMakeRuntimeError("Unable to found cmake executable")
@@ -682,7 +542,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={config.target_simplified_architecture}"])
 
     if prefer_static:
-        args.extend(['-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.lib"'])
+        args.extend(['-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_FIND_LIBRARY_SUFFIXES=.a;.lib'])
 
     if config.linker is not None:
         dirs = config.linker.get_lib_dirs(config.ld_flags)
@@ -693,12 +553,15 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         if len(filtered_dirs) == 0:
             filtered_dirs = dirs
 
+        filtered_dirs = filtered_dirs.union({dep.lib_path for dep in dependencies})
+
         if len(filtered_dirs) > 0:
-            dir_str = ':'.join(filtered_dirs)
-            pkg_dir_str = ':'.join([os.path.join(dir, "pkgconfig") for dir in filtered_dirs])
+            dir_str = ';'.join(filtered_dirs)
+            pkg_dir_str = ';'.join([os.path.join(dir, "pkgconfig") for dir in filtered_dirs])
+            prefix_str = ';'.join([os.path.dirname(dir) for dir in filtered_dirs])
             os.environ["PKG_CONFIG_PATH"] = pkg_dir_str
             os.environ["PKG_CONFIG_LIBDIR"] = pkg_dir_str
-            args.extend([f"-DCMAKE_LIBRARY_PATH={dir_str}", f"-DCMAKE_FIND_ROOT_PATH={dir_str}", "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY"])
+            args.extend([f"-DCMAKE_LIBRARY_PATH={dir_str}", f"-DCMAKE_FIND_ROOT_PATH={prefix_str}", f"-DCMAKE_PREFIX_PATH={prefix_str}", "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY", "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY", "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY"])
 
     if run_command(config, [cmake_path, path, *args, *additional_args]) != 0:
         raise PowerMakeRuntimeError("Unable to run cmake")

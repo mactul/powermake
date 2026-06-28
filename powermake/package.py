@@ -6,16 +6,24 @@ import tempfile
 import subprocess
 import typing as T
 from enum import Enum
+from dataclasses import dataclass
 
 from .config import Config
 from .operation import run_command
-from . import run_another_powermake
+from .run_another import run_another_powermake
 from .exceptions import PowerMakeRuntimeError
 from .utils import makedirs, join_absolute_paths
 from .architecture import split_toolchain_prefix
 from .display import print_info, print_debug_info
 from .version_parser import Version, parse_version, remove_version_frills, PreType
 from .cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
+
+@dataclass
+class Lib:
+    includedir: str
+    lib_path: str
+    version: T.Union[Version, None]
+    lib_file: str
 
 
 class ExtType(Enum):
@@ -42,6 +50,8 @@ class GitRepo:
         self.src_makefile_path: T.Union[str, None] = None
         self.makefile_git_url: T.Union[str, None] = None
         self.tags_to_exclude: T.Tuple[str, ...] = tuple()
+        self.additional_cmdline: T.Tuple[str, ...] = tuple()
+        self.version_add_cmdline: T.Tuple[str, ...] = tuple()
 
     def set_external_powermake_makefile(self, powermake_makefile_path: str, git_url: T.Union[str, None]) -> None:
         self.src_makefile_path = powermake_makefile_path
@@ -104,7 +114,7 @@ class GitRepo:
             makedirs(os.path.join(temp_dir.name, os.path.dirname(self.dst_makefile_path)))
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
-        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path])
+        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path, *self.additional_cmdline, *self.version_add_cmdline])
 
         lib_path = os.path.join(install_path, "lib")
         if not os.path.exists(lib_path):
@@ -130,34 +140,37 @@ class GitRepo:
 
 class DefaultGitRepos(GitRepo):
     _default_packages = {
-        "SDL2": "SDL",
-        "SDL3": "SDL",
-        "SDL2_ttf": "SDL_ttf",
-        "SDL3_ttf": "SDL_ttf",
-        "SDL2_image": "SDL_image",
-        "SDL3_image": "SDL_image",
-        "ssl": "openssl",
-        "crypto": "openssl",
-        "jpeg": "libjpeg-turbo",
-        "turbojpeg": "libjpeg-turbo",
-        "png": "libpng",
-        "zip": "libzip",
-        "glfw3": "glfw",
-        "mariadb": "mariadb-connector-c"
+        "SDL2": ("SDL", tuple()),
+        "SDL3": ("SDL", tuple()),
+        "SDL2_ttf": ("SDL_ttf", ("--dependency=SDL2,2.0,2.*", "--dependency=freetype,None,None")),
+        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=freetype,None,None")),
+        "SDL2_image": ("SDL_image", ("--dependency=SDL2,2.0,2.*", )),
+        "SDL3_image": ("SDL_image", ("--dependency=SDL3,3.0,3.*", )),
+        "ssl": ("openssl", tuple()),
+        "crypto": ("openssl", tuple()),
+        "jpeg": ("libjpeg-turbo", tuple()),
+        "turbojpeg": ("libjpeg-turbo", tuple()),
+        "png": ("libpng", ("--dependency=z,None,None", )),
+        "zip": ("libzip", ("--dependency=z,None,None", )),
+        "glfw3": ("glfw", tuple()),
+        "mariadb": ("mariadb-connector-c", tuple()),
+        "z": ("zlib", tuple())
     }
-    _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...]]] = {
-        "SDL": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
-        "SDL_ttf": ("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
-        "SDL_image": ("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
-        "boringssl": ("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*")),
-        "libressl": ("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple()),
-        "openssl": ("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*")),
-        "libjpeg-turbo": ("https://github.com/libjpeg-turbo/libjpeg-turbo", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("jpeg.*", )),
-        "libpng": ("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*")),
-        "libzip": ("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", )),
-        "glfw": ("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple()),
-        "json-c": ("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "j/json-c/json-c_makefile.py", tuple()),
-        "mariadb-connector-c": ("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*")),
+    _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...], T.Tuple[str, ...]]] = {
+        "SDL": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
+        "SDL_ttf": ("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
+        "SDL_image": ("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
+        "boringssl": ("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*"), ("--cmake-static", )),
+        "libressl": ("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple(), tuple()),
+        "openssl": ("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*"), tuple()),
+        "libjpeg-turbo": ("https://github.com/libjpeg-turbo/libjpeg-turbo", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("jpeg.*", ), tuple()),
+        "libpng": ("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*"), ("--cmake-static", )),
+        "libzip": ("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", ), tuple()),
+        "glfw": ("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
+        "json-c": ("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "j/json-c/json-c_makefile.py", tuple(), tuple()),
+        "mariadb-connector-c": ("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*"), tuple()),
+        "freetype": ("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), ("--cmake-static", )),
+        "zlib": ("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", "--cmake-flag=-DZLIB_BUILD_TESTING=OFF"))
     }
 
     def __init__(self) -> None:
@@ -167,7 +180,7 @@ class DefaultGitRepos(GitRepo):
     def set_libname(self, libname: str, package_name: T.Union[str, None]) -> None:
         if package_name is None:
             if libname in self._default_packages:
-                package_name = self._default_packages[libname]
+                package_name, self.version_add_cmdline = self._default_packages[libname]
             else:
                 package_name = libname
 
@@ -176,7 +189,7 @@ class DefaultGitRepos(GitRepo):
             return
 
         self.libname = libname
-        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path, self.tags_to_exclude = self._preconfigured_repos[package_name]
+        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path, self.tags_to_exclude, self.additional_cmdline = self._preconfigured_repos[package_name]
 
     def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         if self.libname is None:
@@ -566,41 +579,26 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
 
     includedir = os.path.join(lib_installed_path, "include")
     libs, non_match = search_lib(lib, libname, get_non_match=True, ext_pref_order=ext_pref_order)
-    non_match_to_ignore = set()
     for name in non_match:
         path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
         if os.path.exists(path):
             print(f"The folder {path} already exists and the compilation generated files that belong in this folder.")
             print("What do you want to do ?\n")
-            print("1: delete the folder and recreate it from scratch")
-            print("2: copy the files, overwriting the existing ones")
-            print("3: Don't install any more file in this folder\n")
-            answer = "4"
-            while answer not in {"1", "2", "3"}:
-                answer = input("[1/2/3] ")
+            print("1: delete the folder and make it a symlink to ")
+            print("2: keep the folder as it is\n")
+            answer = "3"
+            while answer not in {"1", "2"}:
+                answer = input("[1/2] ")
             if answer == "1":
                 shutil.rmtree(path, ignore_errors=True)
-            elif answer == "3":
-                non_match_to_ignore.add(name)
-                continue
-        makedirs(os.path.join(path, "lib"))
-        for file in non_match[name]:
-            full_filepath = os.path.join(lib, file)
-            if os.path.islink(full_filepath):
-                real_path = os.path.realpath(full_filepath)
-                relpath_from_lib = os.path.relpath(real_path, lib)
-                shutil.copy(full_filepath, os.path.join(path, "lib", relpath_from_lib), follow_symlinks=True)
-    # We use 2 loops to make sure all copies following symlink are done before moving the file referenced
-    for name in non_match:
-        if name in non_match_to_ignore:
-            continue
-        path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, name, builded_version_str)
-        for file in non_match[name]:
-            if file in libs:
-                shutil.copy(os.path.join(lib, file), os.path.join(path, "lib", file), follow_symlinks=False)
             else:
-                shutil.move(os.path.join(lib, file), os.path.join(path, "lib", file))
-        shutil.copytree(includedir, os.path.join(path, "include"), dirs_exist_ok=True)
+                continue
+        try:
+            makedirs(os.path.dirname(path))
+            os.symlink(lib_installed_path, path, target_is_directory=True)
+        except OSError:
+            # On Winslop, symlink requires admin rights or dev mode
+            shutil.copytree(lib_installed_path, path)
 
     if len(libs) == 0:
         return None
@@ -704,7 +702,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
 
 
-def find_lib(config: Config, libname: str, install_dir: str, *, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[str, str, T.Union[Version, None]]:
+def find_lib(config: Config, libname: str, install_dir: str, *, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> Lib:
     # Cache structure example:
     # =======================================================
     # cache = {
@@ -745,4 +743,4 @@ def find_lib(config: Config, libname: str, install_dir: str, *, package_name: T.
     if cache_modified:
         save_cache(cache_filepath, cache)
 
-    return lib, include, version
+    return Lib(includedir=include, lib_path=os.path.dirname(lib), lib_file=lib, version=version)
