@@ -243,6 +243,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("--delete-cache", help="Delete the cache, use this if PowerMake act weirdly", action="store_true")
         self.add_argument("--generate-vscode", nargs='?', metavar="VSCODE_FOLDER_PATH", help="Generate a launch.json and a tasks.json for visual studio code.", default=False)
         self.add_argument("--always-overwrite", help="Remove all prompts asking if a file must be overwritten", action="store_true")
+        self.add_argument("--pkg-install-noconfirm", help="Remove all [Y/n] asking to install a package - note that package.find_lib can still require user interaction in case there is a choice to do.", action="store_true")
         self.add_argument("--get-probable-bin-path", help="This return a probable path to the binary linked at the end. It can be used to interface with a debugger", action="store_true")
         self.add_argument("--get-compilation-metadata", help="(Internal option) - Returns a json containing metadata used by run_another_powermake.", action="store_true")
         self.add_argument("--compilation-unit", metavar="TOKEN", help="(Internal option) - Specify the token of the current compilation unit", default=None)

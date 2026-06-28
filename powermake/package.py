@@ -88,12 +88,14 @@ class GitRepo:
 
     def download_build_install(self, config: Config, install_path: str, tag: T.Union[str, None] = None) -> None:
         makefile_temp_dir: tempfile.TemporaryDirectory[str] | None = None
-        print(f"Do you want to download {self.code_git_url} ? It will be compiled and installed in: {install_path}")
-        answer = "a"
-        while answer != "" and answer != "y" and answer != "Y" and answer != "n" and answer != "N":
-            answer = input("[Y/n] ")
-        if answer != "" and answer != "y" and answer != "Y":
-            raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
+
+        if not config._args_parsed.pkg_install_noconfirm:
+            print(f"Do you want to download {self.code_git_url} ? It will be compiled and installed in: {install_path}")
+            answer = "a"
+            while answer != "" and answer != "y" and answer != "Y" and answer != "n" and answer != "N":
+                answer = input("[Y/n] ")
+            if answer != "" and answer != "y" and answer != "Y":
+                raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
         temp_dir = tempfile.TemporaryDirectory("_powermake_build")
         if tag is None:
@@ -154,7 +156,8 @@ class DefaultGitRepos(GitRepo):
         "zip": ("libzip", ("--dependency=z,None,None", )),
         "glfw3": ("glfw", tuple()),
         "mariadb": ("mariadb-connector-c", tuple()),
-        "z": ("zlib", tuple())
+        "z": ("zlib", tuple()),
+        "zs": ("zlib", tuple())
     }
     _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...], T.Tuple[str, ...]]] = {
         "SDL": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
@@ -479,8 +482,13 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
                 print(text, "are upgradable to a version that will satisfy your requirements.")
             else:
                 print(f"The package {upgradable[0][0]} is installed with the incompatible version {upgradable[0][2]} but can be upgraded to the version {upgradable[0][3]}")
-            print("Do you want to upgrade your entire system ? (will run `pacman -Syu` as root)")
-            answer = input("[Y/n] ")
+
+            if not config._args_parsed.pkg_install_noconfirm:
+                answer = 'y'
+            else:
+                print("Do you want to upgrade your entire system ? (will run `pacman -Syu` as root)")
+                answer = input("[Y/n] ")
+
             if answer == "" or answer == "y" or answer == "Y":
                 cmd = linux_escalate_command(["pacman", "-Syu"])
             else:
@@ -501,8 +509,11 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
                     cmd = []
             else:
                 print(f"The package {installable[0][0]}, version {installable[0][2]}, providing {installable[0][1]} might be compatible.")
-                print(f"Do you want to install it ? (will run `pacman -S {shlex.quote(installable[0][0])}` as root)")
-                answer = input("[Y/n] ")
+                if config._args_parsed.pkg_install_noconfirm:
+                    answer = 'y'
+                else:
+                    print(f"Do you want to install it ? (will run `pacman -S {shlex.quote(installable[0][0])}` as root)")
+                    answer = input("[Y/n] ")
                 if answer == "" or answer == "y" or answer == "Y":
                     cmd = linux_escalate_command(["pacman", "-S", installable[0][0]])
                 else:

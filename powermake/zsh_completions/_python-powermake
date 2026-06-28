@@ -74,6 +74,7 @@ _python_powermake_global() {
                     '--delete-cache[delete the cache]' \
                     '--generate-vscode=-[generate VSCode config]:path:_directories' \
                     '--always-overwrite[skip overwrite prompts]' \
+                    '--pkg-install-noconfirm[answer yes to all pkgs install prompts]' \
                     '--get-probable-bin-path[print probable binary path]'
                 builtin cd -- "$oldpwd"
             fi
