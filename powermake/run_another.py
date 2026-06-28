@@ -56,8 +56,9 @@ import sys
 import json
 import typing as T
 
+from . import display
 from .config import Config
-from . import utils, display
+from .utils import print_bytes, POWERMAKE_SENTINEL
 from .display import print_debug_info
 from .exceptions import PowerMakeRuntimeError
 from .operation import _run_command_yield_output
@@ -78,6 +79,36 @@ def _get_last_compilation_unit(makefile_path: str) -> T.Union[T.Tuple[str, str],
         return (lines[0], lines[1])
     except OSError:
         return None
+
+class SentinelSearch:
+    def __init__(self) -> None:
+        self.i = 0
+
+    def search_buffer(self, buffer: bytes) -> int:
+        start = self.i
+        for i in range(len(buffer)):
+            if buffer[i] == POWERMAKE_SENTINEL[self.i]:
+                self.i += 1
+                if self.i == len(POWERMAKE_SENTINEL):
+                    print_bytes(buffer[:i-len(POWERMAKE_SENTINEL)+1])
+                    return i + 1
+            else:
+                if start > 0:
+                    start = 0
+                    print_bytes(POWERMAKE_SENTINEL[:start])
+                self.i = 0
+
+        if self.i > 0:
+            print_bytes(buffer[:-self.i])
+        else:
+            print_bytes(buffer)
+
+        return 0
+
+    def flush_remaining(self) -> None:
+        if self.i > 0:
+            print_bytes(POWERMAKE_SENTINEL[:self.i])
+
 
 def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True, propagate_cmdline_add_flag: bool = True) -> T.Union[T.List[str], None]:
     """
@@ -126,7 +157,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
         print_debug_info(f"PowerMake {path} already run during this compilation unit - skip", config.verbosity)
         return _get_libs_from_folder(last_comp_unit[1])
 
-    command = [sys.executable, "-u", path, "--compilation-unit", config.compilation_unit, "--get-compilation-metadata", "--retransmit-colors", "-j", str(nb_jobs)]
+    command = [sys.executable, path, "--compilation-unit", config.compilation_unit, "--get-compilation-metadata", "--retransmit-colors", "-j", str(nb_jobs)]
     if verbosity == 0:
         command.append("-q")
     elif verbosity >= 2:
@@ -137,7 +168,7 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     if debug:
         command.append("-d")
-    
+
     if propagate_cmdline_add_flag:
         for flag in config._args_parsed.add_flag:
             command.append(f"--add-flag={flag}")
@@ -177,25 +208,29 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     command.extend(command_line_args)
 
-    lines = _run_command_yield_output(config, command, custom_info_msg=f"Running {path}", env=env)
+    generator = _run_command_yield_output(config, command, custom_info_msg=f"Running {path}", env=env)
 
-    last_line = None
+    last_buffer: T.Union[bytes, None] = None
+    sentinel_search = SentinelSearch()
 
-    for line in lines:
-        if isinstance(line, int):
-            if line != 0:
-                if last_line is not None:
-                    utils.print_bytes(last_line)
+    for buffer in generator:
+        if isinstance(buffer, int):
+            if buffer != 0:
+                sentinel_search.flush_remaining()
                 raise PowerMakeRuntimeError(display.error_text(f"Failed to run powermake {path}")) from None
             break
-        if last_line is not None:
-            utils.print_bytes(last_line)
-        last_line = line
 
-    if last_line is None:
+        if last_buffer is None:
+            i = sentinel_search.search_buffer(buffer)
+            if i > 0:
+                last_buffer = buffer[i:]
+        else:
+            last_buffer += buffer
+
+    if last_buffer is None:
         raise RuntimeError("PowerMake corrupted; please verify your installation")
 
-    decoded_last_line = last_line.decode("utf-8").strip()
+    decoded_last_line = last_buffer.decode("utf-8").strip()
 
     if decoded_last_line == "":
         raise RuntimeError("PowerMake corrupted; --get-compilation-metadata didn't return anything, if you use powermake.generate_config, make sure to also use powermake.run_callbacks")

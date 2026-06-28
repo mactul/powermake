@@ -51,6 +51,7 @@
 # ---------------------------------------------------------------------------
 
 
+import io
 import os
 import subprocess
 import typing as T
@@ -234,7 +235,7 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
     """
     global _commands_counter
 
-    pipe = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=stderr, **kwargs)
+    pipe = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=stderr, text=False, **kwargs)
 
     _print_lock.acquire()
 
@@ -250,12 +251,13 @@ def _run_command_yield_output(config: Config, command: T.Union[T.List[str], str]
     print_debug_info(command, config.verbosity)
 
     while pipe.stdout is not None:
-        line = pipe.stdout.readline()
+        # pipe.stdout IS an io.BufferedReader, but mypy thinks it's IO[Any]
+        buffer = T.cast(io.BufferedReader, pipe.stdout).read1(1024)
 
-        if not line:
+        if not buffer:
             break
 
-        yield line
+        yield buffer
 
     returncode = pipe.wait()
 
@@ -280,22 +282,22 @@ def run_command_get_output(config: Config, command: T.Union[T.List[str], str], s
     x = _run_command_yield_output(config, command, shell=shell, target=target, _dependencies=_dependencies, _generate_makefile=_generate_makefile, _tool=_tool, stderr=stderr, stopper=stopper, **kwargs)
     returncode = 0
     output = b""
-    for line in x:
-        if isinstance(line, int):
-            returncode = line
+    for buffer in x:
+        if isinstance(buffer, int):
+            returncode = buffer
         else:
-            output += line
+            output += buffer
     return (returncode, output)
 
 
 def run_command(config: Config, command: T.Union[T.List[str], str], shell: bool = False, target: T.Union[str, None] = None, _dependencies: T.Iterable[str] = [], _generate_makefile: bool = True, _tool: str = "", stopper: T.Union[CompilationStopper, None] = None, **kwargs: T.Any) -> int:
     x = _run_command_yield_output(config, command, shell=shell, target=target, _dependencies=_dependencies, _generate_makefile=_generate_makefile, _tool=_tool, stopper=stopper, **kwargs)
     returncode = 0
-    for line in x:
-        if isinstance(line, int):
-            returncode = line
+    for buffer in x:
+        if isinstance(buffer, int):
+            returncode = buffer
         else:
-            print_bytes(line)
+            print_bytes(buffer)
     return returncode
 
 

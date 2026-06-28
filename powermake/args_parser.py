@@ -64,10 +64,10 @@ import typing as T
 
 from . import generation
 from .config import Config
-from .utils import makedirs
 from .cache import get_cache_dir
 from .__version__ import __version__
 from .interactive_config import InteractiveConfig
+from .utils import POWERMAKE_SENTINEL, makedirs, print_bytes
 from .generation import gnu_makefile, compile_commands, vscode
 from .display import print_info, print_debug_info, init_colors, error_text
 from .exceptions import PowerMakeException, PowerMakeRuntimeError, print_powermake_traceback
@@ -443,7 +443,7 @@ def run_callbacks(config: Config, *, build_callback: T.Callable[[Config], None],
             metadata["lib_build_directory"] = os.path.abspath(config.lib_build_directory)
         else:
             metadata["lib_build_directory"] = ""
-        print()
+        print_bytes(POWERMAKE_SENTINEL)
         print(json.dumps(metadata))
         exit(0)
 

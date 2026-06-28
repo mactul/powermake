@@ -57,6 +57,7 @@ import tempfile
 import typing as T
 import __main__ as __makefile__
 
+POWERMAKE_SENTINEL = b"__X6788A4524B__POWERMAKE_SENTINEL__B4254A8876X__"
 
 _run_path = "."
 def _store_run_path(run_path: str) -> None:

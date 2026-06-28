@@ -434,7 +434,8 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
     cache_modified = False
 
     print_info("Updating pacman db in a fakeroot environment", verbosity=config.verbosity)
-    pacman_update_db()
+    if not pacman_update_db():
+        return None
 
     available_versions = pacman_get_available_versions(possible_filepaths)
     found: T.Union[T.Tuple[str, str, Version], None] = None
@@ -684,12 +685,13 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
             raise PowerMakeRuntimeError("A folder was found with the good version and libs in the good format, but none of them is compatible with your linker")
 
     if not disable_system_packages:
-        pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
-        if pacman_result is not None:
-            cache_modified_by_pacman, lib, include, lib_version = pacman_result
-            if cache_modified_by_pacman:
-                cache_modified = True
-            return cache_modified, lib, include, lib_version
+        if shutil.which("pacman") is not None:
+            pacman_result = _find_lib_with_pacman(possible_filepaths, tempdir.name, main_object_path, cache, config, min_version, max_version, allow_prerelease)
+            if pacman_result is not None:
+                cache_modified_by_pacman, lib, include, lib_version = pacman_result
+                if cache_modified_by_pacman:
+                    cache_modified = True
+                return cache_modified, lib, include, lib_version
 
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
