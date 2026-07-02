@@ -93,25 +93,28 @@ def get_type_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
             # if no toolchain is specified, the auto toolchain should prefer clang
             return "clang"
         return None
-    if "clang-cl" in tool_primer.tool_path:
+
+    name = os.path.basename(tool_primer.tool_path)
+
+    if "clang-cl" in name:
         return "clang-cl"
-    if "clang" in tool_primer.tool_path:
+    if "clang" in name:
         return "clang"
-    if "mingw" in tool_primer.tool_path and "ld" in tool_primer.tool_path:
+    if "mingw" in name and "ld" in name:
         return "mingw-ld"
-    if "mingw" in tool_primer.tool_path:
+    if "mingw" in name:
         return "mingw"
-    if "nasm" in tool_primer.tool_path:
+    if "nasm" in name:
         return "nasm"
-    if "llvm" in tool_primer.tool_path:
+    if "llvm" in name:
         return "clang"
-    if "gcc" in tool_primer.tool_path or "g++" in tool_primer.tool_path:
+    if "gcc" in name or "g++" in name:
         return "gcc"
-    if "ld" in tool_primer.tool_path:
+    if "ld" in name:
         return "ld"
-    if "cl" in tool_primer.tool_path:
+    if "cl" in name:
         return "msvc"
-    if "ml" in tool_primer.tool_path:
+    if "ml" in name:
         return "masm"
 
     if "CCC_ANALYZER_ANALYSIS" in os.environ:
