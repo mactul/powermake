@@ -143,7 +143,7 @@ class LinkerGNU(Linker):
                 libs = line[len("libraries: ="):].split(':')
                 for lib in libs:
                     dir = os.path.realpath(lib)
-                    if os.path.isdir(dir) and "lib" in os.path.basename(dir):
+                    if os.path.isdir(dir):
                         libraries.add(dir)
         return libraries
 
@@ -175,7 +175,7 @@ class LinkerLD(LinkerGNU):
                     if len(d.strip()) == 0:
                         continue
                     dir = os.path.realpath(d.strip()[len('SEARCH_DIR("'):-2])
-                    if os.path.isdir(dir) and "lib" in os.path.basename(dir):
+                    if os.path.isdir(dir):
                         libraries.add(dir)
         return libraries
 

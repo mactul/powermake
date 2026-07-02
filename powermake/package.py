@@ -90,7 +90,7 @@ class GitRepo:
         makefile_temp_dir: tempfile.TemporaryDirectory[str] | None = None
 
         if not config._args_parsed.pkg_install_noconfirm:
-            print(f"Do you want to download {self.code_git_url} ? It will be compiled and installed in: {install_path}")
+            print(f"Do you want to download {self.code_git_url} ? It will be compiled and installed in: '{install_path}'")
             answer = "a"
             while answer != "" and answer != "y" and answer != "Y" and answer != "n" and answer != "N":
                 answer = input("[Y/n] ")
@@ -422,6 +422,16 @@ def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str
     return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
 
 
+def find_closest_include_dir(dir: str) -> T.Union[str, None]:
+    dir = os.path.abspath(dir)
+    while len(dir) > 1:
+        include = os.path.join(dir, "include")
+        if os.path.isdir(include):
+            return include
+        dir = os.path.dirname(dir)
+    return None
+
+
 def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:
     new_cache: T.Dict[str, T.Any] = {
         "system": [],
@@ -447,7 +457,10 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
     for libpath, package, installed_version, server_version in available_versions:
         incompatible = False
         if installed_version is not None:
-            include = os.path.realpath(os.path.join(os.path.dirname(libpath), '..', 'include'))
+            include = find_closest_include_dir(os.path.realpath(os.path.join(os.path.dirname(libpath), '..')))
+            if include is None:
+                continue
+
             # update cache
             cache["system"].append({
                 "version": str(installed_version),
@@ -483,7 +496,7 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
             else:
                 print(f"The package {upgradable[0][0]} is installed with the incompatible version {upgradable[0][2]} but can be upgraded to the version {upgradable[0][3]}")
 
-            if not config._args_parsed.pkg_install_noconfirm:
+            if config._args_parsed.pkg_install_noconfirm:
                 answer = 'y'
             else:
                 print("Do you want to upgrade your entire system ? (will run `pacman -Syu` as root)")
@@ -543,7 +556,9 @@ def _find_lib_with_pacman(possible_filepaths: T.List[str], tempdir_name: str, ma
             available_versions = pacman_get_available_versions(possible_filepaths)
             for libpath, package, installed_version, server_version in available_versions:
                 if installed_version is not None:
-                    include = os.path.realpath(os.path.join(os.path.dirname(libpath), '..', 'include'))
+                    include = find_closest_include_dir(os.path.realpath(os.path.join(os.path.dirname(libpath), '..')))
+                    if include is None:
+                        continue
                     # update cache
                     already_in_cache = False
                     for entry in cache["system"]:
@@ -632,7 +647,9 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
         # If we find a compatible file installed, no need to search the version number it will be good in any case.
         for filepath in possible_filepaths:
             if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
-                return (cache_modified, filepath, os.path.realpath(os.path.join(os.path.dirname(filepath), '..', 'include')), None)
+                include = find_closest_include_dir(os.path.realpath(os.path.join(os.path.dirname(filepath), '..')))
+                if include is not None:
+                    return (cache_modified, filepath, include, None)
 
     if config.linker is None:
         raise PowerMakeRuntimeError("No linker was found, we need one to check a lib compatibility")
