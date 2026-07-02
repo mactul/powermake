@@ -20,6 +20,11 @@ SET ASM=ml64
 py ./lib_depend/makefile.py -rv || goto :failed
 SET ASM=
 
+py ./use_zlib/makefile.py -rv --pkg-install-noconfirm || goto :failed
+SET CC=cl
+py ./use_zlib/makefile.py -rv --pkg-install-noconfirm || goto :failed
+SET CC=
+
 goto :EOF
 
 :failed

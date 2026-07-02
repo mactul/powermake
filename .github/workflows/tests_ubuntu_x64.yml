@@ -34,9 +34,9 @@ jobs:
     - name: install gcc libs for i386
       run: >-
         sudo dpkg --add-architecture i386 && sudo apt update && sudo apt-get install -y linux-libc-dev:i386
-    - name: install nasm & wine
+    - name: install nasm & wine & openssl-dev
       run: |
-        sudo apt-get install -y nasm wine wine-binfmt binfmt-support
+        sudo apt-get install -y nasm wine wine-binfmt binfmt-support libssl-dev
         sudo update-binfmts --enable wine
     - name: run tests
       run: >-
