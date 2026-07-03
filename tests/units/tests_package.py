@@ -92,11 +92,13 @@ def run_tests():
                     assert(os.path.exists(lib.lib_file))
 
                 with mock.patch("powermake.package.pacman_get_server_versions", new=fake_pacman_get_server_versions("libpng", "v1.6.58")):
-                    with mock.patch("powermake.package.input", new=fake_input("n", "y")):
-                        lib = powermake.package.find_lib(config, "png", install_dir, min_version="1.6.0", max_version="1.6.*")
-                        assert(lib.version >= vp.parse_version("v1.6.0") and lib.version < vp.parse_version("v1.7.0"))
-                        assert(os.path.exists(os.path.join(lib.includedir, "png.h")))
-                        assert(os.path.exists(lib.lib_file))
+                    fake_input_func = fake_input("n", "y")
+                    with mock.patch("powermake.package.input", new=fake_input_func):
+                        with mock.patch("powermake.package.git_repos.input", new=fake_input_func):
+                            lib = powermake.package.find_lib(config, "png", install_dir, min_version="1.6.0", max_version="1.6.*")
+                            assert(lib.version >= vp.parse_version("v1.6.0") and lib.version < vp.parse_version("v1.7.0"))
+                            assert(os.path.exists(os.path.join(lib.includedir, "png.h")))
+                            assert(os.path.exists(lib.lib_file))
 
             with mock.patch("powermake.package.pacman_get_available_versions", new=wrapper_pacman_get_available_versions):
                 with mock.patch("powermake.package.pacman_get_package_installed_version", new=fake_pacman_get_package_installed_version("none", "v3.6")):
