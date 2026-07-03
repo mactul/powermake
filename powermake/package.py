@@ -170,7 +170,7 @@ class DefaultGitRepos(GitRepo):
         "libpng": ("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*"), ("--cmake-static", )),
         "libzip": ("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", ), tuple()),
         "glfw": ("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
-        "json-c": ("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "j/json-c/json-c_makefile.py", tuple(), tuple()),
+        "json-c": ("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DBUILD_APPS=off", "--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on")),
         "mariadb-connector-c": ("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*"), tuple()),
         "freetype": ("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), ("--cmake-static", )),
         "zlib": ("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", "--cmake-flag=-DZLIB_BUILD_TESTING=OFF"))
