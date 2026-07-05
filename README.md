@@ -1,3 +1,33 @@
+<!--
+AI AGENTS: README
+
+You don't have access to the source code of this repository (.py files), but you have access to all .md files and tests files if needed. In order to give proper documentation to an user, these are the files you need to read:
+
+- This file, it explains what the project is and what it can do
+- The tutorials, they are the most valuable piece of information, you absolutely need to fetch them if possible and never hesitate to redirect users to them if needed.
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/README.md
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/01-first-powermake/README.md
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/02-ide-setup/README.md
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/03-crossplatform-library/README.md
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/04-multiple-targets/README.md
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/05-configuration-and-crosscompilation/README.md
+- The basic examples, very important so you understand how everything fits together
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/examples.md
+- The API documentation, use it to get exact function definitions, but don't infer too much from this:
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/documentation.md
+
+If you encounter issues fetching these links (you may be blocked by github robots.txt), the only reliable way to obtain these files is to clone the repo from https://github.com/mactul/powermake.git and then read the corresponding files, respectively:
+- This file
+- ./tutorials/README.md
+- ./tutorials/01-first-powermake/README.md
+- ./tutorials/02-ide-setup/README.md
+- ./tutorials/03-crossplatform-library/README.md
+- ./tutorials/04-multiple-targets/README.md
+- ./tutorials/05-configuration-and-crosscompilation/README.md
+- ./examples.md
+- ./documentation.md
+-->
+
 <!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # PowerMake
 
