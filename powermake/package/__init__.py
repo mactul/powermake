@@ -575,7 +575,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
 
 
-def find_lib(config: Config, libname: str, install_dir: str, *, min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), package_name: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> Lib:
+def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/installed_libs/", min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), package_name: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> Lib:
     # Cache structure example:
     # =======================================================
     # cache = {
@@ -612,7 +612,7 @@ def find_lib(config: Config, libname: str, install_dir: str, *, min_version: T.U
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, os.path.abspath(install_dir), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
+    cache_modified, lib, include, version = _find_lib(cache, config, libname, os.path.abspath(os.path.expanduser(install_dir)), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
     if cache_modified:
         save_cache(cache_filepath, cache)
 

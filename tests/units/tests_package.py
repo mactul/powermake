@@ -2,6 +2,7 @@ import os
 import time
 import subprocess
 import typing as T
+import powermake.cache
 import powermake.package
 from unittest import mock
 from powermake.package import ExtType
@@ -79,14 +80,16 @@ def run_tests():
     assert(subprocess.check_output(cmd).decode().strip() == "root")
 
     config = powermake.generate_config("test", args_parsed=powermake.ArgumentParser().parse_args([]))
-    install_dir = os.path.expanduser("~/.cache/powermake/tests_install")
+
+    # We want the tests install to be destroyed after cache deletion
+    install_dir = os.path.join(powermake.cache.get_cache_dir(), "tests_install")
 
     with mock.patch("powermake.package.shutil.which", new=fake_which):
 
         with mock.patch("powermake.package.pacman_update_db", new=fake_pacman_update_db):
             with mock.patch("powermake.package.pacman_get_package_installed_version", new=fake_pacman_get_package_installed_version("v1.1.0")):
                 with mock.patch("powermake.package.pacman_get_server_versions", new=fake_pacman_get_server_versions("openssl", "v1.1.0")):
-                    lib = powermake.package.find_lib(config, "ssl", install_dir, min_version="1.0", max_version="1.*")
+                    lib = powermake.package.find_lib(config, "ssl", install_dir=install_dir, min_version="1.0", max_version="1.*")
                     assert(lib.version == vp.parse_version("v1.1.0"))
                     assert(os.path.exists(os.path.join(lib.includedir, "openssl/ssl.h")))
                     assert(os.path.exists(lib.lib_file))
@@ -95,7 +98,7 @@ def run_tests():
                     fake_input_func = fake_input("n", "y")
                     with mock.patch("powermake.package.input", new=fake_input_func):
                         with mock.patch("powermake.package.git_repos.input", new=fake_input_func):
-                            lib = powermake.package.find_lib(config, "png", install_dir, min_version="1.6.0", max_version="1.6.*")
+                            lib = powermake.package.find_lib(config, "png", install_dir=install_dir, min_version="1.6.0", max_version="1.6.*")
                             assert(lib.version >= vp.parse_version("v1.6.0") and lib.version < vp.parse_version("v1.7.0"))
                             assert(os.path.exists(os.path.join(lib.includedir, "png.h")))
                             assert(os.path.exists(lib.lib_file))
@@ -105,21 +108,21 @@ def run_tests():
                     with mock.patch("powermake.package.pacman_get_server_versions", new=fake_pacman_get_server_versions("openssl", "v3.6")):
                         with mock.patch("powermake.package.subprocess.run", side_effect=fake_subprocess_run):
                             with mock.patch("powermake.package.input", new=fake_input("y")):
-                                lib = powermake.package.find_lib(config, "ssl", install_dir, min_version="3.0", max_version="3.*")
+                                lib = powermake.package.find_lib(config, "ssl", install_dir=install_dir, min_version="3.0", max_version="3.*")
                                 print(lib)
                                 assert(lib.version == vp.parse_version("v3.6"))
                                 assert(os.path.exists(os.path.join(lib.includedir, "openssl/ssl.h")))
                                 assert(os.path.exists(lib.lib_file))
 
     start_time = time.time()
-    lib = powermake.package.find_lib(config, "png", install_dir, min_version="1.6.0", max_version="1.6.*")
+    lib = powermake.package.find_lib(config, "png", install_dir=install_dir, min_version="1.6.0", max_version="1.6.*")
     assert(time.time() - start_time < 1.0)  # The lib is installed, it should definitely take less than a second
     assert(lib.version >= vp.parse_version("v1.6.0") and lib.version < vp.parse_version("v1.7.0"))
     assert(os.path.exists(os.path.join(lib.includedir, "png.h")))
     assert(os.path.exists(lib.lib_file))
 
     start_time = time.time()
-    lib = powermake.package.find_lib(config, "ssl", install_dir, min_version="3.0", max_version="3.*")
+    lib = powermake.package.find_lib(config, "ssl", install_dir=install_dir, min_version="3.0", max_version="3.*")
     assert(time.time() - start_time < 1.0)  # The lib should be in the system cache
     assert(lib.version == vp.parse_version("v3.6"))
     assert(os.path.exists(os.path.join(lib.includedir, "openssl/ssl.h")))
@@ -127,7 +130,7 @@ def run_tests():
 
     # We assume libc is always installed, since we don't provide a version it should immediatly be found
     start_time = time.time()
-    lib = powermake.package.find_lib(config, "c", install_dir, min_version=None, max_version=None)
+    lib = powermake.package.find_lib(config, "c", install_dir=install_dir, min_version=None, max_version=None)
     assert(time.time() - start_time < 1.0)  # We are just asking GCC where the libraries are
     assert(lib.version is None)
     assert(os.path.exists(os.path.join(lib.includedir, "stdio.h")))

@@ -8,7 +8,10 @@ def on_build(config: powermake.Config):
     if config.target_is_windows():
         config.add_ld_flags("-static")
 
-    lib = powermake.package.find_lib(config, "zs" if config.target_is_windows() else "z", os.path.expanduser("~/.cache/powermake/tests_install"), min_version='1.3.2', max_version='1.*')
+    # We want the tests install to be destroyed after cache deletion
+    install_dir = os.path.join(powermake.cache.get_cache_dir(), "tests_install")
+
+    lib = powermake.package.find_lib(config, "zs" if config.target_is_windows() else "z", install_dir=install_dir, min_version='1.3.2', max_version='1.*')
 
     config.add_includedirs(lib.includedir)
 
