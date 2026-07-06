@@ -12,12 +12,11 @@ def on_build(config: powermake.Config):
     install_dir = os.path.join(powermake.cache.get_cache_dir(), "tests_install")
 
     lib = powermake.package.find_lib(config, "zs" if config.target_is_windows() else "z", install_dir=install_dir, min_version='1.3.2', max_version='1.*')
-
-    config.add_includedirs(lib.includedir)
+    config.add_lib(lib)
 
     objects = powermake.compile_files(config, {"main.c"})
 
-    exe = powermake.link_files(config, objects, archives=[lib.lib_file])
+    exe = powermake.link_files(config, objects)
 
     r, out = powermake.run_command_get_output(config, command=[exe], custom_info_msg="Testing the installed version")
     assert(r == 0)

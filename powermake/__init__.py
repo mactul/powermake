@@ -423,7 +423,8 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
     if config.target_is_windows():
         extension = ".exe"
     output_file = os.path.join(config.exe_build_directory, executable_name + extension)
-    makedirs(os.path.dirname(output_file), exist_ok=True)
+    output_dir = os.path.dirname(output_file)  # executable_name may contain a path
+    makedirs(output_dir, exist_ok=True)
     args = config.linker.format_args(shared_libs=config.shared_libs, flags=config.ld_flags)
 
     if type(object_files) != set:
@@ -432,7 +433,22 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
         object_files = list(object_files)
 
     archives = list(archives)  # It shouldn't be an iterable, but it's easy to get confused,
-                               # for safety always conevrt to list before use
+                               # for safety always convert to list before use
+                               # It also makes a copy which is handy for the next step
+
+    archives.extend(lib.lib_file for lib in reversed(config._package_libs))
+
+    for lib in config._package_libs:
+        if not lib.is_system:
+            if not lib.lib_file.endswith(".a"):
+                shutil.copy2(lib.lib_file, os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file)))
+            elif lib.lib_file.endswith(".dll.a"):
+                dll_path = lib.lib_file[:-2]
+                alternative_dll_path = os.path.join(os.path.dirname(lib.lib_file), "../bin", os.path.basename(dll_path))
+                if os.path.exists(dll_path):
+                    shutil.copy2(dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
+                elif os.path.exists(alternative_dll_path):
+                    shutil.copy2(alternative_dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
 
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "LD").execute(force=force)
@@ -553,7 +569,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         if len(filtered_dirs) == 0:
             filtered_dirs = dirs
 
-        filtered_dirs = filtered_dirs.union({dep.lib_path for dep in dependencies})
+        filtered_dirs = filtered_dirs.union({os.path.dirname(dep.lib_file) for dep in dependencies})
 
         if len(filtered_dirs) > 0:
             dir_str = ';'.join(filtered_dirs)

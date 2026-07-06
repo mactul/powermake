@@ -52,15 +52,17 @@
 
 
 import os
+import re
 import copy
 import json
 import argparse
 import platform
 import typing as T
 
-from .tools import ToolPrimer, EnforcedType
+from .package.lib import Lib
 from .cache import get_cache_dir
 from .display import error_text
+from .tools import ToolPrimer, EnforcedType
 from .exceptions import PowerMakeRuntimeError
 from .search_visual_studio import load_msvc_environment
 from .linkers import Linker, GenericLinker, get_all_linker_types
@@ -418,6 +420,7 @@ class Config:
         self.defines: T.List[str] = []
         self.shared_libs: T.List[str] = []
         self.additional_includedirs: T.List[str] = []
+        self._package_libs: T.List[Lib] = []
         self.c_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
         self.cpp_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
         self.as_flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []
@@ -1014,3 +1017,9 @@ class Config:
 
     def get_cmdline_additional_flags(self) -> T.List[T.Union[str, T.Tuple[str, ...]]]:
         return [tuple(flag.split(' ')) if ' ' in flag else flag for flag in self._args_parsed.add_flag]
+
+    def add_lib(self, lib: Lib) -> None:
+        self.add_includedirs(lib.includedir)
+        self._package_libs.append(lib)
+        if not lib.is_system and re.fullmatch(".*\\.so(\\.[0-9]+)*", lib.lib_file):
+            self.add_ld_flags(("-Wl,-rpath,$ORIGIN", "-Wl,-z,origin"))

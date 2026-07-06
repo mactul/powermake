@@ -6,8 +6,8 @@ import tempfile
 import subprocess
 import typing as T
 from enum import Enum
-from dataclasses import dataclass
 
+from .lib import Lib
 from .git_repos import GitRepo, DefaultGitRepos
 
 from ..config import Config
@@ -18,13 +18,11 @@ from ..display import print_info, print_debug_info
 from ..version_parser import Version, parse_version, remove_version_frills, PreType
 from ..cache import get_cache_dir, load_cache_from_file, check_cache_controls, cache_controls_array, store_cache_to_file
 
-@dataclass
-class Lib:
-    includedir: str
-    lib_path: str
-    version: T.Union[Version, None]
-    lib_file: str
-
+__all__ = [
+    "Lib",
+    "GitRepo",
+    "DefaultGitRepos"
+]
 
 class ExtType(Enum):
     LIB_A = "\\.a"
@@ -65,6 +63,21 @@ def linux_escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]
         return [*_privilege_escalator, shlex.join(command)]
     return [*_privilege_escalator, *command]
 
+
+def get_soname(config: Config, lib_path: str) -> T.Union[str, None]:
+    if config.linker is None:
+        return None
+
+    objdump_path = (split_toolchain_prefix(config.linker.path)[0] or os.path.dirname(config.linker.path)) + "objdump"
+
+    try:
+        lines = subprocess.check_output([objdump_path, "-p", lib_path], encoding="utf-8").splitlines()
+        for line in lines:
+            if "SONAME" in line:
+                return line.split()[-1]
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    return None
 
 
 def pacman_update_db() -> bool:
@@ -134,15 +147,6 @@ def filter_versions(versions: T.List[T.Tuple[str, Version]], min_version: T.Unio
 
     compatible_versions.sort(reverse=True, key=lambda x:x[1])
     return compatible_versions
-
-
-def remove_version_ext(ext: str) -> str:
-    i = len(ext) - 1
-    while i > 0 and (ext[i].isdigit() or ext[i] == '.'):
-        i -= 1
-    if i <= 0:
-        return ""
-    return ext[:i+1]
 
 
 def search_lib(dir: str, libname: str, get_non_match: bool = True, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[T.List[str], T.Dict[str, T.Set[str]]]:
@@ -476,7 +480,7 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
     return os.path.join(lib, libs[0]), includedir, builded_version
 
 
-def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None]]:
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None], bool]:
     cache_modified = False
 
     if "system" not in cache:
@@ -492,10 +496,24 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
             if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
                 include = find_closest_include_dir(os.path.realpath(os.path.join(os.path.dirname(filepath), '..')))
                 if include is not None:
-                    return (cache_modified, filepath, include, None)
+                    return (cache_modified, filepath, include, None, True)
 
     if config.linker is None:
         raise PowerMakeRuntimeError("No linker was found, we need one to check a lib compatibility")
+
+    if not disable_system_packages:
+        for entry in cache["system"]:
+            if not check_cache_controls(entry):
+                entry["invalid"] = True
+                cache_modified = True
+                continue
+            if entry["lib"] in possible_filepaths:
+                v = parse_version(entry["version"])
+                if v is None:
+                    continue
+                if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
+                    if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
+                        return (cache_modified, entry["lib"], entry["include"], v, True)
 
     current_toolchain_prefix = split_toolchain_prefix(os.path.basename(config.linker.path))[0]
     if current_toolchain_prefix is None:
@@ -518,20 +536,6 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     else:
         package_folder_name = package_name
 
-    if not disable_system_packages:
-        for entry in cache["system"]:
-            if not check_cache_controls(entry):
-                entry["invalid"] = True
-                cache_modified = True
-                continue
-            if entry["lib"] in possible_filepaths:
-                v = parse_version(entry["version"])
-                if v is None:
-                    continue
-                if (allow_prerelease or v.pre_type == PreType.NOT_PRE) and (min_version is None or min_version <= v) and (max_version is None or v <= max_version):
-                    if check_linker_compat(config, tempdir.name, main_object_path, entry["lib"]):
-                        return (cache_modified, entry["lib"], entry["include"], v)
-
     install_path = os.path.join(install_dir, config.target_simplified_architecture, current_toolchain_prefix, package_folder_name, libname)
     if os.path.isdir(install_path):
         files = os.listdir(install_path)
@@ -552,7 +556,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
             for lib in libs:
                 libpath = os.path.join(lib_dir, lib)
                 if check_linker_compat(config, tempdir.name, main_object_path, libpath):
-                    return (cache_modified, libpath, include, version[1])
+                    return (cache_modified, libpath, include, version[1], False)
             raise PowerMakeRuntimeError("A folder was found with the good version and libs in the good format, but none of them is compatible with your linker")
 
     if not disable_system_packages:
@@ -562,7 +566,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                 cache_modified_by_pacman, lib, include, lib_version = pacman_result
                 if cache_modified_by_pacman:
                     cache_modified = True
-                return cache_modified, lib, include, lib_version
+                return (cache_modified, lib, include, lib_version, True)
 
     # Not a single installed or system managed package is compatible.
     # No other choice than to build from sources
@@ -571,7 +575,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     if git_result is None:
         raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
 
-    return (cache_modified, *git_result)
+    return (cache_modified, *git_result, False)
 
 
 
@@ -612,8 +616,10 @@ def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/i
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version = _find_lib(cache, config, libname, os.path.abspath(os.path.expanduser(install_dir)), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
+    cache_modified, lib, include, version, is_system = _find_lib(cache, config, libname, os.path.abspath(os.path.expanduser(install_dir)), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
-    return Lib(includedir=include, lib_path=os.path.dirname(lib), lib_file=lib, version=version)
+    lib = os.path.realpath(lib)
+
+    return Lib(includedir=include, lib_file=lib, version=version, soname=get_soname(config, lib), is_system=is_system)
