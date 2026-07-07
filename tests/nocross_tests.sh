@@ -22,3 +22,5 @@ python3 ./multiplatform/makefile.py -rv --l ./linux_config3.json --assert-cc="cl
 
 echo "testing lib compilation and link accross powermake makefiles, in release and in debug"
 python3 ./lib_depend/makefile.py -rvd || failure
+
+python ./use_zlib/makefile.py -rv --pkg-install-noconfirm || failure

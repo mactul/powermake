@@ -440,15 +440,15 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     for lib in config._package_libs:
         if not lib.is_system:
-            if not lib.lib_file.endswith(".a"):
-                shutil.copy2(lib.lib_file, os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file)))
-            elif lib.lib_file.endswith(".dll.a"):
-                dll_path = lib.lib_file[:-2]
+            if lib.lib_file.endswith(".dll.a") or lib.lib_file.endswith(".lib"):
+                dll_path = lib.lib_file[:-2] if lib.lib_file.endswith(".dll.a") else (lib.lib_file[:-3] + "dll")
                 alternative_dll_path = os.path.join(os.path.dirname(lib.lib_file), "../bin", os.path.basename(dll_path))
                 if os.path.exists(dll_path):
                     shutil.copy2(dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
                 elif os.path.exists(alternative_dll_path):
                     shutil.copy2(alternative_dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
+            elif not lib.lib_file.endswith(".a"):
+                shutil.copy2(lib.lib_file, os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file)))
 
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "LD").execute(force=force)

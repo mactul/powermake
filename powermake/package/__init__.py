@@ -37,8 +37,10 @@ class ExtType(Enum):
     "Files ending with .lib (ex: ssl.lib)"
     LIB_DLL = "\\.dll"
     "Files ending with .dll (ex: ssl.dll)"
+    LIB_DYLIB = "\\.dylib"
+    "Files ending with .dylib (ex: ssl.dylib)"
 
-DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_SO_NUM, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_SO_NUM, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL, ExtType.LIB_DYLIB]
 
 
 _privilege_escalator: T.Union[None, T.List[str]] = None
@@ -480,6 +482,30 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
     return os.path.join(lib, libs[0]), includedir, builded_version
 
 
+def linux_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
+    for ext in ext_pref_order:
+        if ext == ExtType.LIB_SO or ext == ExtType.LIB_SO_NUM:
+            return False
+        if ext == ExtType.LIB_A:
+            return True
+    return True  # True by default if nothing found
+
+def windows_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
+    for ext in ext_pref_order:
+        if ext == ExtType.LIB_DLL:
+            return False
+        if ext == ExtType.LIB_DLL_A or ext == ExtType.LIB_LIB:
+            return True
+    return True  # True by default if nothing found
+
+def macos_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
+    for ext in ext_pref_order:
+        if ext == ExtType.LIB_DYLIB:
+            return False
+        if ext == ExtType.LIB_A:
+            return True
+    return True  # True by default if nothing found
+
 def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None], bool]:
     cache_modified = False
 
@@ -524,7 +550,13 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
     if git_repo is not None:
         if isinstance(git_repo, DefaultGitRepos):
-            git_repo.set_libname(libname, package_name)
+            if config.target_is_windows():
+                prefer_static = windows_prefer_static(ext_pref_order)
+            elif config.target_is_macos():
+                prefer_static = macos_prefer_static(ext_pref_order)
+            else:
+                prefer_static = linux_prefer_static(ext_pref_order)
+            git_repo.set_libname(libname, package_name, prefer_static)
 
         if package_name is None:
             package_name = os.path.basename(git_repo.code_git_url.split(':')[-1])

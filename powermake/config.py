@@ -1023,3 +1023,5 @@ class Config:
         self._package_libs.append(lib)
         if not lib.is_system and re.fullmatch(".*\\.so(\\.[0-9]+)*", lib.lib_file):
             self.add_ld_flags(("-Wl,-rpath,$ORIGIN", "-Wl,-z,origin"))
+        elif not lib.is_system and lib.lib_file.endswith(".dylib"):
+            self.add_ld_flags("-Wl,-rpath,@loader_path")

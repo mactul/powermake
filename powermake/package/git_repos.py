@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import subprocess
 import typing as T
+from dataclasses import dataclass
 
 from ..config import Config
 from ..operation import run_command
@@ -11,6 +12,19 @@ from ..run_another import run_another_powermake
 from ..exceptions import PowerMakeRuntimeError
 from ..utils import makedirs, join_absolute_paths
 from ..version_parser import Version, parse_version, remove_version_frills
+
+
+
+@dataclass
+class _RepoInfo:
+    code_git_url: str
+    dst_makefile_path: str
+    makefile_git_url: T.Union[str, None]
+    src_makefile_path: T.Union[str, None]
+    tags_to_exclude: T.Tuple[str, ...]
+    additional_cmdline: T.Tuple[str, ...]
+    static_flags: T.Tuple[str, ...]
+
 
 class GitRepo:
     def __init__(self, git_url: str, powermake_makefile_path_in_repo: str) -> None:
@@ -20,7 +34,6 @@ class GitRepo:
         self.makefile_git_url: T.Union[str, None] = None
         self.tags_to_exclude: T.Tuple[str, ...] = tuple()
         self.additional_cmdline: T.Tuple[str, ...] = tuple()
-        self.version_add_cmdline: T.Tuple[str, ...] = tuple()
 
     def set_external_powermake_makefile(self, powermake_makefile_path: str, git_url: T.Union[str, None]) -> None:
         self.src_makefile_path = powermake_makefile_path
@@ -85,7 +98,7 @@ class GitRepo:
             makedirs(os.path.join(temp_dir.name, os.path.dirname(self.dst_makefile_path)))
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
-        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path, *self.additional_cmdline, *self.version_add_cmdline])
+        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path, *self.additional_cmdline])
 
         lib_path = os.path.join(install_path, "lib")
         if not os.path.exists(lib_path):
@@ -134,31 +147,31 @@ class DefaultGitRepos(GitRepo):
         "z": ("zlib", tuple(), None),
         "zs": ("zlib", tuple(), None)
     }
-    _preconfigured_repos: T.Dict[str, T.Tuple[str, str, T.Union[str, None], T.Union[str, None], T.Tuple[str, ...], T.Tuple[str, ...]]] = {
-        "SDL": ("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
-        "SDL_ttf": ("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
-        "SDL_image": ("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
-        "boringssl": ("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*"), ("--cmake-static", )),
-        "libressl": ("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple(), tuple()),
-        "openssl": ("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*"), tuple()),
-        "libjpeg-turbo": ("https://github.com/libjpeg-turbo/libjpeg-turbo", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("jpeg.*", ), tuple()),
-        "libpng": ("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*"), ("--cmake-static", )),
-        "libzip": ("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", ), tuple()),
-        "glfw": ("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", )),
-        "json-c": ("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DBUILD_APPS=off", "--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on")),
-        "mariadb-connector-c": ("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*"), tuple()),
-        "freetype": ("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), ("--cmake-static", )),
-        "zlib": ("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-static", "--cmake-flag=-DZLIB_BUILD_TESTING=OFF"))
+    _preconfigured_repos: T.Dict[str, _RepoInfo] = {
+        "SDL": _RepoInfo("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--cmake-static", )),
+        "SDL_ttf": _RepoInfo("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--cmake-static", )),
+        "SDL_image": _RepoInfo("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--cmake-static", )),
+        "boringssl": _RepoInfo("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*"), tuple(), ("--cmake-static", )),
+        "libressl": _RepoInfo("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple(), tuple(), tuple()),
+        "openssl": _RepoInfo("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*"), tuple(), tuple()),
+        "libjpeg-turbo": _RepoInfo("https://github.com/libjpeg-turbo/libjpeg-turbo", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("jpeg.*", ), tuple(), tuple()),
+        "libpng": _RepoInfo("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*"), tuple(), ("--cmake-static", )),
+        "libzip": _RepoInfo("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", ), tuple(), tuple()),
+        "glfw": _RepoInfo("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--cmake-static", )),
+        "json-c": _RepoInfo("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DBUILD_APPS=off", "--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on"), tuple()),
+        "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*"), tuple(), tuple()),
+        "freetype": _RepoInfo("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), tuple(), ("--cmake-static", )),
+        "zlib": _RepoInfo("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DZLIB_BUILD_TESTING=OFF", ), ("--cmake-static", ))
     }
 
     def __init__(self) -> None:
         self.libname: T.Union[str, None] = None
         super().__init__("", "")
 
-    def set_libname(self, libname: str, package_name: T.Union[str, None]) -> None:
+    def set_libname(self, libname: str, package_name: T.Union[str, None], prefer_static: bool) -> None:
         if package_name is None:
             if libname in self._default_packages:
-                package_name, self.version_add_cmdline, _ = self._default_packages[libname]
+                package_name, self.additional_cmdline, _ = self._default_packages[libname]
             else:
                 package_name = libname
 
@@ -167,7 +180,16 @@ class DefaultGitRepos(GitRepo):
             return
 
         self.libname = libname
-        self.code_git_url, self.dst_makefile_path, self.makefile_git_url, self.src_makefile_path, self.tags_to_exclude, self.additional_cmdline = self._preconfigured_repos[package_name]
+        self.code_git_url = self._preconfigured_repos[package_name].code_git_url
+        self.dst_makefile_path = self._preconfigured_repos[package_name].dst_makefile_path
+        self.makefile_git_url = self._preconfigured_repos[package_name].makefile_git_url
+        self.src_makefile_path = self._preconfigured_repos[package_name].src_makefile_path
+        self.tags_to_exclude = self._preconfigured_repos[package_name].tags_to_exclude
+        self.additional_cmdline = (
+            *self._preconfigured_repos[package_name].additional_cmdline,
+            *self.additional_cmdline,
+            *(self._preconfigured_repos[package_name].static_flags if prefer_static else tuple())
+        )
 
     def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         if self.libname is None:
