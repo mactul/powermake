@@ -137,7 +137,10 @@ class Version():
         return self.__test(other) is True
 
     def __str__(self) -> str:
-        string = f"{self.epoch}!{'.'.join(self.release)}"
+        string = ""
+        if self.epoch != "1":
+            string = f"{self.epoch}!"
+        string += f"{'.'.join(self.release)}"
         if self.pre_type == PreType.ALPHA:
             string += f"-alpha{self.pre_number}"
         elif self.pre_type == PreType.BETA:
