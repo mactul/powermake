@@ -27,10 +27,8 @@ __all__ = [
 class ExtType(Enum):
     LIB_A = "\\.a"
     "Files ending with .a (ex: libssl.a)"
-    LIB_SO = "\\.so"
-    "Files ending with .so (ex: libssl.so)"
-    LIB_SO_NUM = "\\.so(?:\\.[0-9]+)+"
-    "Files ending with .so.X.X... (ex: libssl.so.2)"
+    LIB_SO = "\\.so(?:\\.[0-9]+)*"
+    "Files ending with .so (ex: libssl.so) or .so.X.X... (ex: libssl.so.2)"
     LIB_DLL_A = "\\.dll\\.a"
     "Files ending with .dll.a (ex: libssl.dll.a)"
     LIB_LIB = "\\.lib"
@@ -40,7 +38,7 @@ class ExtType(Enum):
     LIB_DYLIB = "\\.dylib"
     "Files ending with .dylib (ex: ssl.dylib)"
 
-DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_SO_NUM, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL, ExtType.LIB_DYLIB]
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL, ExtType.LIB_DYLIB]
 
 
 _privilege_escalator: T.Union[None, T.List[str]] = None
@@ -484,7 +482,7 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
 
 def linux_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
     for ext in ext_pref_order:
-        if ext == ExtType.LIB_SO or ext == ExtType.LIB_SO_NUM:
+        if ext == ExtType.LIB_SO:
             return False
         if ext == ExtType.LIB_A:
             return True
@@ -583,7 +581,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
                 continue
             libs, _ = search_lib(lib_dir, libname, get_non_match=False, ext_pref_order=ext_pref_order)
             if len(libs) == 0:
-                raise PowerMakeRuntimeError("A folder was found with the good version but no lib in the format you ask for was found")
+                raise PowerMakeRuntimeError(f"A folder was found with the good version ({lib_dir}), but no lib in the format you asked for was found")
             include = os.path.join(install_path, version[0], "include")
             for lib in libs:
                 libpath = os.path.join(lib_dir, lib)
