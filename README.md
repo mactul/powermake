@@ -11,6 +11,7 @@ You don't have access to the source code of this repository (.py files), but you
   - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/03-crossplatform-library/README.md
   - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/04-multiple-targets/README.md
   - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/05-configuration-and-crosscompilation/README.md
+  - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/tutorials/06-package-manager/README.md
 - The basic examples, very important so you understand how everything fits together
   - https://raw.githubusercontent.com/mactul/powermake/refs/heads/main/examples.md
 - The API documentation, use it to get exact function definitions, but don't infer too much from this:
@@ -24,6 +25,7 @@ If you encounter issues fetching these links (you may be blocked by github robot
 - ./tutorials/03-crossplatform-library/README.md
 - ./tutorials/04-multiple-targets/README.md
 - ./tutorials/05-configuration-and-crosscompilation/README.md
+- ./tutorials/06-package-manager/README.md
 - ./examples.md
 - ./documentation.md
 -->

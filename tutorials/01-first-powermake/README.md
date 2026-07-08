@@ -3,7 +3,7 @@
 
 ## Installation & updates
 
-First of all, make sure PowerMake is up to date, new versions are often out each two weeks.  
+First of all, make sure PowerMake is up-to-date, new versions are often out each two weeks.  
 For this tutorial, you need `powermake >= 2.4.0`
 
 ```sh
@@ -13,7 +13,7 @@ pip install -U powermake
 
 ## File hierarchy
 
-We will create a very very small project that look like this:
+We will create a very small project that look like this:
 
 ```
 - my_project
@@ -85,7 +85,7 @@ Go in the same directory as the `makefile.py` file and run:
 python makefile.py -rv
 ```
 
-- The `-r` option is here to specify that we want to rebuild everything each time (like this PowerMake will not skip any already compiled file and you will see everything that happens even if you enter this command multiple time.)
+- The `-r` option is here to specify that we want to rebuild everything each time (like this PowerMake will not skip any already compiled file, and you will see everything that happens even if you enter this command multiple time.)
 - The `-v` option enable the verbose mode, like this you will see which command PowerMake is actually running.
 
 At this time, if you have followed the steps carefully, you should now have a new build folder
@@ -98,7 +98,7 @@ At this time, if you have followed the steps carefully, you should now have a ne
     - makefile.py
 ```
 
-In this build folder you will found the generated binary in an architecture like this:
+In this build folder you will find the generated binary in an architecture like this:
 ```
 build/Linux/x64/release/bin/my_project
 ```
@@ -179,7 +179,7 @@ def on_build(config: powermake.Config):
 powermake.run("my_project", build_callback=on_build)
 ```
 
-It may look like a lot to compile a single file and it is, because this template is already able to compile a rather big project.
+It may look like a lot to compile a single file, and it is, because this template is already able to compile a rather big project.
 
 
 The entry point of this file is this line:
@@ -189,7 +189,7 @@ powermake.run("my_project", build_callback=on_build)
 
 This small line will be present in almost every powermake makefile and does a ton of things for you.
 
-It's here that the command line is parsed, that the optional PowerMake config files are parsed, that the compilation environment is configured, that your compiler is detected and setup and finally it's this line that will launch specific actions like cleaning, compiling, testing, installing, etc...
+It's here that the command line is parsed, that the optional PowerMake config files are parsed, that the compilation environment is configured, that your compiler is detected and setup, and finally it's this line that will launch specific actions like cleaning, compiling, testing, installing, etc...
 
 Here, we only have set up a build callback.  
 This means that the function `on_build` will be called when it's compilation time and default callbacks will be called for all other jobs (cleaning, installing, testing).

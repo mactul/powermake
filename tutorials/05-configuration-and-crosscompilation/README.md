@@ -166,4 +166,7 @@ powermake.run("fuzzer", build_callback=on_build)
 ```
 
 > [!NOTE]  
-> If set your compiler like that in the code, PowerMake can't infer the other tools, it's too late; so you must set every tool you use.
+> If you set your compiler like that in the code, PowerMake can't infer the other tools, it's too late; so you must set every tool you use.
+
+
+### [-> Next tutorial (Package Manager)](../06-package-manager/README.md)

@@ -1,7 +1,7 @@
 <!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Cross-platform Library
 
-### [<- Previous tutorial (First PowerMake)](../02-ide-setup/README.md)
+### [<- Previous tutorial (Set up your IDE)](../02-ide-setup/README.md)
 
 > [!IMPORTANT]  
 > This tutorial assumes that you have followed the first one: [First Powermake](../01-first-powermake/README.md)
@@ -75,7 +75,7 @@ int main()
 }
 ```
 
-For the makefile.py files, you can start by generating them with the `powermake` command like in the previous tutorial.
+For the makefile.py files, you can start by generating them with the `powermake` command like in the first tutorial.
 
 
 ## Library makefile
@@ -150,7 +150,7 @@ powermake.run("my_time", build_callback=on_build)
 
 You can see that we added `config.add_includedirs("./include/")`, that is required for `time_linux.c` and `time_windows.c` to found the `my_time.h` file.
 
-In the previous chapter we haven't talked about the first parameter of `powermake.run`, here it's `"my_time"`.  
+In the first chapter we haven't talked about the first parameter of `powermake.run`, here it's `"my_time"`.  
 This parameter is the name of the project and it is used for link operations to automatically give a name to the binary.  
 For example here, we haven't specified the output name for `powermake.archive_files` (yes it's possible to do so, we will see later), so the name will be automatically attributed and will be `libmy_time.a`
 
@@ -163,7 +163,7 @@ In the `library` subfolder and see that a file named `libmy_time.a` is generated
 
 ## Program makefile
 
-This program is close to the one made in the previous chapter, with two differences:
+This program is close to the one made in the first chapter, with two differences:
 - We will need a way to automatically trigger the library makefile so we will not have to run it by hand each time
 - We will need to link with a set of objects AND a static library
 

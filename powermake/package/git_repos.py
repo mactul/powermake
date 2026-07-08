@@ -42,13 +42,16 @@ class GitRepo:
     def set_tags_to_exclude(self, *regex: str) -> None:
         self.tags_to_exclude = regex
 
+    def set_additional_cmdline(self, *args: str) -> None:
+        self.additional_cmdline = args
+
     def _is_tag_excluded(self, tag: str) -> bool:
         for regex in self.tags_to_exclude:
             if re.fullmatch(regex, tag):
                 return True
         return False
 
-    def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
+    def _get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         try:
             output = subprocess.check_output(["git", "ls-remote", "-t", "--refs", "-q", self.code_git_url], encoding="utf-8").split("\n")
         except subprocess.CalledProcessError:
@@ -68,7 +71,7 @@ class GitRepo:
 
         return versions
 
-    def download_build_install(self, config: Config, install_path: str, tag: T.Union[str, None] = None) -> None:
+    def _download_build_install(self, config: Config, install_path: str, tag: T.Union[str, None] = None) -> None:
         makefile_temp_dir: tempfile.TemporaryDirectory[str] | None = None
 
         if not config._args_parsed.pkg_install_noconfirm:
@@ -121,10 +124,10 @@ class GitRepo:
         if makefile_temp_dir is not None:
             makefile_temp_dir.cleanup()
 
-    def suggested_min_ver(self) -> T.Union[Version | None]:
+    def _suggested_min_ver(self) -> T.Union[Version | None]:
         return None
 
-    def suggested_max_ver(self) -> T.Union[Version | None]:
+    def _suggested_max_ver(self) -> T.Union[Version | None]:
         return None
 
 
@@ -192,12 +195,12 @@ class DefaultGitRepos(GitRepo):
             *(self._preconfigured_repos[package_name].static_flags if prefer_static else tuple())
         )
 
-    def get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
+    def _get_server_versions(self) -> T.List[T.Tuple[str, Version]]:
         if self.libname is None:
             raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
-        return super().get_server_versions()
+        return super()._get_server_versions()
 
-    def suggested_min_ver(self) -> T.Union[Version | None]:
+    def _suggested_min_ver(self) -> T.Union[Version | None]:
         if self.libname in self._default_packages:
             range = self._default_packages[self.libname][2]
             if range is None:
@@ -205,7 +208,7 @@ class DefaultGitRepos(GitRepo):
             return parse_version(range[0])
         return None
 
-    def suggested_max_ver(self) -> T.Union[Version | None]:
+    def _suggested_max_ver(self) -> T.Union[Version | None]:
         if self.libname in self._default_packages:
             range = self._default_packages[self.libname][2]
             if range is None:

@@ -433,17 +433,17 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
     if git_repo is None:
         return None
 
-    compatible_versions = filter_versions(git_repo.get_server_versions(), min_version or git_repo.suggested_min_ver(), max_version or git_repo.suggested_max_ver(), allow_prerelease)
+    compatible_versions = filter_versions(git_repo._get_server_versions(), min_version or git_repo._suggested_min_ver(), max_version or git_repo._suggested_max_ver(), allow_prerelease)
     if len(compatible_versions) > 0:
         builded_version = compatible_versions[0][1]
         builded_version_str = str(compatible_versions[0][1])
         lib_installed_path = os.path.join(install_path, builded_version_str)
-        git_repo.download_build_install(config, lib_installed_path, compatible_versions[0][0])
+        git_repo._download_build_install(config, lib_installed_path, compatible_versions[0][0])
     elif min_version is None and max_version is None:
         builded_version = None
         builded_version_str = "no_version"
         lib_installed_path = os.path.join(install_path, builded_version_str)
-        git_repo.download_build_install(config, lib_installed_path)
+        git_repo._download_build_install(config, lib_installed_path)
     else:
         return None
 

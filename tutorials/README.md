@@ -1,9 +1,9 @@
 <!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
 # Tutorials
 
-Welcome in the tutorials section.
+Welcome to the tutorials section.
 
-The idea of this section is to guide you step by step with examples to became a PowerMake master.
+The idea of this section is to guide you step by step with examples to become a PowerMake master.
 
 We recommend that you follow this tutorial in order.  
 You should at least start by the first one, the other are more independents.
@@ -19,3 +19,4 @@ This section is not meant to show every argument of every function, the idea is 
 - [Crossplatform Library](./03-crossplatform-library/README.md)
 - [Multiple Targets](./04-multiple-targets/README.md)
 - [Configuration and Crosscompilation](./05-configuration-and-crosscompilation/README.md)
+- [Package Manager](./06-package-manager/README.md)
