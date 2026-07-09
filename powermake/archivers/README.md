@@ -26,7 +26,7 @@ The former is quite easy, you just have to modify the `split_toolchain_prefix` f
 
 The latter requires a little more work.
 
-First, you need to modify the `get_type_pref` function. this is to make sure that the tool type is guessed correctly when only the path is specified.
+First, you need to modify the `get_type_pref` function. This is to make sure that the tool type is guessed correctly when only the path is specified.
 
 Then you need to edit the top of `auto_toolchain`. If the tool you are adding doesn't give a ton of information on the rest of the toolchain, like `nasm` of `masm`, only edit the `to_<YOUR TOOL CATEGORY>` variable. At least make sure that the tool type is translated into the same tool type in its own category. When editing this function, you should rather put not enough corresponding entries than too many. An entry here should be a very plausible guess.
 

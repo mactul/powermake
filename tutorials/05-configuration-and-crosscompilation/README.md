@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # Configuration and Cross-compilation
 
 ### [<- Previous tutorial (Multiple Targets)](../04-multiple-targets/README.md)
@@ -39,9 +39,9 @@ Here are all the environment variables you can set.
 - `CC`: The path of the C compiler
 - `CXX`: The path of the C++ compiler
 - `AS`: The path of the assembler for .s and .S files
-- `ASM` The path of the assembler for .asm files
-- `RC` The path of the Windows resources compiler
-- `AR` The path of the static lib archiver
+- `ASM`: The path of the assembler for .asm files
+- `RC`: The path of the Windows resources compiler
+- `AR`: The path of the static lib archiver
 - `LD`: The path of the linker
 - `SHLD`: The path of the linker used for making shared library
 
@@ -74,12 +74,12 @@ However, sometimes you want to change the default compiler of a project, for the
 
 ## Configuration files
 
-PowerMake have 4 stages of configuration.  
+PowerMake has 4 stages of configuration.  
 You have the global config file, the local config file, the environment variables and the overwritten config in the makefile itself.
 
-The idea is that each configuration stage overwrite the fields of the last one.
+The idea is that each configuration stage overwrites the fields of the last one.
 
-For example, specifying that you want to compile in 32 bits with clang in the global configuration and then specifying that you want to compile in 64 bits in the local config will result in a final configuration that specify clang/64 bits.
+For example, specifying that you want to compile in 32 bits with clang in the global configuration and then specifying that you want to compile in 64 bits in the local config will result in a final configuration that specifies clang/64 bits.
 
 > [!IMPORTANT]  
 > As seen above, PowerMake is able to infer all unspecified fields to find a value coherent with what you specifically specified.  
@@ -118,7 +118,7 @@ Then press 1 to edit the C Compiler configuration.
 You will have two choices, the compiler type and the compiler path.
 
 > [!NOTE]  
-> The compiler type is here to tell PowerMake what does the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
+> The compiler type is here to tell PowerMake what the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
 >
 > Most of the time, PowerMake will detect the type based on the path (it will be the case for `i386-elf-gcc`), but it may be required for a tool like `emcc`.
 
@@ -127,7 +127,7 @@ Try to change the C Compiler.
 Once this is done, go all the way back to the main menu by pressing 3 and then 8.
 
 Finally, you can save your new configuration.  
-Save the config localy if it's just for the test, it will be easier to delete like that.
+Save the config locally if it's just for the test, it will be easier to delete like that.
 
 ### Local configuration file
 

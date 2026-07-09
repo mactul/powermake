@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # Examples
 
 - [Examples](#examples)
@@ -39,7 +39,7 @@ def on_build(config: powermake.Config):
     config.nb_total_operations = len(files) + 1
 
     # Compile each file in the set files with the C and C++ compiler of the config object.
-    # This function parallelize the compilation of each file
+    # This function parallelizes the compilation of each file
     # returns a set containing the path of each .o (or equivalent)
     objects = powermake.compile_files(config, files)
 
@@ -70,7 +70,7 @@ def on_build(config: powermake.Config):
     # The flags that are unknown by PowerMake will be passed untranslated.
     config.add_c_cpp_flags("-Wall", "-Wextra", "-fanalyzer")
 
-    # This will remove precedent optimization flags and put the optimization level to the equivalent of -Oz on GCC.
+    # This will remove previous optimization flags and put the optimization level to the equivalent of -Oz on GCC.
     # PowerMake already set the optimization to -Og when compiling in debug mode and to -O3 when compiling in release mode.
     config.set_optimization("-Oz")
 
@@ -118,10 +118,10 @@ def on_build(config: powermake.Config):
 
 def on_install(config: powermake.Config, location: str):
     if location is None:
-        # No location is explicitly provided so we change the default for our convenance.
+        # No location is explicitly provided so we change the default for our convenience.
         # We choose this path differently whether we are on Windows or on other platforms (here we assume other platforms are all Unix-Like).
         if config.target_is_windows():
-            # Note that there is no need for this folder to exists, if it doesn't exist and if the program has the right to do so, it will be created.
+            # Note that there is no need for this folder to exist, if it doesn't exist and if the program has the right to do so, it will be created.
             location = "C:/personal_libs/"
         else:
             location = "/usr/local/"
@@ -165,10 +165,10 @@ def on_build(config: powermake.Config):
 
 def on_install(config: powermake.Config, location: str):
     if location is None:
-        # No location is explicitly provided so we change the default for our convenance.
+        # No location is explicitly provided so we change the default for our convenience.
         # We choose this path differently whether we are on Windows or on other platforms (here we assume other platforms are all Unix-Like).
         if config.target_is_windows():
-            # Note that there is no need for this folder to exists, if it doesn't exist and if the program has the right to do so, it will be created.
+            # Note that there is no need for this folder to exist, if it doesn't exist and if the program has the right to do so, it will be created.
             location = "C:/personal_libs/"
         else:
             location = "/usr/local/"
@@ -227,7 +227,7 @@ def on_build(config: powermake.Config):
 
     files = powermake.get_files("**/*.c", "**/*.cpp")
 
-    # In theory, your program will depend on your_library/file6.h else there is no point of including the library so we add ../your_library/ in the include path.
+    # In theory, your program will depend on your_library/file6.h else there is no point in including the library so we add ../your_library/ in the include path.
     config.add_includedirs("../your_library/")
 
     objects = powermake.compile_files(config, files)
@@ -247,7 +247,7 @@ powermake.run("your_program", build_callback=on_build)
 ## Using a tool unsupported by PowerMake
 
 This is a makefile for a compiler which requires bison and flex for the compilation.  
-Flex and Bison doesn't benefit from a special support in PowerMake but they can still be run as simple commands.
+Flex and Bison don't benefit from a special support in PowerMake but they can still be run as simple commands.
 
 ```py
 import powermake
@@ -306,4 +306,4 @@ powermake.run("compiler", build_callback=on_build, clean_callback=on_clean)
 
 ## Real examples
 
-You can found other real and often more complex examples in the forum in the "[share your powermake section](https://github.com/mactul/powermake/discussions/categories/share-your-powermakes)"
+You can find other real and often more complex examples in the forum in the "[share your powermake section](https://github.com/mactul/powermake/discussions/categories/share-your-powermakes)"

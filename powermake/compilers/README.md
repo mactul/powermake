@@ -4,7 +4,7 @@
 
 First of all, you have to create a new compiler derived class (you can use CompilerMSVC as a model).  
 If your compiler inherit directly from `powermake.compilers.Compiler`, you should put your compiler in a new separate file.  
-If your compiler inherit from `powermake.compilers.CompilerGNU`, you may want to put your compiler in `gnu.py`, idem if your compiler inherit from `powermake.compilers.CompilerMSVC`.
+If your compiler inherits from `powermake.compilers.CompilerGNU`, you may want to put your compiler in `gnu.py`, idem if your compiler inherits from `powermake.compilers.CompilerMSVC`.
 
 Then, in the `__init__.py` file of this folder, you must include your compiler class and you must put your compiler in either the `_c_compiler_types` dict or the `_cpp_compiler_types` dict.
 
@@ -26,7 +26,7 @@ The former is quite easy, you just have to modify the `split_toolchain_prefix` f
 
 The latter requires a little more work.
 
-First, you need to modify the `get_type_pref` function. this is to make sure that the tool type is guessed correctly when only the path is specified.
+First, you need to modify the `get_type_pref` function. This is to make sure that the tool type is guessed correctly when only the path is specified.
 
 Then you need to edit the top of `auto_toolchain`. If the tool you are adding doesn't give a ton of information on the rest of the toolchain, like `nasm` of `masm`, only edit the `to_<YOUR TOOL CATEGORY>` variable. At least make sure that the tool type is translated into the same tool type in its own category. When editing this function, you should rather put not enough corresponding entries than too many. An entry here should be a very plausible guess.
 

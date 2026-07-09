@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # Package Manager
 
 ### [<- Previous tutorial (Configuration and Cross-compilation)](../05-configuration-and-crosscompilation/README.md)
@@ -9,12 +9,12 @@
 
 ## Quick introduction
 
-Managing dependencies for a C/C++ program have never been easy, there is a lot of libraries format, and a lot of way they can be compiled and installed.
+Managing dependencies for a C/C++ program has never been easy, there are a lot of library formats, and a lot of ways they can be compiled and installed.
 
 You can assume the libraries you need are installed on your system with your favorite package manager, but if you are cross-compiling, they might not be available.  
 It's even worse if you ever need to handle multiple versions of the same library that coexist on your system.
 
-The powermake package manager is meant to takle these issues.
+The powermake package manager is meant to tackle these issues.
 - It can find libraries installed on your system and check their package version (only available for Linux distributions providing pacman yet).
 - It verifies compatibility with your linker.
 - It can clone git repos, compile them and install them in different subfolders for each version.
@@ -92,7 +92,7 @@ powermake.run("my_project", build_callback=on_build)
 </details>
 
 
-As you see, the min_version and max_version accept versions containing `'*'` in them. `v1.*` means any version that have 1 as the major version number.
+As you see, the min_version and max_version accept versions containing `'*'` in them. `v1.*` means any version that has 1 as the major version number.
 
 Here, PowerMake will make sure to find the ssl lib in a version that is >= v1.1.0 and < v2.0.
 
@@ -102,7 +102,7 @@ If the package is not in the correct version or powermake didn't manage to inter
 
 > [!NOTE]  
 > When choosing the version to download from git, PowerMake will always use the latest version available on git that matches the range.  
-> Therefore, unless you want full reproductibility, you should use `'*'` when specifying your max version, at least on the version patch (example: `v1.3.*`), so you will always get security updates and bug fixes.
+> Therefore, unless you want full reproducibility, you should use `'*'` when specifying your max version, at least on the version patch (example: `v1.3.*`), so you will always get security updates and bug fixes.
 
 ### Using another git repo
 

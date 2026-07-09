@@ -3,8 +3,8 @@
 ## Adding an SharedLinker
 
 First of all, you have to create a new shared linker derived class (you can use SharedLinkerMSVC as a model).  
-If your shared linker inherit directly from `powermake.shared_linkers.SharedLinker`, you should put your shared linker in a new separate file.  
-If your shared linker inherit from `powermake.shared_linkers.SharedLinkerGNU`, you may want to put your shared linker in `gnu.py`, idem if your shared linker inherit from `powermake.shared_linkers.SharedLinkerMSVC`.
+If your shared linker inherits directly from `powermake.shared_linkers.SharedLinker`, you should put your shared linker in a new separate file.  
+If your shared linker inherits from `powermake.shared_linkers.SharedLinkerGNU`, you may want to put your shared linker in `gnu.py`, idem if your shared linker inherit from `powermake.shared_linkers.SharedLinkerMSVC`.
 
 Then, in the `__init__.py` file of this folder, you must include your shared linker class and you must put your shared linker in the `_shared_linker_types` dict.
 
@@ -26,7 +26,7 @@ The former is quite easy, you just have to modify the `split_toolchain_prefix` f
 
 The latter requires a little more work.
 
-First, you need to modify the `get_type_pref` function. this is to make sure that the tool type is guessed correctly when only the path is specified.
+First, you need to modify the `get_type_pref` function. This is to make sure that the tool type is guessed correctly when only the path is specified.
 
 Then you need to edit the top of `auto_toolchain`. If the tool you are adding doesn't give a ton of information on the rest of the toolchain, like `nasm` of `masm`, only edit the `to_<YOUR TOOL CATEGORY>` variable. At least make sure that the tool type is translated into the same tool type in its own category. When editing this function, you should rather put not enough corresponding entries than too many. An entry here should be a very plausible guess.
 

@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # Tutorials
 
 Welcome to the tutorials section.
@@ -6,7 +6,7 @@ Welcome to the tutorials section.
 The idea of this section is to guide you step by step with examples to become a PowerMake master.
 
 We recommend that you follow this tutorial in order.  
-You should at least start by the first one, the other are more independents.
+You should at least start with the first one, the others are more independent.
 
 This section is not meant to show every argument of every function, the idea is more to show what is possible to do. If you are searching for a very specific thing, you will more likely find it in the [documentation](../documentation.md) or by asking a question in the [discussions section](https://github.com/mactul/powermake/discussions).
 

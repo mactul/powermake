@@ -30,7 +30,7 @@ If you encounter issues fetching these links (you may be blocked by github robot
 - ./documentation.md
 -->
 
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # PowerMake
 
 <img alt="ubuntu x64 tests status" src="https://github.com/mactul/powermake/workflows/Run%20tests%20on%20ubuntu%20x64/badge.svg">
@@ -122,11 +122,11 @@ However, today, even for a 5 files project on Linux with GCC, PowerMake is more 
 
 ## Advantages of PowerMake
 
-PowerMake is made to make the developper experience easier, faster and more enjoyable.  
-PowerMake is a breeze for the developpers that hate the oppacity and lack of quality of life features of CMake. Here are some of the reasons why:
+PowerMake is made to make the developer experience easier, faster and more enjoyable.  
+PowerMake is a breeze for the developers that hate the opacity and lack of quality of life features of CMake. Here are some of the reasons why:
 
 - Very easy to read makefiles
-  - Your makefile will just be a small python script that can be read from top to bottom, even by someone that have never used PowerMake.
+  - Your makefile will just be a small python script that can be read from top to bottom, even by someone who has never used PowerMake.
   - No more huge GNU Makefiles, makefile.am or CMakeLists.txt that are impossible to read.
 
 - Cross-Platform:
@@ -139,7 +139,7 @@ PowerMake is a breeze for the developpers that hate the oppacity and lack of qua
     - Missing features can always be written in the makefile.
 
 - Smart automatic configurations
-  - PowerMake have local and global config files, but on top of that, PowerMake is able to automatically find a value that make sense for each field that is not explicitly assigned, you can easily have very basic configurations files (often no config file at all) and it will still work for most systems. For example just specifying that your linker path is `i686-w64-mingw32-ld` will be enough for PowerMake to detect that you are compiling in cross-compilation, for Windows 32 bits with a low level linker and the whole toolchain will be correctly set, the build folder will be correctly set and even the `config.target_is_windows()` method will return `True`.
+  - PowerMake has local and global config files, but on top of that, PowerMake is able to automatically find a value that makes sense for each field that is not explicitly assigned, you can easily have very basic configuration files (often no config file at all) and it will still work for most systems. For example just specifying that your linker path is `i686-w64-mingw32-ld` will be enough for PowerMake to detect that you are compiling in cross-compilation, for Windows 32 bits with a low level linker and the whole toolchain will be correctly set, the build folder will be correctly set and even the `config.target_is_windows()` method will return `True`.
 
 - Stupidly easy Cross-compilation
   - `CC=i686-w64-mingw32-gcc python makefile.py -rv` is all you need to compile for Windows 32 bits from Linux (this is a consequence of the smart configurations listed above).
@@ -159,14 +159,14 @@ PowerMake is a breeze for the developpers that hate the oppacity and lack of qua
   - You write `-Wall` for example and on MSVC it's translated to `/W3`
   - You can use flags like `-fanalyzer` (only GCC) or `-Weverything` (only clang) and they will be automatically removed when not supported.
 
-- Powerfull package manager
+- Powerful package manager
   - PowerMake can automatically find libraries compatible with your linker in the version range you want, even when cross-compiling.
   - It's even able to download and compile any library from its sources.
 
 ## Disadvantages of PowerMake
 
 - Young project (began in 2024)
-  - Retrocompatibilty is supposed to be kept between versions, and we make a lot of tests in CI to reduce regressions, but they are still more likely than in a battle-tested solution like CMake.
+  - Retrocompatibility is supposed to be kept between versions, and we make a lot of tests in CI to reduce regressions, but they are still more likely than in a battle-tested solution like CMake.
 
 - Small ecosystem
   - Don't expect CMake's ecosystem maturity, IDE support breadth, or huge community/Stack Overflow coverage. However, I (mactul) am always available to help you use the tool or implement your ideas.
@@ -186,9 +186,9 @@ This also means that the philosophy is completely different from a tool like mak
 When you read a GNU Makefile, you start at the end, the final target and you read each target dependency recursively before executing the task.  
 In a GNU Makefile, the order of each target doesn't reflect at all the order of execution.
 
-Powermake is read as a script. the order of each instruction has a capital importance. The first step is read, if it needs to be executed, it's executed, then the next step is read, etc...
+Powermake is read as a script. The order of each instruction matters a great deal. The first step is read, if it needs to be executed, it's executed, then the next step is read, etc...
 - The main advantage of this approach is that it's extremely easy to write and read the makefile, it's just a good old script that executes from top to bottom. You can also do loops, functions, etc... everything python offers, which is way more powerful than the make approach.
-- The main disadvantage of this approach is that steps during the makefile can't automatically be parallelized. [powermake.compile_files](./documentation.md#powermakecompile_files) offers a good parallelization that counteracts this problem, but you have to compile most of your files in this function for this parallelization to have an effect. The worse thing you can do is loop over each one of your file and call this function for one file at a time.
+- The main disadvantage of this approach is that steps during the makefile can't automatically be parallelized. [powermake.compile_files](./documentation.md#powermakecompile_files) offers a good parallelization that counteracts this problem, but you have to compile most of your files in this function for this parallelization to have an effect. The worst thing you can do is loop over each one of your files and call this function for one file at a time.
 
 
 <!--snippet:installation_and_examples-->

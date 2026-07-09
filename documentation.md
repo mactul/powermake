@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # PowerMake
 
 - [PowerMake](#powermake)
@@ -2147,7 +2147,7 @@ print(vp.remove_version_frills("15.1.1+r500+gb1b8d8ce3eea-1") == "15.1.1-1")
 powermake.version_parser.Version(epoch: str = '1', release: tuple[str, ...] = ('0', ), pre_type: powermake.version_parser.PreType = powermake.version_parser.PreType.NOT_PRE, pre_number: str | None = None, post_number: str | None = None, dev_number: str | None = None) -> powermake.version_parser.Version
 ```
 
-This is the object returned by [powermake.version_parser.parse_version](#powermakeversion_parserparse_version), it can also be instanciated directly.
+This is the object returned by [powermake.version_parser.parse_version](#powermakeversion_parserparse_version), it can also be instantiated directly.
 
 The main point of this object is that 2 `powermake.version_parser.Version` can be compared with ==, !=, <, >, <=, >=.
 
@@ -2305,7 +2305,7 @@ config.c_compiler = powermake.compilers.CompilerClang()
 
 #### powermake.archivers.Archiver
 
-There is 5 predefined archivers, that can be instanciated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
+There is 5 predefined archivers, that can be instantiated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
 ```py
 powermake.archivers.ArchiverGNU
 powermake.archivers.ArchiverAR
@@ -2316,7 +2316,7 @@ powermake.archivers.ArchiverMSVC
 
 #### powermake.linkers.Linker
 
-There is 11 predefined linkers, that can be instanciated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
+There is 11 predefined linkers, that can be instantiated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
 ```py
 powermake.linkers.LinkerGNU
 powermake.linkers.LinkerLD
@@ -2333,7 +2333,7 @@ powermake.linkers.LinkerClang_CL
 
 #### powermake.shared_linkers.SharedLinker
 
-There is 11 predefined shared linkers, that can be instanciated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
+There is 11 predefined shared linkers, that can be instantiated exactly like [powermake.compilers.Compiler](#powermakecompilerscompiler).
 ```py
 powermake.shared_linkers.SharedLinkerGNU
 powermake.shared_linkers.SharedLinkerLD
@@ -2368,7 +2368,7 @@ We recommend you try compiling your code with different static analyzers to catc
 We especially recommend gcc and the `-fanalyzer` option, it's one of the most powerful analyzer we know and PowerMake will ensure that this flag will be removed if unsupported.
 
 > [!TIP]  
-> You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work accross translation units.
+> You should set the `-fanalyzer` flag during both compilation **and** link and use the `-flto` flag to enable link time optimization, like this the analyzer can work across translation units.
 > Simply writing `config.add_flags('-fanalyzer', '-flto')` in the beginning of your build callback will ensure that.
 
 
@@ -2456,7 +2456,7 @@ If the tip above isn't enough to set up vscode, here is more details:
 
 
 > [!IMPORTANT]  
-> First thing first, by default vscode doesn't use the `compile_commands.json`.  
+> First thing first, by default VS Code doesn't use the `compile_commands.json`.  
 > If you are using `python makefile.py --generate-vscode` that's not a problem, because it generates a local settings.json that tells vscode to use this file.  
 > However, if you are not using the `--generate-vscode` option, we recommend adding `"C_Cpp.default.compileCommands": ".vscode/compile_commands.json"` in your User Settings json file (Ctrl + Shift + P > search "settings" > click on "Preferences: Open User Settings (JSON)")
 

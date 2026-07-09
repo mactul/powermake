@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # Cross-platform Library
 
 ### [<- Previous tutorial (Set up your IDE)](../02-ide-setup/README.md)
@@ -49,7 +49,7 @@ void my_sleep(unsigned int ms)
 }
 ```
 
-time_windows.h
+time_windows.c
 ```c
 #include <windows.h>
 #include "my_time.h"
@@ -115,7 +115,7 @@ And voilà ! Our makefile will now automatically pick the good files to compile,
 
 It's now time to address the link issue !  
 The link operation will change if we want a shared library or a static library.  
-For the moment, let assume we want a static library.
+For the moment, let's assume we want a static library.
 
 We just have to replace:
 ```py
@@ -148,7 +148,7 @@ def on_build(config: powermake.Config):
 powermake.run("my_time", build_callback=on_build)
 ```
 
-You can see that we added `config.add_includedirs("./include/")`, that is required for `time_linux.c` and `time_windows.c` to found the `my_time.h` file.
+You can see that we added `config.add_includedirs("./include/")`, that is required for `time_linux.c` and `time_windows.c` to find the `my_time.h` file.
 
 In the first chapter we haven't talked about the first parameter of `powermake.run`, here it's `"my_time"`.  
 This parameter is the name of the project and it is used for link operations to automatically give a name to the binary.  
@@ -243,7 +243,7 @@ def on_build(config: powermake.Config):
 
 def on_install(config: powermake.Config, location: str):
     if location is None:
-        # No location is explicitly provided so we change the default for our convenance.
+        # No location is explicitly provided so we change the default for our convenience.
         location = "/usr/local/"
 
     # This ensures that the file "my_time.h" will be exported into /usr/local/include/my_time/my_time.h

@@ -43,7 +43,7 @@ To make sure your pull request will not be rejected, here are the crucial guidel
   - Every new feature should be documented at user end (in the documentation.md) to be published.
   - Internal documentation of your code is not a big deal as long as your code is readable and has good namings.
 - commit to `dev` or a branch created for your feature, not to `main`.
-  - small changes can be directly commited to `dev` and will the be merged to `main` after.
+  - small changes can be directly committed to `dev` and will then be merged to `main` after.
   - big features should create their own branch to facilitate the merging work.
 - Avoid sending huge pull requests affecting all files
   - Because every pull request should be entirely reviewed and merged with other commits, huge pull request are extremely inconvenient.

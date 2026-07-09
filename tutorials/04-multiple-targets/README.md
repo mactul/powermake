@@ -1,4 +1,4 @@
-<!-- This file, beeing part of the documentation is excluded from AI restrictions of the license -->
+<!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # Multiple Targets
 
 ### [<- Previous tutorial (Cross-platform Library)](../03-crossplatform-library/README.md)
@@ -14,7 +14,7 @@ With PowerMake, you need to handle your targets differently.
 
 You must differentiate two types of targets.
 - The ones that don't have anything related to the others
-- The ones that share or depends on the main makefile
+- The ones that share or depend on the main makefile
 
 For the former, the answer is easy, don't fear to make multiple makefiles. Because you don't need to name your makefile `makefile.py` you can easily have `generate_docs.py`, `generate_tests.py`, etc...
 
@@ -81,7 +81,7 @@ Here we parse the command line, put every parsed arg in a Namespace and `exit(1)
 At this time it might be a good idea to `print(args_parsed)` to see what does this object look like.
 
 > [!IMPORTANT]  
-> if your arg contains dashes (-), like `--foo-bar` for example, the Namespace will contain a member called `foo_bar`.
+> If your arg contains dashes (-), like `--foo-bar` for example, the Namespace will contain a member called `foo_bar`.
 
 ```py
 if args_parsed.hello:
@@ -97,7 +97,7 @@ And finally, we can call `powermake.run` with the Namespace of parsed arguments.
 
 
 Most of the time you will need to use boolean arguments (with `action="store_true"`).  
-Obviously you can also have different type of arguments.  
+Obviously you can also have different types of arguments.  
 You can't really have positional arguments because those are already all used by PowerMake for the test callback, but you can do almost anything you want with named arguments.
 
 > [!TIP]  
@@ -118,7 +118,7 @@ parser.add_argument("--zb-version", help="display Zorglub version", action="stor
 
 # An optional argument with constraints
 # Will be "disabled" if --zb-enable-gui is not on the command line, None if there is just `--zb-enable-gui` without any argument, "SDL2" if the command line is `--zb-enable-gui=SDL2` or "QT" if the command line is `--zb-enable-gui QT`
-parser.add_argument("--zb-enable-gui", nargs='?', help="enable the GUI, optionally specify which GUI frontend to use" choices=["SDL2", "SDL3", "QT", "GTK"], default="disabled")
+parser.add_argument("--zb-enable-gui", nargs='?', help="enable the GUI, optionally specify which GUI frontend to use", choices=["SDL2", "SDL3", "QT", "GTK"], default="disabled")
 
 # The same as above but this time it can either not be on the command line or have a value but it cannot be on the command line and empty.
 parser.add_argument("--zb-set-gui", help="set the GUI to use if you want one", choices=["SDL2", "SDL3", "QT", "GTK"], default=None)
@@ -149,7 +149,7 @@ print(args_parsed)
 Using custom command line arguments you can easily conditionally compile different pieces of code.
 However, this doesn't serve a ton of purpose if you can only link files with the name specified in `powermake.run`.
 
-Hopefully, `powermake.link_files`, `powermake.archive_files` and `powermake.link_shared_lib` all have an optional argument to specify the output file name.
+Fortunately, `powermake.link_files`, `powermake.archive_files` and `powermake.link_shared_lib` all have an optional argument to specify the output file name.
 
 For example, let's compile a lib under different names if it's hardened:
 ```py
