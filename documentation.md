@@ -92,6 +92,7 @@
         - [get\_cmdline\_additional\_flags()](#get_cmdline_additional_flags)
         - [copy()](#copy)
         - [empty\_copy()](#empty_copy)
+        - [add\_lib()](#add_lib)
     - [powermake.default\_on\_clean](#powermakedefault_on_clean)
     - [powermake.default\_on\_install](#powermakedefault_on_install)
     - [powermake.get\_files](#powermakeget_files)
@@ -1818,6 +1819,14 @@ powermake.run("my_emscripten_project", build_callback=on_build)
 </details>
 
 
+##### add_lib()
+```py
+config.add_lib(lib: powermake.package.Lib) -> None
+```
+
+From a lib returned by [powermake.package.find_lib](#powermakepackagefind_lib), add the includedirs, the lib file and an eventual rpath to the compilation configuration.
+
+
 ### powermake.default_on_clean
 ```py
 powermake.default_on_clean(config: powermake.Config)
@@ -2306,6 +2315,8 @@ Here is the description of the other optional arguments:
   This will prefer .so over .a when the target is Linux and on Windows, only static libs are considered (.dll.a and .lib).  
   By default, static libs are always prefered over dynamic ones, because static libs makes it easier to manage multiple versions cohabiting.
 
+> [!TIP]  
+> You can provide `--pkg-install-noconfirm` in the command line if you want to remove all [Y/n] confirmations when PowerMake tries to download/install something.
 
 #### powermake.package.GitRepo
 ```py
