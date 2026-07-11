@@ -151,7 +151,11 @@ class GitRepo:
             makedirs(os.path.join(temp_dir.name, os.path.dirname(self.dst_makefile_path)))
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
-        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=["--install", install_path, *self.additional_cmdline])
+        cmdline = ["--install", install_path, *self.additional_cmdline]
+        if config._args_parsed.pkg_install_noconfirm:
+            cmdline.append("--pkg-install-noconfirm")
+
+        run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=cmdline)
 
         lib_path = os.path.join(install_path, "lib")
         if not os.path.exists(lib_path):
@@ -228,6 +232,8 @@ class DefaultGitRepos(GitRepo):
                 package_name, self.additional_cmdline, _ = self._default_packages[libname]
             else:
                 package_name = libname
+        elif libname in self._default_packages:
+            _, self.additional_cmdline, _ = self._default_packages[libname]
 
         if package_name not in self._preconfigured_repos:
             self.libname = None
