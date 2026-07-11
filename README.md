@@ -143,6 +143,7 @@ PowerMake is a breeze for the developers that hate the opacity and lack of quali
 
 - Stupidly easy Cross-compilation
   - `CC=i686-w64-mingw32-gcc python makefile.py -rv` is all you need to compile for Windows 32 bits from Linux (this is a consequence of the smart configurations listed above).
+  - You can also use `python makefile.py -rv --os Windows --arch x86` to do the same.
 
 - Extremely fast:
   - Fast parallel compilation

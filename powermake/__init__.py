@@ -50,9 +50,7 @@
 
 
 import os
-import sys
 import glob
-import json
 import shlex
 import shutil
 import fnmatch

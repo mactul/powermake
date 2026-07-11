@@ -14,6 +14,18 @@ As you will see, this point is one of the strengths of PowerMake, rendering this
 > [!NOTE]  
 > For this tutorial, you can take the file hierarchy of the first tutorial or any other project with a working PowerMake, just make sure your C code will compile with all the different compilers you are planning to use.
 
+# --os and --arch command line arguments
+
+If you don't care about the specific compiler used, and you just want to compile "for windows", "for linux" or for a different architecture "x86", "x64", "arm64", etc... You can let PowerMake automatically find an adapted cross-compiler.
+
+For example
+```sh
+python makefile.py -rv --os Windows --arch x86
+```
+Will compile for Windows 32 bits, easy no ?
+
+You can also specify architectures and OS unknown to PowerMake and this will change the build folder (but in this case you must provide the compiler path with the methods listed below or PowerMake will tell you it's unable to automatically find a compiler for the os/architecture you provided).
+
 ## Environment variables
 
 The quickest way to change the PowerMake compiler for a single compilation is to use the environment variables.

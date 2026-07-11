@@ -258,6 +258,73 @@ You can also replace the `-b` argument with `-r` (using `-br` does the same as `
 There are many more options you can add such as `-d` (`--debug`), `-q` (`--quiet`), `-v` (`--verbose`), etc...
 
 All these options can be listed by running `python makefile.py -h` or if you haven't created a makefile yet, by directly calling the module `python -m powermake -h` or just `powermake -h` if the pip installation is in your path.
+```
+usage: python YOUR_MAKEFILE.py [-h] [--version] [-d] [-b] [-r] [-c] [-i] [--install [LOCATION]] [-t] [-f] [-q] [-v]
+                               [-j JOBS] [-l LOCAL_CONFIG_PATH] [-g GLOBAL_CONFIG_PATH] [-s FILE] [-o DIRECTORY]
+                               [--clangd-compat] [-m] [--os OPERATING_SYSTEM] [--arch ARCHITECTURE]
+                               [--add-flag FLAG] [--retransmit-colors] [--delete-cache]
+                               [--generate-vscode [VSCODE_FOLDER_PATH]] [--always-overwrite]
+                               [--pkg-install-noconfirm] [--get-probable-bin-path] [--get-compilation-metadata]
+                               [--compilation-unit TOKEN]
+                               [action] [install_location] [test_params ...]
+
+positional arguments:
+  action                Can be "build", "rebuild", "clean", "install", "test" or "config"
+  install_location      Only if the action is set to install, indicate in which folder the installation should be
+  test_params           Only if the action is set to test or if -t (--test) is provided, will be passed to the
+                        tested program. You may want to use -- in front of those arguments, like this: python
+                        makefile.py -t -- arg1 -option1 arg2 -option2
+
+options:
+  -h, --help            show this help message and exit
+  --version             display PowerMake version
+  -d, --debug           Trigger the build callback with config.debug set to True.
+  -b, --build           Trigger the build callback. This is the default but it can be used in combination with
+                        --clean or --install
+  -r, --rebuild         Trigger the build callback with config.rebuild set to True.
+  -c, --clean           Trigger the clean callback.
+  -i                    Trigger the install callback with the location argument set to None.
+  --install [LOCATION]  Trigger the install callback with the location argument set to the location given or None.
+  -t, --test            Trigger the test callback
+  -f, --config          Switch to an interactive mode that helps you editing your configuration files.
+  -q, --quiet           Disable all messages from the lib.
+  -v, --verbose         Display every command the lib runs.
+  -j, --jobs JOBS       Set on how many threads the compilation should be parallelized.
+  -l, --local-config LOCAL_CONFIG_PATH
+                        Set the path for the local config
+  -g, --global-config GLOBAL_CONFIG_PATH
+                        Set the path for the global config
+  -s, --single-file FILE
+                        Run the compilation but only compile the specified file.
+  -o, --compile-commands-dir DIRECTORY
+                        Run the compilation and generate a compile_commands.json file in the directory specified.
+  --clangd-compat       Use this with -o, generate the compile_commands.json as if it was compiled with clang to
+                        avoid incompatibilities between flags used and the LSP.
+  -m, --makefile        Run the compilation and generate a GNU Makefile.
+  --os OPERATING_SYSTEM
+                        Set the target operating system, overwrite the config
+  --arch ARCHITECTURE   Set the target architecture, overwrite the config
+  --add-flag FLAG       Add a compiler/linker flag like if it was added with config.add_flags for this compilation.
+                        Beware, if your flag starts with -, like -Wall, you must write --add-flag='-Wall'. This
+                        option can be supplied multiple times to add multiple flags. Flags added this way can be
+                        propagated to children makefile with powermake.run_another_powermake.
+  --retransmit-colors   Let all ANSI color codes intact, even if not in a terminal. This option is especially
+                        useful in the configuration of an IDE.
+  --delete-cache        Delete the cache, use this if PowerMake act weirdly
+  --generate-vscode [VSCODE_FOLDER_PATH]
+                        Generate a launch.json and a tasks.json for visual studio code.
+  --always-overwrite    Remove all prompts asking if a file must be overwritten
+  --pkg-install-noconfirm
+                        Remove all [Y/n] asking to install a package - note that package.find_lib can still require
+                        user interaction in case there is a choice to do.
+  --get-probable-bin-path
+                        This return a probable path to the binary linked at the end. It can be used to interface
+                        with a debugger
+  --get-compilation-metadata
+                        (Internal option) - Returns a json containing metadata used by run_another_powermake.
+  --compilation-unit TOKEN
+                        (Internal option) - Specify the token of the current compilation unit
+```
 
 > [!IMPORTANT]  
 > While `python makefile.py install` and `python makefile.py --install` takes the `install_location` as an optional argument, this argument has been disabled with the `-i` option, because writing `-bic` would have triggered the install callback with the location `c`
@@ -625,6 +692,9 @@ On Linux, if you set this to "Windows" (or anything that starts win "win"), it w
 > [!WARNING]  
 > Note that if you change this value in the script after the config is loaded, [obj_build_directory](#obj_build_directory), [lib_build_directory](#lib_build_directory) and [exe_build_directory](#exe_build_directory) will not be updated.
 
+> [!TIP]  
+> There is the `--os` argument on the command line that overrides this and can be used to corss-compile instead of a config file
+
 
 ##### host_architecture
 ```py
@@ -648,6 +718,9 @@ It's used to determine the subfolder of the build folder and to set the compiler
 - You can write this in the json configuration, but only if you are doing cross-compilation, on the other hand, you should let powermake retrieve this value.
 > [!WARNING]  
 > Note that if you change this value in the script after the config is loaded, the environment will not be reloaded and the compiler will keep the previous architecture, use [config.set_target_architecture](#set_target_architecture) to reload the environment.
+
+> [!TIP]  
+> There is the `--arch` argument on the command line that overrides this and can be used to cross-compile instead of a config file
 
 
 ##### c_compiler
