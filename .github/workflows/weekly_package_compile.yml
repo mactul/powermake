@@ -1,0 +1,227 @@
+name: Build all supported libs on all platforms
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # runs at 2 AM UTC on Monday.
+  workflow_dispatch:
+  push:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  weekly:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Explicit list instead of a host_os x target_os x target_arch cross-product:
+        # the buildable combos aren't actually a full cross-product (cross-compiling
+        # only works between specific host/target pairs), so trying to carve that out
+        # of a cross-product with include/exclude is fragile - one entry here is one
+        # job, full stop, no guessing about which fields get merged where.
+        #
+        # cross_os is true only when target_os differs from the host's native OS
+        # (i.e. the mingw-from-Linux rows). That's the one case makefile.py needs
+        # --os for; arch-only cross-compiles (multilib x86, aarch64-linux-gnu,
+        # clang -arch on macOS) stay on the host's native OS and only need --arch,
+        # so makefile.py can still autodetect the installed compiler.
+        include:
+          # --- native builds ---
+          - host_os: ubuntu-latest
+            target_os: linux
+            target_arch: x64
+          - host_os: ubuntu-24.04-arm
+            target_os: linux
+            target_arch: arm64
+          - host_os: windows-latest
+            target_os: windows
+            target_arch: x64
+          - host_os: windows-latest
+            target_os: windows
+            target_arch: x86
+          - host_os: windows-11-arm
+            target_os: windows
+            target_arch: arm64
+          - host_os: macos-latest
+            target_os: macos
+            target_arch: arm64
+          - host_os: macos-26-intel
+            target_os: macos
+            target_arch: x64
+
+          # --- arch-only cross-compiles (same OS as host, just need --arch) ---
+          # 32-bit x86 on an x64 Linux host, via gcc-multilib
+          - host_os: ubuntu-latest
+            target_os: linux
+            target_arch: x86
+          # arm64 Linux from an x64 Linux host, via gcc-aarch64-linux-gnu
+          - host_os: ubuntu-latest
+            target_os: linux
+            target_arch: arm64
+          # macOS universal cross-builds via clang (Xcode ships both backends
+          # already, so these need no extra installs)
+          - host_os: macos-latest
+            target_os: macos
+            target_arch: x64
+          - host_os: macos-26-intel
+            target_os: macos
+            target_arch: arm64
+
+          # --- true cross-OS builds (need --os) ---
+          # Windows via mingw-w64, from an x64 Linux host
+          - host_os: ubuntu-latest
+            target_os: windows
+            target_arch: x64
+            cross_os: true
+          - host_os: ubuntu-latest
+            target_os: windows
+            target_arch: x86
+            cross_os: true
+
+    runs-on: ${{ matrix.host_os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install powermake
+        run: |
+          python -m pip install colorama build twine
+          python -m build
+          pip install -U dist/powermake-0.0.0-py3-none-any.whl --break-system-packages --force-reinstall
+
+      # Only the x64 Linux host needs extra toolchains: Windows/macOS runners already
+      # ship MSVC / Xcode clang, which cover every target_arch those hosts are asked
+      # to build above.
+      - name: Update apt
+        if: matrix.host_os == 'ubuntu-latest' || matrix.host_os == 'ubuntu-24.04-arm'
+        run: sudo apt-get update
+
+      - name: Install mingw & clang
+        if: matrix.host_os == 'ubuntu-latest'
+        run: sudo apt-get install -y mingw-w64 clang
+
+      - name: Install g++-multilib
+        if: matrix.host_os == 'ubuntu-latest'
+        # Some of this gets superseded by the aarch64-linux-gnu install below,
+        # but the parts that remain are needed for i386 target builds.
+        run: sudo apt-get install -y g++-multilib
+
+      - name: Install aarch64-linux-gnu-gcc
+        if: matrix.host_os == 'ubuntu-latest'
+        run: sudo apt-get install -y g++-aarch64-linux-gnu
+
+      - name: Install gcc libs for i386
+        if: matrix.host_os == 'ubuntu-latest'
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt-get install -y linux-libc-dev:i386
+
+      - name: Install build deps (ubuntu)
+        if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch != 'arm64' || matrix.host_os == 'ubuntu-24.04-arm'
+        run: |
+          sudo apt-get install -y cmake autoconf automake nasm ninja-build gnome-desktop-testing libasound2-dev \
+          libaudio-dev libfribidi-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
+          libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+          libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+          libegl1-mesa-dev libdbus-1-dev libudev-dev libthai-dev libusb-1.0-0-dev \
+          libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev libxinerama-dev
+
+      - name: Install build deps (ubuntu cross arm64)
+        if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch == 'arm64'
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo sed -i '/^Types: deb$/a Architectures: amd64 i386' /etc/apt/sources.list.d/ubuntu.sources
+          sudo tee /etc/apt/sources.list.d/ubuntu-arm64.sources > /dev/null <<'EOF'
+          Types: deb
+          URIs: http://ports.ubuntu.com/ubuntu-ports/
+          Suites: noble noble-updates noble-security
+          Components: main restricted universe multiverse
+          Architectures: arm64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake autoconf automake nasm ninja-build gnome-desktop-testing \
+            libasound2-dev:arm64 libaudio-dev:arm64 libfribidi-dev:arm64 \
+            libjack-dev:arm64 libsndio-dev:arm64 libx11-dev:arm64 libxext-dev:arm64 \
+            libxrandr-dev:arm64 libxcursor-dev:arm64 libxfixes-dev:arm64 libxi-dev:arm64 \
+            libxss-dev:arm64 libxtst-dev:arm64 libxkbcommon-dev:arm64 libdrm-dev:arm64 \
+            libgbm-dev:arm64 libgl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libegl1-mesa-dev:arm64 \
+            libdbus-1-dev:arm64 libudev-dev:arm64 libthai-dev:arm64 \
+            libusb-1.0-0-dev:arm64 libpipewire-0.3-dev:arm64 libwayland-dev:arm64 \
+            libdecor-0-dev:arm64 liburing-dev:arm64 libxinerama-dev:arm64
+
+
+      - name: Install build deps (macos)
+        if: matrix.host_os == 'macos-latest' || matrix.host_os == 'macos-26-intel'
+        run: |
+          brew install nasm autoconf automake
+
+      - name: Run all libs and record results
+        env:
+          HOST_OS: ${{ runner.os }}
+          HOST_ARCH: ${{ runner.arch }}
+          TARGET_OS: ${{ matrix.target_os }}
+          TARGET_ARCH: ${{ matrix.target_arch }}
+        run: >-
+          python tests/compile_all_libs/makefile.py -rv
+          --arch ${{ matrix.target_arch }}
+          ${{ matrix.cross_os && format('--os {0}', matrix.target_os) || '' }} --pkg-install-noconfirm
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: results-${{ matrix.host_os }}-${{ matrix.target_os }}-${{ matrix.target_arch }}
+          path: tests/compile_all_libs/results-*.json
+
+  aggregate:
+    needs: weekly
+    if: ${{ !cancelled() }}
+    permissions:
+      pages: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          path: results
+          merge-multiple: true
+
+      - name: Build SVG
+        run: |
+          python tests/compile_all_libs/generate_matrix_svg.py results/results-*.json --output tests/compile_all_libs/svg_output/compatibility-matrix.svg
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: tests/compile_all_libs/svg_output/
+
+  deploy:
+    needs: aggregate
+    if: ${{ !cancelled() }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v5
+        id: deployment

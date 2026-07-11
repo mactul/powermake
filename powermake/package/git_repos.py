@@ -201,7 +201,7 @@ class DefaultGitRepos(GitRepo):
         "png16": ("libpng", ("--dependency=z,None,None", ), ("1.6.0", "1.6.*")),
         "zip": ("libzip", ("--dependency=z,None,None", ), None),
         "glfw3": ("glfw", tuple(), ("3.0", "3.*")),
-        "mariadb": ("mariadb-connector-c", tuple(), None),
+        "mariadb": ("mariadb-connector-c", ("--dependency=ssl,None,None", "--dependency=crypto,None,None"), None),
         "z": ("zlib", tuple(), None),
         "zs": ("zlib", tuple(), None)
     }
@@ -210,14 +210,14 @@ class DefaultGitRepos(GitRepo):
         "SDL_ttf": _RepoInfo("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--cmake-static", )),
         "SDL_image": _RepoInfo("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--cmake-static", )),
         "boringssl": _RepoInfo("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*"), tuple(), tuple()),
-        "libressl": _RepoInfo("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/autogen_cmake_makefile.py", tuple(), tuple(), tuple()),
+        "libressl": _RepoInfo("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), ("--autogen-sh", )),
         "openssl": _RepoInfo("https://github.com/openssl/openssl.git", "makefile.py", "https://github.com/mactul/powermake-repos.git", "o/openssl/openssl_makefile.py", (".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*"), tuple(), tuple()),
         "libjpeg-turbo": _RepoInfo("https://github.com/libjpeg-turbo/libjpeg-turbo", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("jpeg.*", ), tuple(), tuple()),
         "libpng": _RepoInfo("https://github.com/pnggroup/libpng", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*png.*", ".*master.*"), tuple(), tuple()),
         "libzip": _RepoInfo("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", ), tuple(), tuple()),
         "glfw": _RepoInfo("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), tuple(), tuple()),
         "json-c": _RepoInfo("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DBUILD_APPS=off", "--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on"), tuple()),
-        "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "m/mariadb/mariadb_makefile.py", (".*MS.*", ".*py.*"), tuple(), tuple()),
+        "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*MS.*", ".*py.*"), tuple(), ("--remove-one-subfolder=mariadb", )),
         "freetype": _RepoInfo("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), tuple(), tuple()),
         "zlib": _RepoInfo("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DZLIB_BUILD_TESTING=OFF", ), tuple())
     }
@@ -227,6 +227,8 @@ class DefaultGitRepos(GitRepo):
         super().__init__("", "")
 
     def set_libname(self, libname: str, package_name: T.Union[str, None], prefer_static: bool) -> None:
+        self.additional_cmdline = tuple()
+
         if package_name is None:
             if libname in self._default_packages:
                 package_name, self.additional_cmdline, _ = self._default_packages[libname]

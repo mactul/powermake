@@ -554,7 +554,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={config.target_simplified_architecture}"])
 
     if prefer_static:
-        args.extend(['-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_FIND_LIBRARY_SUFFIXES=.a;.lib'])
+        args.append('-DBUILD_SHARED_LIBS=OFF')
 
     if config.linker is not None:
         dirs = config.linker.get_lib_dirs(config.ld_flags)

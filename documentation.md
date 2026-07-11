@@ -165,7 +165,6 @@ git clone https://github.com/mactul/powermake
 cd powermake
 # Checkout to the latest tag
 git checkout $(git tag | tail -n1)
-sed -i "s/{{VERSION_PLACEHOLDER}}/0.0.0/g" pyproject.toml
 rm -rf ./dist/
 python -m build
 pip install -U dist/powermake-*-py3-none-any.whl --force-reinstall

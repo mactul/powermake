@@ -513,7 +513,11 @@ def _find_lib_with_git(install_path: str, current_toolchain_prefix: str, package
             print("What do you want to do ?\n")
             print("1: delete the folder and make it a symlink to ")
             print("2: keep the folder as it is\n")
-            answer = "3"
+            if config._args_parsed.pkg_install_noconfirm:
+                print("--pkg-install-noconfirm: strategy 2")
+                answer = "2"
+            else:
+                answer = "3"
             while answer not in {"1", "2"}:
                 answer = input("[1/2] ")
             if answer == "1":
