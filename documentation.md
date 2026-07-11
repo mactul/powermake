@@ -112,6 +112,12 @@
       - [powermake.version\_parser.Version](#powermakeversion_parserversion)
       - [powermake.version\_parser.parse\_version](#powermakeversion_parserparse_version)
       - [powermake.version\_parser.remove\_version\_frills](#powermakeversion_parserremove_version_frills)
+    - [powermake.package](#powermakepackage)
+      - [powermake.package.find\_lib](#powermakepackagefind_lib)
+      - [powermake.package.GitRepo](#powermakepackagegitrepo)
+      - [set\_external\_powermake\_makefile](#set_external_powermake_makefile)
+      - [set\_tags\_to\_exclude](#set_tags_to_exclude)
+      - [set\_additional\_cmdline](#set_additional_cmdline)
     - [Having more control than what powermake.run offers](#having-more-control-than-what-powermakerun-offers)
       - [powermake.ArgumentParser](#powermakeargumentparser)
         - [add\_argument()](#add_argument)
@@ -2176,6 +2182,168 @@ Remove everything that will not be understood by the version parser.
 For example Linux-6.12.3-hardened-1 will be transformed in 6.12.3-1.
 
 Please pay attention that not_a_release_3 will be transformed in "3", which will be interpreted as the version 3.
+
+### powermake.package
+
+`powermake.package` is a powerful solution to get the libs you want in the version you want, with the possibility to download and compile them from sources.
+
+> [!TIP]  
+> Read [the corresponding tutorial](./tutorials/06-package-manager/README.md) before this documentation to understand how to use `powermake.package`.
+
+#### powermake.package.find_lib
+```py
+powermake.package.find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/installed_libs/", min_version: str | None = None, max_version: str | None = None, git_repo: powermake.package.GitRepo | None = DefaultGitRepos(), package_name: str | None = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: list[powermake.package.ExtType] = DEFAULT_EXT_PREF_ORDER) -> powermake.package.Lib
+```
+
+This function finds and potentially downloads a library in the version range asked, then returns a powermake.package.Lib object that can be handed to [config.add_lib](#add_lib).  
+For more information about this process, look at [the tutorial](./tutorials/06-package-manager/README.md).
+
+Only the `config` and `libname` arguments are required, for example:
+```py
+lib = powermake.package.find_lib(config, "ssl")
+config.add_lib(lib)
+```
+This already adds OpenSSL to your program
+
+Here is the description of the other optional arguments:
+
+- `install_dir`: By default PowerMake installs all downloaded packages into subfolders of `~/.powermake/installed_libs/`, but you can use another location if you want. Note that PowerMake will add lots of subfolders in this install folder.
+
+- `min_version`: The oldest possible version allowed for the lib, for example `"3.0"`. By default, no minimum version restriction is applied. You can use wildcards in the version if you want, like `v3.*.2`, but for the min_version it doesn't make a lot of sense. The versions number are parsed by [powermake.version_parser.parse_version](#powermakeversion_parserparse_version), so you have a lot of freedom in their syntax.
+
+- `max_version`: The newest version allowed for the lib. You can use wildcards in the version number, for example, if you want something `< 4.0`, you can write `3.*` to reference any version with the major 3 that exists. When multiple versions are available (for example when downloading from git), the newest one that is not bigger than max_version is taken.
+
+- `git_repo`: A [powermake.package.GitRepo](#powermakepackagegitrepo) object that specify how the lib should be downloaded and compiled. By default, PowerMake looks at a list of pre-configured repos. This can be set to `None` to disable source download/compile entirely.
+
+- `package_name`: If you have multiple providers for a library, and you are not satisfied by the default, you can set this argument. For example, by default, `ssl` is downloaded from `openssl`, if you set `package_name="boringssl"`, it will be downloaded from `boringssl`. 2 versions of the same lib with 2 different providers can cohexist in the same install path, PowerMake stores the name of the package in the path.
+
+- `allow_prerelease`: By default, all prerelease (alpha, beta, rc, ...) are excluded from the compatible versions list, set this to `True` to allow PowerMake to use prereleases.
+
+- `strict_post`: By default, `v2.2.4` and `v2.2.4-3` are considered the same, the post number (or build number) is often added by the packager of the system and refer to the same source code. Set `strict_post=True` if you want exact version match.
+
+- `disable_system_packages`: If you want to only use libs built from sources and never taken from the system install folders, set this to `True`.
+
+- `ext_pref_order`: A list of lib file extensions to consider and in which order to consider them. Beware that it's not a list of string but a list of the powermake.package.ExtType enum. For example, you can use:
+  ```py
+  from powermake.package import ExtType
+
+  lib = powermake.package.find_lib(config, "ssl", ext_pref_order=[ExtType.LIB_SO, ExtType.LIB_A, ExtType.LIB_DLL_A, ExtType.LIB_LIB])
+  config.add_lib(lib)
+  ```
+  This will prefer .so over .a when the target is Linux and on Windows, only static libs are considered (.dll.a and .lib).  
+  By default, static libs are always prefered over dynamic ones, because static libs makes it easier to manage multiple versions cohabiting.
+
+
+#### powermake.package.GitRepo
+```py
+powermake.package.GitRepo(git_url: str, powermake_makefile_path_in_repo: str) -> powermake.package.GitRepo
+```
+
+When you want to use a library that is not pre-configured by powerMake, whether because it's your own library or because we didn't think of adding this library, you must create a `powermake.package.GitRepo` object to describe how the lib is downloaded and compiled.
+
+An example:
+```py
+# We specify where the repo can be found and where is the makefile.py in this repo
+repo = powermake.package.GitRepo("https://github.com/someone/my_awesome_repo.git", "build/makefile.py")
+
+lib = powermake.package.find_lib(config, "my_awesome_lib", git_repo=repo)
+config.add_lib(lib)
+```
+
+<details>
+<summary>Full file sample</summary>
+
+```py
+import powermake
+
+def on_build(config: powermake.Config):
+    files = powermake.get_files("**/*.c")
+
+    # We specify where the repo can be found and where is the makefile.py in this repo
+    repo = powermake.package.GitRepo("https://github.com/someone/my_awesome_repo.git", "build/makefile.py")
+
+    lib = powermake.package.find_lib(config, "my_awesome_lib", git_repo=repo)
+    config.add_lib(lib)
+
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+
+powermake.run("my_project", build_callback=on_build)
+```
+</details>
+
+As you may see from the example, the idea is just to specify the git url (it can be https or ssh) and where is PowerMake makefile is in this repo, and as long as the PowerMake makefile implements correctly the build and install callback, the download / compilation / installation should be automatic.
+
+> [!CAUTION]  
+> Even if no version is specified in [powermake.package.find_lib](#powermakepackagefind_lib), the repo should be tagged with a version number and the latest version will be downloaded, not the main branch.
+
+Unfortunately, this `GitRepo` instance is only going to work if you own the repository and can put a makefile.py in the repo. For public repos that you don't own, like for example, https://github.com/openssl/openssl.git, you need the method [set_external_powermake_makefile](#set_external_powermake_makefile)
+
+#### set_external_powermake_makefile
+```py
+git_repo.set_external_powermake_makefile(powermake_makefile_path: str, git_url: str | None) -> None:
+```
+
+With this method, you can use a makefile that is not on the repo, for example:
+```py
+repo = powermake.package.GitRepo("https://github.com/openssl/openssl.git", "build/makefile.py")
+repo.set_external_powermake_makefile("./my_local_powermake_for_openssl.py")
+
+# ssl is already pre-configured by PowerMake, don't bother doing that for this specific lib, it's just for the example.
+lib = powermake.package.find_lib(config, "ssl", git_repo=repo)
+config.add_lib(lib)
+```
+
+Or even with a makefile that is in another repo:
+```py
+repo = powermake.package.GitRepo("https://github.com/openssl/openssl.git", "build/makefile.py")
+repo.set_external_powermake_makefile("o/openssl/openssl_makefile.py", "https://github.com/mactul/powermake-repos.git")
+
+# ssl is already pre-configured by PowerMake, don't bother doing that for this specific lib, it's just for the example.
+lib = powermake.package.find_lib(config, "ssl", git_repo=repo)
+config.add_lib(lib)
+```
+In this example, PowerMake will start by downloading the openssl repo, then will download the powermake-repos repo and will copy the file `./o/openssl/openssl_makefile.py` that is in powermake-repos inside the openssl repo, at the `build/makefile.py` location. Finally, it will run `openssl/build/makefile.py`.
+
+> [!NOTE]  
+> The build folder doesn't exist in the openssl repo, but that's not a problem, PowerMake will create all necessary folders.
+
+
+#### set_tags_to_exclude
+```py
+git_repo.set_tags_to_exclude(*regex: str) -> None
+```
+
+Sometimes, a repo contains tags that are not versions at all.  
+To make sure PowerMake doesn't pick them as version number by mistake, resulting in very wrong tags targeting, it's a good idea to exclude them.
+
+For example, for OpenSSL, powermake uses
+```py
+git_repo.set_tags_to_exclude(".*fips.*", ".*FIPS.*", ".*engine.*", ".*SSLeay.*")
+```
+
+> [!NOTE]  
+> Beware that the regexes are real regex, so `*` doesn't mean "anything" like in [powermake.get_files](#powermakeget_files), but means "repeat the previous character as many times you want, even 0". So to match "anything", you need `.*` (`.` is any character, repeated many times).
+
+#### set_additional_cmdline
+```py
+git_repo.set_additional_cmdline(*args: str) -> None
+```
+
+If you whish to use the same powermake makefile for different repos, you may want to pass additional arguments to this makefile.
+
+For example, internally, PowerMake uses a lot:
+```py
+repo.set_external_powermake_makefile("generic/cmake/cmake_makefile.py", "https://github.com/mactul/powermake-repos.git")
+```
+
+This makefile runs standard CMake commands and accepts some arguments, for example:
+```py
+git_repo.set_additional_cmdline("--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on", "--dependency=png,1.6.0,1.6.*")
+```
+This will make sure cmake_makefile.py will call `powermake.package.find_lib(config, "png", min_version="1.6.0", max_version="1.6.0")`.  
+And that it will run CMake with `-DBUILD_TESTING=off` and `-DDISABLE_WERROR=on` (and the installation folders for libpng returned by `find_lib`).
 
 ### Having more control than what powermake.run offers
 
