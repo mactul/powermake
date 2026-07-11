@@ -216,17 +216,20 @@ def get_possible_filepaths(config: Config, libname: str, ext_pref_order: T.List[
     if config.linker is None:
         return []
     dirs = config.linker.get_lib_dirs(config.ld_flags)
+
     filtered_dirs: T.Set[str] = set()
     for dir in dirs:
-        if config.target_simplified_architecture == "x86" and "lib32" in dir:
+        if config.target_simplified_architecture == "x86" and ("lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir):
             filtered_dirs.add(dir)
     if len(filtered_dirs) == 0:
         filtered_dirs = dirs
 
     filepaths = []
-    for dir in filtered_dirs:
+    for dir in dirs:
         libs, _ = search_lib(dir, libname, get_non_match=False, ext_pref_order=ext_pref_order)
         if len(libs) == 0:
+            if dir not in filtered_dirs:
+                continue
             if config.target_is_mingw():
                 filename = f"lib{libname}.a"
             elif config.target_is_windows():
