@@ -42,9 +42,6 @@ jobs:
           - host_os: windows-latest
             target_os: windows
             target_arch: x86
-          - host_os: windows-11-arm
-            target_os: windows
-            target_arch: arm64
           - host_os: macos-latest
             target_os: macos
             target_arch: arm64
@@ -172,9 +169,9 @@ jobs:
           TARGET_OS: ${{ matrix.target_os }}
           TARGET_ARCH: ${{ matrix.target_arch }}
         run: >-
-          python tests/compile_all_libs/makefile.py -rv
-          --arch ${{ matrix.target_arch }}
-          ${{ matrix.cross_os && format('--os {0}', matrix.target_os) || '' }} --pkg-install-noconfirm
+          python tests/compile_all_libs/makefile.py -rv ${{ matrix.host_os == 'windows-latest' && '-l windows_config.json' || '' }}
+          --arch ${{ matrix.target_arch }} ${{ matrix.cross_os && format('--os {0}', matrix.target_os) || '' }}
+          --pkg-install-noconfirm
 
       - uses: actions/upload-artifact@v7
         with:
