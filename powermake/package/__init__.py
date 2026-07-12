@@ -77,8 +77,8 @@ __all__ = [
 class ExtType(Enum):
     LIB_A = "\\.a"
     "Files ending with .a (ex: libssl.a)"
-    LIB_SO = "\\.so(?:\\.[0-9]+)*"
-    "Files ending with .so (ex: libssl.so) or .so.X.X... (ex: libssl.so.2)"
+    LIB_SO = "\\.so"
+    "Files ending with .so (ex: libssl.so)"
     LIB_DLL_A = "\\.dll\\.a"
     "Files ending with .dll.a (ex: libssl.dll.a)"
     LIB_LIB = "\\.lib"

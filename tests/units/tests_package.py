@@ -65,10 +65,10 @@ def fake_which(name: str):
     return str
 
 def run_tests():
-    with mock.patch("powermake.package.os.listdir", new=fake_listdir(["libssl.so", "libssl.so.1", "libssl.a", "libssl.gz.a", "libssl.dll", "ssl.a", "ssl.dll.a", "lib.a", "fdgfr", "lib.dll.a", "crypto.so", "crypto.so.0", "crypto.a"])):
-        assert(powermake.package.search_lib("abcd", "ssl") == (['libssl.a', 'libssl.so', 'libssl.so.1', 'libssl.dll', 'ssl.a', 'ssl.dll.a'], {"crypto": {"crypto.so", "crypto.a", "crypto.so.0"}, "ssl.gz": {"libssl.gz.a"}}))
-        assert(powermake.package.search_lib("abcd", "ssl", ext_pref_order=[ExtType.LIB_DLL, ExtType.LIB_LIB, ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_DLL_A]) == (['libssl.dll', 'libssl.a', 'libssl.so', 'libssl.so.1', 'ssl.a', 'ssl.dll.a'], {"crypto": {"crypto.so", "crypto.a", "crypto.so.0"}, "ssl.gz": {"libssl.gz.a"}}))
-        assert(powermake.package.search_lib("abcd", "ssl", ext_pref_order=[ExtType.LIB_SO, ExtType.LIB_A]) == (['libssl.so', 'libssl.so.1', 'libssl.a', 'ssl.a'], {'ssl.gz': {'libssl.gz.a'}, 'crypto': {'crypto.a', 'crypto.so', 'crypto.so.0'}}))
+    with mock.patch("powermake.package.os.listdir", new=fake_listdir(["libssl.so", "libssl.so.1", "libssl.a", "libssl.gz.a", "libssl.dll", "ssl.a", "ssl.dll.a", "lib.a", "fdgfr", "lib.dll.a", "crypto.so", "crypto.a"])):
+        assert(powermake.package.search_lib("abcd", "ssl") == (['libssl.a', 'libssl.so', 'libssl.dll', 'ssl.a', 'ssl.dll.a'], {"crypto": {"crypto.so", "crypto.a"}, "ssl.gz": {"libssl.gz.a"}}))
+        assert(powermake.package.search_lib("abcd", "ssl", ext_pref_order=[ExtType.LIB_DLL, ExtType.LIB_LIB, ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_DLL_A]) == (['libssl.dll', 'libssl.a', 'libssl.so', 'ssl.a', 'ssl.dll.a'], {"crypto": {"crypto.so", "crypto.a"}, "ssl.gz": {"libssl.gz.a"}}))
+        assert(powermake.package.search_lib("abcd", "ssl", ext_pref_order=[ExtType.LIB_SO, ExtType.LIB_A]) == (['libssl.so', 'libssl.a', 'ssl.a'], {'ssl.gz': {'libssl.gz.a'}, 'crypto': {'crypto.a', 'crypto.so'}}))
 
     print("Testing privilege escalation, will run `whoami` as root")
     cmd = powermake.package.linux_escalate_command(["whoami"])
