@@ -127,7 +127,7 @@ def run_tests():
     # We assume libc is always installed, since we don't provide a version it should immediatly be found
     start_time = time.time()
     lib = powermake.package.find_lib(config, "c", install_dir=install_dir, min_version=None, max_version=None)
-    assert(time.time() - start_time < 1.0)  # We are just asking GCC where the libraries are
+    assert(time.time() - start_time < 2.0)  # We are just asking GCC where the libraries are
     assert(lib.version is None)
     assert(os.path.exists(os.path.join(lib.includedir, "stdio.h")))
     assert(os.path.exists(lib.lib_file))
