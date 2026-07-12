@@ -4,7 +4,6 @@ on:
   schedule:
     - cron: '0 2 * * 1' # runs at 2 AM UTC on Monday.
   workflow_dispatch:
-  push:
 
 permissions:
   contents: read

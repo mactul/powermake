@@ -560,20 +560,27 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         dirs = config.linker.get_lib_dirs(config.ld_flags)
         filtered_dirs: T.Set[str] = set()
         for dir in dirs:
-            if config.target_simplified_architecture == "x86" and "lib32" in dir:
+            if config.target_simplified_architecture == "x86" and ("lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir):
                 filtered_dirs.add(dir)
         if len(filtered_dirs) == 0:
             filtered_dirs = dirs
 
-        filtered_dirs = filtered_dirs.union({os.path.dirname(dep.lib_file) for dep in dependencies})
+        filtered_dirs = filtered_dirs.union(os.path.dirname(dep.lib_file) for dep in dependencies)
 
         if len(filtered_dirs) > 0:
-            dir_str = ';'.join(filtered_dirs)
-            pkg_dir_str = ';'.join([os.path.join(dir, "pkgconfig") for dir in filtered_dirs])
-            prefix_str = ';'.join([os.path.dirname(dir) for dir in filtered_dirs])
+            lib_path_str = ';'.join(filtered_dirs)
+            include_path_str = ';'.join(package.find_closest_include_dir(dir) for dir in filtered_dirs)
+            pkg_dir_str = ';'.join(os.path.join(dir, "pkgconfig") for dir in filtered_dirs)
             os.environ["PKG_CONFIG_PATH"] = pkg_dir_str
             os.environ["PKG_CONFIG_LIBDIR"] = pkg_dir_str
-            args.extend([f"-DCMAKE_LIBRARY_PATH={dir_str}", f"-DCMAKE_FIND_ROOT_PATH={prefix_str}", f"-DCMAKE_PREFIX_PATH={prefix_str}", "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY", "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY", "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY"])
+            args.extend([
+                f"-DCMAKE_INCLUDE_PATH={include_path_str}",
+                f"-DCMAKE_LIBRARY_PATH={lib_path_str}",
+                "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=NEVER",
+            ])
 
     if run_command(config, [cmake_path, path, *args, *additional_args]) != 0:
         raise PowerMakeRuntimeError("Unable to run cmake")

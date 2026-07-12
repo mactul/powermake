@@ -2317,6 +2317,12 @@ Here is the description of the other optional arguments:
 > [!TIP]  
 > You can provide `--pkg-install-noconfirm` in the command line if you want to remove all [Y/n] confirmations when PowerMake tries to download/install something.
 
+Below is a matrix generated every Monday morning by a CI that shows all pre-configured libraries tested on multiple platforms and cross-compilation scenarios.
+
+If you see red, that suggest this specific host OS/architecture - target OS/architecture combo might not work, but it can also be a CI quirk (missing build dependencies for example)
+
+![Compatibility matrix](https://mactul.github.io/powermake/compatibility-matrix.svg)
+
 #### powermake.package.GitRepo
 ```py
 powermake.package.GitRepo(git_url: str, powermake_makefile_path_in_repo: str) -> powermake.package.GitRepo

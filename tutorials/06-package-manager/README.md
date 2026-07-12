@@ -207,3 +207,12 @@ def on_build(config: powermake.Config):
 powermake.run("my_project", build_callback=on_build)
 ```
 </details>
+
+
+## Libs pre-configured in PowerMake
+
+Below is a matrix generated every Monday morning by a CI that shows all pre-configured libraries tested on multiple platforms and cross-compilation scenarios.
+
+If you see red, that suggest this specific host OS/architecture - target OS/architecture combo might not work, but it can also be a CI quirk (missing build dependencies for example)
+
+![Compatibility matrix](https://mactul.github.io/powermake/compatibility-matrix.svg)
