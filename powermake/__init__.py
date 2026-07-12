@@ -567,15 +567,23 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
 
         filtered_dirs = filtered_dirs.union(os.path.dirname(dep.lib_file) for dep in dependencies)
 
+        prefix_paths: T.Set[str] = set()
+        for dep in dependencies:
+            lib_dir = os.path.dirname(dep.lib_file)
+            if lib_dir.endswith(("lib", "lib/")) and os.path.isdir(os.path.join(lib_dir, "cmake")):
+                prefix_paths.add(os.path.join(lib_dir, ".."))
+
         if len(filtered_dirs) > 0:
             lib_path_str = ';'.join(filtered_dirs)
             include_path_str = ';'.join(package.find_closest_include_dir(dir) or "" for dir in filtered_dirs)
             pkg_dir_str = ';'.join(os.path.join(dir, "pkgconfig") for dir in filtered_dirs)
+            prefix_path_str = ';'.join(prefix_paths)
             os.environ["PKG_CONFIG_PATH"] = pkg_dir_str
             os.environ["PKG_CONFIG_LIBDIR"] = pkg_dir_str
             args.extend([
                 f"-DCMAKE_INCLUDE_PATH={include_path_str}",
                 f"-DCMAKE_LIBRARY_PATH={lib_path_str}",
+                f"-DCMAKE_PREFIX_PATH={prefix_path_str}",
                 "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
