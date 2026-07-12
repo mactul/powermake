@@ -569,7 +569,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
 
         if len(filtered_dirs) > 0:
             lib_path_str = ';'.join(filtered_dirs)
-            include_path_str = ';'.join(package.find_closest_include_dir(dir) for dir in filtered_dirs)
+            include_path_str = ';'.join(package.find_closest_include_dir(dir) or "" for dir in filtered_dirs)
             pkg_dir_str = ';'.join(os.path.join(dir, "pkgconfig") for dir in filtered_dirs)
             os.environ["PKG_CONFIG_PATH"] = pkg_dir_str
             os.environ["PKG_CONFIG_LIBDIR"] = pkg_dir_str
