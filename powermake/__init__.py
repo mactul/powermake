@@ -570,7 +570,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         prefix_paths: T.Set[str] = set()
         for dep in dependencies:
             lib_dir = os.path.dirname(dep.lib_file)
-            if lib_dir.endswith(("lib", "lib/")) and os.path.isdir(os.path.join(lib_dir, "cmake")):
+            if lib_dir.endswith(("lib", "lib/")):
                 prefix_paths.add(os.path.join(lib_dir, ".."))
 
         if len(filtered_dirs) > 0:

@@ -11,22 +11,24 @@ def on_build(config: powermake.Config):
     assert(config.linker is not None)
     assert(config.shared_linker is not None)
 
-    libs = set()
+    libs = []
     repo = powermake.package.DefaultGitRepos()
     for libname in repo._default_packages:
-        libs.add((libname, repo._default_packages[libname][0]))
+        libs.append((libname, repo._default_packages[libname][0]))
 
-    libs.add(("ssl", "boringssl"))
-    libs.add(("crypto", "boringssl"))
-    libs.add(("ssl", "libressl"))
-    libs.add(("crypto", "libressl"))
-    libs.add(("json-c", "json-c"))
-    libs.add(("freetype", "freetype"))
+    libs.append(("ssl", "boringssl"))
+    libs.append(("crypto", "boringssl"))
+    libs.append(("ssl", "libressl"))
+    libs.append(("crypto", "libressl"))
+    libs.append(("json-c", "json-c"))
+    libs.append(("freetype", "freetype"))
 
     if config.target_is_windows():
         libs.remove(("z", "zlib"))
     else:
         libs.remove(("zs", "zlib"))
+
+    libs.sort()  # We don't really care about the order, but we want something predictible
 
     # We want the tests install to be destroyed after cache deletion
     install_dir = os.path.join(powermake.cache.get_cache_dir(), "tests_install")
