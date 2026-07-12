@@ -60,12 +60,13 @@ jobs:
             target_arch: arm64
           # macOS universal cross-builds via clang (Xcode ships both backends
           # already, so these need no extra installs)
-          - host_os: macos-latest
-            target_os: macos
-            target_arch: x64
-          - host_os: macos-26-intel
-            target_os: macos
-            target_arch: arm64
+          # disabled for the moment, PowerMake is not ready for cross-compilation on macOS
+          # - host_os: macos-latest
+          #   target_os: macos
+          #   target_arch: x64
+          # - host_os: macos-26-intel
+          #   target_os: macos
+          #   target_arch: arm64
 
           # --- true cross-OS builds (need --os) ---
           # Windows via mingw-w64, from an x64 Linux host
