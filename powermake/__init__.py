@@ -535,16 +535,10 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         if config.target_simplified_architecture == "x86":
             args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))}")
 
-    asm = None
     if config.as_compiler is not None and (not config.target_is_windows() or config.target_is_mingw()):
-        asm = config.as_compiler
-    elif config.asm_compiler is not None:
-        asm = config.asm_compiler
-
-    if asm is not None:
-        args.append(f"-DCMAKE_ASM_COMPILER={asm.path}")
+        args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(asm.translate_flags(["-m32", "-msse2"]))}")
+            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))}")
 
     nasm = compilers.CompilerNASM()
     if nasm.is_available():

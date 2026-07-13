@@ -166,7 +166,7 @@ jobs:
       - name: Install build deps (macos)
         if: matrix.host_os == 'macos-latest' || matrix.host_os == 'macos-26-intel'
         run: |
-          brew install nasm autoconf automake
+          brew install nasm autoconf automake libtool
 
       - name: install nasm (windows)
         if: matrix.host_os == 'windows-latest'
