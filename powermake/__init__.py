@@ -529,15 +529,15 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     if config.c_compiler is not None:
         args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_C_FLAGS={shlex.join(config.c_compiler.translate_flags(["-m32"]))}")
+            args.append(f"-DCMAKE_C_FLAGS={shlex.join(config.c_compiler.translate_flags(["-m32", "-msse2"]))}")
     if config.cpp_compiler is not None:
         args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32"]))}")
+            args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))}")
     if config.as_compiler is not None:
         args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32"]))}")
+            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))}")
     if config.asm_compiler is not None:
         args.append(f"-DCMAKE_ASM_NASM_COMPILER={config.asm_compiler.path}")
         args.append(f"-DCMAKE_ASM_MASM_COMPILER={config.asm_compiler.path}")
