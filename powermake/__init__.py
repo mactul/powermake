@@ -548,12 +548,27 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     if masm.is_available():
         args.append(f"-DCMAKE_ASM_MASM_COMPILER={masm.path}")
 
-    if config.target_is_windows():
-        system_name = "Windows"
-    elif config.target_is_linux():
-        system_name = "Linux"
-    elif config.target_is_macos():
-        system_name = "Darwin"
+
+    if config.target_operating_system != config.host_operating_system or config.target_simplified_architecture != config.host_simplified_architecture:
+        if config.target_is_windows():
+            system_name = "Windows"
+        elif config.target_is_linux():
+            system_name = "Linux"
+        elif config.target_is_macos():
+            system_name = "Darwin"
+        else:
+            system_name = config.target_operating_system
+
+        arch_map = {
+            "x64": "AMD64",
+        }
+        arch = config.target_simplified_architecture
+        if arch in arch_map:
+            arch = arch_map[arch]
+
+        args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={arch}"])
+
+    if config.target_is_macos():
         xcrun = shutil.which("xcrun")
         if xcrun is not None:
             try:
@@ -561,10 +576,6 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
                 args.append(f"-DCMAKE_FRAMEWORK_PATH={os.path.join(sdk, "System/Library/Frameworks")}")
             except subprocess.CalledProcessError:
                 pass
-    else:
-        system_name = config.target_operating_system
-
-    args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={config.target_simplified_architecture}"])
 
     if prefer_static:
         args.append('-DBUILD_SHARED_LIBS=OFF')
