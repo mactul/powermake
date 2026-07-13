@@ -22,11 +22,19 @@ def on_build(config: powermake.Config):
     libs.append(("crypto", "libressl"))
     libs.append(("json-c", "json-c"))
     libs.append(("freetype", "freetype"))
+    libs.append(("harfbuzz", "harfbuzz"))
 
     if config.target_is_windows():
         libs.remove(("z", "zlib"))
     else:
         libs.remove(("zs", "zlib"))
+
+    if config.target_is_windows() and not config.target_is_mingw():
+        libs.remove(("SDL2_image", "SDL_image"))
+        libs.remove(("SDL3_image", "SDL_image"))
+    else:
+        libs.remove(("SDL2_image-static", "SDL_image"))
+        libs.remove(("SDL3_image-static", "SDL_image"))
 
     libs.sort()  # We don't really care about the order, but we want something predictible
 

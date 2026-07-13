@@ -190,9 +190,11 @@ class DefaultGitRepos(GitRepo):
         "SDL2": ("SDL", tuple(), ("2.0", "2.*")),
         "SDL3": ("SDL", tuple(), ("3.0", "3.*")),
         "SDL2_ttf": ("SDL_ttf", ("--cmake-flag=-DCMAKE_POLICY_VERSION_MINIMUM=3.5", "--dependency=SDL2,2.0,2.*", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), ("2.0", "2.*")),
-        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), ("3.0", "3.*")),
+        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None,force_before", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_HARFBUZZ_VENDORED=OFF", "--cmake-flag=-DSDLTTF_FREETYPE_VENDORED=OFF"), ("3.0", "3.*")),
         "SDL2_image": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
         "SDL3_image": ("SDL_image", ("--dependency=SDL3,3.0,3.*", ), ("3.0", "3.*")),
+        "SDL2_image-static": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
+        "SDL3_image-static": ("SDL_image", ("--dependency=SDL3,3.0,3.*", ), ("3.0", "3.*")),
         "ssl": ("openssl", tuple(), None),
         "crypto": ("openssl", tuple(), None),
         "jpeg": ("libjpeg-turbo", tuple(), None),
@@ -203,7 +205,7 @@ class DefaultGitRepos(GitRepo):
         "glfw3": ("glfw", tuple(), ("3.0", "3.*")),
         "mariadb": ("mariadb-connector-c", ("--dependency=ssl,None,None", "--dependency=crypto,None,None"), None),
         "z": ("zlib", tuple(), None),
-        "zs": ("zlib", tuple(), None)
+        "zs": ("zlib", tuple(), None),
     }
     _preconfigured_repos: T.Dict[str, _RepoInfo] = {
         "SDL": _RepoInfo("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DSDL_SHARED=ON", "--cmake-flag=-DSDL_STATIC=ON"), tuple()),
@@ -219,7 +221,8 @@ class DefaultGitRepos(GitRepo):
         "json-c": _RepoInfo("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DBUILD_APPS=off", "--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on"), tuple()),
         "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*MS.*", ".*py.*"), tuple(), ("--remove-one-subfolder=mariadb", )),
         "freetype": _RepoInfo("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), tuple(), ("--dependency=z,None,None", )),
-        "zlib": _RepoInfo("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DZLIB_BUILD_TESTING=OFF", ), tuple())
+        "zlib": _RepoInfo("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DZLIB_BUILD_TESTING=OFF", ), tuple()),
+        "harfbuzz": _RepoInfo("https://github.com/harfbuzz/harfbuzz.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), ("--cmake-flag=-DHB_HAVE_FREETYPE=ON", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), tuple())
     }
 
     def __init__(self) -> None:
