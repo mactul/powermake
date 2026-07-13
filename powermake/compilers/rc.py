@@ -88,3 +88,26 @@ class CompilerWindRes(Compiler):
 
     def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
         return True
+
+
+class CompilerRcMSVC(Compiler):
+    type: T.ClassVar = "rc_msvc"
+    obj_extension: T.ClassVar = ".res"
+
+    def __init__(self, path: T.Union[str, T.List[str]] = ["rc.exe"]):
+        super().__init__(path)
+
+    def format_args(self, defines: T.List[str], includedirs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]] = []) -> T.List[str]:
+        flatten_flags: T.List[str] = []
+        for flag in flags:
+            if isinstance(flag, tuple):
+                flatten_flags.extend(flag)
+            else:
+                flatten_flags.append(flag)
+        return [f"/d{define}" for define in defines] + [f"/i{includedir}" for includedir in includedirs] + flatten_flags
+
+    def basic_compile_command(self, outputfile: str, inputfile: str, args: T.List[str] = []) -> T.List[str]:
+        return [self.path, "/fo", outputfile, inputfile, *args]
+
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        return True

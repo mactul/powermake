@@ -65,14 +65,15 @@
 import typing as T
 
 from .common import Compiler
-from .rc import CompilerWindRes
 from .asm import CompilerNASM, CompilerMASM
+from .rc import CompilerWindRes, CompilerRcMSVC
 from .msvc import CompilerMSVC, CompilerClang_CL
 from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus, CompilerMinGW, CompilerMinGWPlusPlus
 
 __all__ = [
     "Compiler",
     "CompilerWindRes",
+    "CompilerRcMSVC",
     "CompilerNASM",
     "CompilerMASM",
     "CompilerMSVC",
@@ -120,7 +121,8 @@ _asm_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
 
 
 _rc_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
-    "windres": CompilerWindRes
+    "windres": CompilerWindRes,
+    "rc_msvc": CompilerRcMSVC,
 }
 
 

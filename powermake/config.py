@@ -112,10 +112,12 @@ def get_type_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
         return "gcc"
     if "ld" in name:
         return "ld"
-    if "cl" in name:
+    if name.startswith("cl"):
         return "msvc"
-    if "ml" in name:
+    if name.startswith("ml"):
         return "masm"
+    if name.startswith("rc"):
+        return "rc_msvc"
 
     if "CCC_ANALYZER_ANALYSIS" in os.environ:
         # This is the signature of scan-build
@@ -220,6 +222,23 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "clang-cl": "llvm-ar",
         "ld": "ar",
         "mingw-ld": "mingw"
+    }
+
+    to_rc = {
+        "ar": "windres",
+        "llvm-ar": "windres",
+        "gcc": "windres",
+        "g++": "windres",
+        "gnu": "windres",
+        "gnu++": "windres",
+        "clang": "windres",
+        "clang++": "windres",
+        "mingw": "windres",
+        "mingw++": "windres",
+        "msvc": "rc_msvc",
+        "clang-cl": "rc_msvc",
+        "ld": "windres",
+        "mingw-ld": "windres"
     }
 
     if not isinstance(preferences["c_compiler"], EnforcedType):
@@ -357,6 +376,25 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
 
         elif preferences["as_compiler"] in to_ar:
             preferences["archiver"] = to_ar[preferences["as_compiler"]]
+
+    if not isinstance(preferences["rc_compiler"], EnforcedType):
+        if preferences["archiver"] in to_rc:
+            preferences["rc_compiler"] = to_rc[preferences["archiver"]]
+
+        elif preferences["c_compiler"] in to_rc:
+            preferences["rc_compiler"] = to_rc[preferences["c_compiler"]]
+
+        elif preferences["cpp_compiler"] in to_rc:
+            preferences["rc_compiler"] = to_rc[preferences["cpp_compiler"]]
+
+        elif preferences["linker"] in to_rc:
+            preferences["rc_compiler"] = to_rc[preferences["linker"]]
+
+        elif preferences["shared_linker"] in to_rc:
+            preferences["rc_compiler"] = to_rc[preferences["shared_linker"]]
+
+        elif preferences["as_compiler"] in to_rc:
+            preferences["rc_compiler"] = to_rc[preferences["as_compiler"]]
 
     return preferences
 
@@ -655,7 +693,7 @@ class Config:
             self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "g++", "clang++", "gcc", "clang"))
 
         self.asm_compiler = T.cast(T.Union[Compiler, None], asm_compiler_primer.get_tool(toolchain_prefix, preferences["asm_compiler"], "nasm", "masm"))
-        self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, "windres"))
+        self.rc_compiler = T.cast(T.Union[Compiler, None], rc_compiler_primer.get_tool(toolchain_prefix, preferences["rc_compiler"], "windres", "rc_msvc"))
 
         if args_parsed.clangd_compat:
             self._clangd_c_compiler = CompilerClang()

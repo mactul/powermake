@@ -614,7 +614,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
                 "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=NEVER",
             ])
 
-    cmake_generator = tuple()
+    cmake_generator: T.Tuple[str, ...] = tuple()
     ninja = shutil.which("ninja")
     if ninja is not None:
         cmake_generator = ("-G", "Ninja")
