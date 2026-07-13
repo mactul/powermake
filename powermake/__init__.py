@@ -534,13 +534,25 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
         if config.target_simplified_architecture == "x86":
             args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))}")
-    if config.as_compiler is not None:
-        args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
+
+    asm = None
+    if config.as_compiler is not None and (not config.target_is_windows() or config.target_is_mingw()):
+        asm = config.as_compiler
+    elif config.asm_compiler is not None:
+        asm = config.asm_compiler
+
+    if asm is not None:
+        args.append(f"-DCMAKE_ASM_COMPILER={asm.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))}")
-    if config.asm_compiler is not None:
-        args.append(f"-DCMAKE_ASM_NASM_COMPILER={config.asm_compiler.path}")
-        args.append(f"-DCMAKE_ASM_MASM_COMPILER={config.asm_compiler.path}")
+            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(asm.translate_flags(["-m32", "-msse2"]))}")
+
+    nasm = compilers.CompilerNASM()
+    if nasm.is_available():
+        args.append(f"-DCMAKE_ASM_NASM_COMPILER={nasm.path}")
+
+    masm = compilers.CompilerMASM()
+    if masm.is_available():
+        args.append(f"-DCMAKE_ASM_MASM_COMPILER={masm.path}")
 
     if config.target_is_windows():
         system_name = "Windows"
@@ -548,6 +560,13 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         system_name = "Linux"
     elif config.target_is_macos():
         system_name = "Darwin"
+        xcrun = shutil.which("xcrun")
+        if xcrun is not None:
+            try:
+                sdk = subprocess.check_output([xcrun, "--sdk", "macosx", "--show-sdk-path"], encoding="utf-8").strip()
+                args.append(f"-DCMAKE_FRAMEWORK_PATH={os.path.join(sdk, "System/Library/Frameworks")}")
+            except subprocess.CalledProcessError:
+                pass
     else:
         system_name = config.target_operating_system
 
