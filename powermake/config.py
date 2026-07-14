@@ -756,7 +756,20 @@ class Config:
             self.host_simplified_architecture = self.host_architecture
 
         if self.host_is_windows() and self.target_is_windows():
-            env = load_msvc_environment(os.path.join(get_cache_dir(), "msvc_envs.json"), architecture=self.target_simplified_architecture)
+            msvc_arch = self.target_simplified_architecture
+            if self.host_simplified_architecture == "x64" and self.target_simplified_architecture == "x86":
+                msvc_arch = "x64_x86"
+            elif self.host_simplified_architecture == "x86" and self.target_simplified_architecture == "x64":
+                msvc_arch = "x86_64"
+            elif self.host_simplified_architecture == "x64" and self.target_simplified_architecture == "arm64":
+                msvc_arch = "x64_arm64"
+            elif self.host_simplified_architecture == "x86" and self.target_simplified_architecture == "arm64":
+                msvc_arch = "x86_arm64"
+            elif self.host_simplified_architecture == "arm64" and self.target_simplified_architecture == "x64":
+                msvc_arch = "arm64_x64"
+            elif self.host_simplified_architecture == "arm64" and self.target_simplified_architecture == "x86":
+                msvc_arch = "arm64_x86"
+            env = load_msvc_environment(os.path.join(get_cache_dir(), "msvc_envs.json"), architecture=msvc_arch)
             if env is not None:
                 for var in env:
                     os.environ[var] = env[var]

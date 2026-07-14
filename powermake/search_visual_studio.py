@@ -162,7 +162,7 @@ def _find_vcvarsall() -> T.Tuple[T.Union[str, None], T.Union[str, None]]:
         for logical_drive in get_drives():
             paths = []
 
-            for prg_dir in ("Program Files (x86)", "Program Files"):
+            for prg_dir in ("Program Files", "Program Files (x86)"):
                 temp_path = os.path.join(logical_drive, prg_dir, "Microsoft Visual Studio", vsvers[version])
                 if not os.path.isdir(temp_path):
                     continue
