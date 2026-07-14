@@ -190,7 +190,7 @@ class DefaultGitRepos(GitRepo):
         "SDL2": ("SDL", tuple(), ("2.0", "2.*")),
         "SDL3": ("SDL", tuple(), ("3.0", "3.*")),
         "SDL2_ttf": ("SDL_ttf", ("--cmake-flag=-DCMAKE_POLICY_VERSION_MINIMUM=3.5", "--dependency=SDL2,2.0,2.*", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), ("2.0", "2.*")),
-        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None,force_before", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_HARFBUZZ_VENDORED=OFF", "--cmake-flag=-DSDLTTF_FREETYPE_VENDORED=OFF"), ("3.0", "3.*")),
+        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
         "SDL2_image": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
         "SDL3_image": ("SDL_image", ("--dependency=SDL3,3.0,3.*", ), ("3.0", "3.*")),
         "SDL2_image-static": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
