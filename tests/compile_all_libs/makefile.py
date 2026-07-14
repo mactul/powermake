@@ -32,9 +32,11 @@ def on_build(config: powermake.Config):
     if config.target_is_windows() and not config.target_is_mingw():
         libs.remove(("SDL2_image", "SDL_image"))
         libs.remove(("SDL3_image", "SDL_image"))
+        libs.remove(("SDL3_ttf", "SDL_ttf"))
     else:
         libs.remove(("SDL2_image-static", "SDL_image"))
         libs.remove(("SDL3_image-static", "SDL_image"))
+        libs.remove(("SDL3_ttf-static", "SDL_ttf"))
 
     libs.sort()  # We don't really care about the order, but we want something predictible
 
