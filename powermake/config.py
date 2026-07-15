@@ -660,7 +660,7 @@ class Config:
         toolchain_prefix = split_toolchain_prefix(path)[0]
 
         if target_arch_detected and path is not None:
-            arch = split_toolchain_architecture(path)[0]
+            arch = split_toolchain_architecture(os.path.basename(path))[0]
             if arch is not None:
                 self.target_architecture = arch
                 self.target_simplified_architecture = arch

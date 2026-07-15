@@ -50,6 +50,7 @@ else
 NO_PROG_TEST="--no-prog-test"
 fi
 CC=x86_64-w64-mingw32-gcc coverage run -a ./multiplatform/makefile.py -rv --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
+CC=/usr/bin/i686-w64-mingw32-gcc coverage run -a ./multiplatform/makefile.py -rv --assert-cc="i686-w64-mingw32-gcc" --assert-arch="x86" $NO_PROG_TEST || failure
 coverage run -a ./multiplatform/makefile.py --always-overwrite -mv -l ./windows_config1.json --assert-cc="x86_64-w64-mingw32-gcc" $NO_PROG_TEST || failure
 pushd ./multiplatform/
 make rebuild || failure
