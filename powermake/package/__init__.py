@@ -140,14 +140,14 @@ def pacman_update_db() -> bool:
     if shutil.which("pacman") is None:
         return False
 
-    return subprocess.run(["fakeroot", "--", "pacman", "-Fy", "--dbpath", dbpath, "--logfile", "/dev/null"]).returncode == 0
+    return subprocess.run(["fakeroot", "--", "pacman", "--disable-sandbox", "-Fy", "--dbpath", dbpath, "--logfile", "/dev/null"]).returncode == 0
 
 
 def pacman_get_server_versions(libpath: str) -> T.List[T.Tuple[str, Version]]:
     dbpath = os.path.join(get_cache_dir(), "packages", "pacman", "db")
 
     try:
-        output = subprocess.check_output(["fakeroot", "--", "pacman", "-F", libpath, "--dbpath", dbpath, "--logfile", "/dev/null"], encoding="utf-8").split("\n")
+        output = subprocess.check_output(["fakeroot", "--", "pacman", "--disable-sandbox", "-F", libpath, "--dbpath", dbpath, "--logfile", "/dev/null"], encoding="utf-8").split("\n")
     except subprocess.CalledProcessError:
         return []
 
