@@ -59,12 +59,15 @@ def run_meson(config: Config, build_dir: str, *additional_args: str, prefer_stat
     if config.target_simplified_architecture == "x86":
         content += "\n[built-in options]\n"
         if config.c_compiler is not None:
-            content += f"c_args = {str(config.c_compiler.translate_flags(["-m32", "-msse2"]))}\n"
+            args = str(config.c_compiler.translate_flags(["-m32", "-msse2"]))
+            content += f"c_args = {args}\n"
         if config.cpp_compiler is not None:
-            content += f"cpp_args = {str(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))}\n"
+            args = str(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))
+            content += f"cpp_args = {args}\n"
         if config.linker is not None:
-            content += f"c_link_args = {str(config.linker.translate_flags(["-m32", "-msse2"]))}\n"
-            content += f"cpp_link_args = {str(config.linker.translate_flags(["-m32", "-msse2"]))}\n"
+            args = str(config.linker.translate_flags(["-m32", "-msse2"]))
+            content += f"c_link_args = {args}\n"
+            content += f"cpp_link_args = {args}\n"
 
     content += "\n[host_machine]\n"
     if config.target_is_windows():
@@ -117,16 +120,19 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     if config.c_compiler is not None:
         args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_C_FLAGS={shlex.join(config.c_compiler.translate_flags(["-m32", "-msse2"]))}")
+            flags = shlex.join(config.c_compiler.translate_flags(["-m32", "-msse2"]))
+            args.append(f"-DCMAKE_C_FLAGS={flags}")
     if config.cpp_compiler is not None:
         args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))}")
+            flags = shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))
+            args.append(f"-DCMAKE_CXX_FLAGS={flags}")
 
     if config.as_compiler is not None and (not config.target_is_windows() or config.target_is_mingw()):
         args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
         if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))}")
+            flags = shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))
+            args.append(f"-DCMAKE_ASM_FLAGS={flags}")
 
     nasm = compilers.CompilerNASM()
     if nasm.is_available():
@@ -161,7 +167,8 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         if xcrun is not None:
             try:
                 sdk = subprocess.check_output([xcrun, "--sdk", "macosx", "--show-sdk-path"], encoding="utf-8").strip()
-                args.append(f"-DCMAKE_FRAMEWORK_PATH={os.path.join(sdk, "System/Library/Frameworks")}")
+                framework_path = os.path.join(sdk, "System/Library/Frameworks")
+                args.append(f"-DCMAKE_FRAMEWORK_PATH={framework_path}")
             except subprocess.CalledProcessError:
                 pass
 
