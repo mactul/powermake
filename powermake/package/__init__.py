@@ -58,7 +58,9 @@ import typing as T
 from enum import Enum
 
 from .lib import Lib
+from .utils import find_closest_include_dir
 from .git_repos import GitRepo, DefaultGitRepos
+from .build_systems import run_cmake, run_meson
 
 from ..config import Config
 from ..exceptions import PowerMakeRuntimeError
@@ -71,7 +73,9 @@ from ..cache import get_cache_dir, load_cache_from_file, check_cache_controls, c
 __all__ = [
     "Lib",
     "GitRepo",
-    "DefaultGitRepos"
+    "DefaultGitRepos",
+    "run_cmake",
+    "run_meson",
 ]
 
 class ExtType(Enum):
@@ -320,16 +324,6 @@ def check_linker_compat(config: Config, tempdir_name: str, main_object_path: str
         raise PowerMakeRuntimeError("No linker was found, we need one to check a lib compatibility")
     cmd = config.linker.basic_link_command(os.path.join(tempdir_name, "main"), [main_object_path, libpath], args=config.linker.format_args([], config.ld_flags))
     return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
-
-
-def find_closest_include_dir(dir: str) -> T.Union[str, None]:
-    dir = os.path.abspath(dir)
-    while len(dir) > 1:
-        include = os.path.join(dir, "include")
-        if os.path.isdir(include):
-            return include
-        dir = os.path.dirname(dir)
-    return None
 
 
 def save_cache(cache_filepath: str, cache: T.Dict[str, T.Any]) -> None:

@@ -23,6 +23,7 @@ def on_build(config: powermake.Config):
     libs.append(("json-c", "json-c"))
     libs.append(("freetype", "freetype"))
     libs.append(("harfbuzz", "harfbuzz"))
+    libs.append(("curl", "curl"))
 
     if config.target_is_windows():
         libs.remove(("z", "zlib"))
@@ -33,6 +34,7 @@ def on_build(config: powermake.Config):
         libs.remove(("SDL2_image", "SDL_image"))
         libs.remove(("SDL3_image", "SDL_image"))
         libs.remove(("SDL3_ttf", "SDL_ttf"))
+        libs.remove(("png", "libpng"))
     else:
         libs.remove(("SDL2_image-static", "SDL_image"))
         libs.remove(("SDL3_image-static", "SDL_image"))

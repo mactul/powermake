@@ -130,7 +130,7 @@ jobs:
       - name: Install build deps (ubuntu)
         if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch != 'arm64' || matrix.host_os == 'ubuntu-24.04-arm'
         run: |
-          sudo apt-get install -y cmake autoconf automake nasm ninja-build gnome-desktop-testing libasound2-dev \
+          sudo apt-get install -y meson cmake autoconf automake nasm ninja-build gnome-desktop-testing libasound2-dev \
           libaudio-dev libfribidi-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
           libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
           libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
@@ -152,7 +152,7 @@ jobs:
           EOF
           sudo apt-get update
           sudo apt-get install -y \
-            cmake autoconf automake nasm ninja-build gnome-desktop-testing \
+            meson cmake autoconf automake nasm ninja-build gnome-desktop-testing \
             libasound2-dev:arm64 libaudio-dev:arm64 libfribidi-dev:arm64 \
             libjack-dev:arm64 libsndio-dev:arm64 libx11-dev:arm64 libxext-dev:arm64 \
             libxrandr-dev:arm64 libxcursor-dev:arm64 libxfixes-dev:arm64 libxi-dev:arm64 \
@@ -166,13 +166,15 @@ jobs:
       - name: Install build deps (macos)
         if: matrix.host_os == 'macos-latest' || matrix.host_os == 'macos-26-intel'
         run: |
-          brew install nasm autoconf automake libtool
+          brew install nasm autoconf automake libtool meson
 
-      - name: install nasm (windows)
+      - name: install nasm & meson (windows)
         if: matrix.host_os == 'windows-latest'
         run: |
           choco install nasm
           echo "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          choco install meson
+          echo "C:\Program Files\Meson" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Run all libs and record results
         env:

@@ -207,6 +207,7 @@ class DefaultGitRepos(GitRepo):
         "mariadb": ("mariadb-connector-c", ("--dependency=ssl,None,None", "--dependency=crypto,None,None"), None),
         "z": ("zlib", tuple(), None),
         "zs": ("zlib", tuple(), None),
+        "psl": ("libpsl", tuple(), None),
     }
     _preconfigured_repos: T.Dict[str, _RepoInfo] = {
         "SDL": _RepoInfo("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DSDL_SHARED=ON", "--cmake-flag=-DSDL_STATIC=ON"), static_flags=tuple()),
@@ -223,7 +224,9 @@ class DefaultGitRepos(GitRepo):
         "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*MS.*", ".*py.*"), additional_cmdline=("--remove-one-subfolder=mariadb", ), static_flags=tuple()),
         "freetype": _RepoInfo("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), additional_cmdline=("--dependency=z,None,None", ), static_flags=tuple()),
         "zlib": _RepoInfo("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DZLIB_BUILD_TESTING=OFF", ), static_flags=tuple()),
-        "harfbuzz": _RepoInfo("https://github.com/harfbuzz/harfbuzz.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DHB_HAVE_FREETYPE=ON", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), static_flags=tuple())
+        "harfbuzz": _RepoInfo("https://github.com/harfbuzz/harfbuzz.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DHB_HAVE_FREETYPE=ON", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), static_flags=tuple()),
+        "curl": _RepoInfo("https://github.com/curl/curl.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--dependency=ssl,None,None", "--dependency=crypto,None,None", "--dependency=z,None,None", "--dependency=psl,None,None"), static_flags=("--cmake-static", )),
+        "libpsl": _RepoInfo("https://github.com/rockdaboot/libpsl", "makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/meson/meson_makefile.py", tuple(), additional_cmdline=("--meson-flag=-Ddefault_library=both", ), static_flags=tuple()),
     }
 
     def __init__(self) -> None:

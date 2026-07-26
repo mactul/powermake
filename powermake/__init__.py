@@ -65,6 +65,7 @@ from .utils import makedirs
 from .tools import EnforcedFlag
 from .__version__ import __version__
 from . import utils, display, generation
+from .package import run_cmake, run_meson
 from .run_another import run_another_powermake
 from .display import print_info, print_debug_info, warning_text
 from .exceptions import PowerMakeRuntimeError, PowerMakeValueError
@@ -99,7 +100,9 @@ __all__ = [
     "ArgumentParser",
     "generate_config",
     "run_callbacks",
-    "run_another_powermake"
+    "run_another_powermake",
+    "run_cmake",
+    "run_meson",
 ]
 
 _use_absolute_path = False
@@ -518,106 +521,3 @@ def delete_files_from_disk(*patterns: str) -> None:
                 shutil.rmtree(filepath)
             else:
                 os.remove(filepath)
-
-
-def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False, dependencies: T.Iterable[package.Lib] = []) -> None:
-    cmake_path = shutil.which("cmake")
-    if cmake_path is None:
-        raise PowerMakeRuntimeError("Unable to found cmake executable")
-
-    args = []
-    if config.c_compiler is not None:
-        args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
-        if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_C_FLAGS={shlex.join(config.c_compiler.translate_flags(["-m32", "-msse2"]))}")
-    if config.cpp_compiler is not None:
-        args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
-        if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))}")
-
-    if config.as_compiler is not None and (not config.target_is_windows() or config.target_is_mingw()):
-        args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
-        if config.target_simplified_architecture == "x86":
-            args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))}")
-
-    nasm = compilers.CompilerNASM()
-    if nasm.is_available():
-        args.append(f"-DCMAKE_ASM_NASM_COMPILER={nasm.path}")
-
-    masm = compilers.CompilerMASM()
-    if masm.is_available():
-        args.append(f"-DCMAKE_ASM_MASM_COMPILER={masm.path}")
-
-
-    if config.target_operating_system != config.host_operating_system or config.target_simplified_architecture != config.host_simplified_architecture:
-        if config.target_is_windows():
-            system_name = "Windows"
-        elif config.target_is_linux():
-            system_name = "Linux"
-        elif config.target_is_macos():
-            system_name = "Darwin"
-        else:
-            system_name = config.target_operating_system
-
-        arch_map = {
-            "x64": "AMD64",
-        }
-        arch = config.target_simplified_architecture
-        if arch in arch_map:
-            arch = arch_map[arch]
-
-        args.extend([f"-DCMAKE_SYSTEM_NAME={system_name}", f"-DCMAKE_SYSTEM_PROCESSOR={arch}"])
-
-    if config.target_is_macos():
-        xcrun = shutil.which("xcrun")
-        if xcrun is not None:
-            try:
-                sdk = subprocess.check_output([xcrun, "--sdk", "macosx", "--show-sdk-path"], encoding="utf-8").strip()
-                args.append(f"-DCMAKE_FRAMEWORK_PATH={os.path.join(sdk, "System/Library/Frameworks")}")
-            except subprocess.CalledProcessError:
-                pass
-
-    if prefer_static:
-        args.append('-DBUILD_SHARED_LIBS=OFF')
-
-    if config.linker is not None:
-        dirs = config.linker.get_lib_dirs(config.ld_flags)
-        filtered_dirs: T.Set[str] = set()
-        for dir in dirs:
-            if config.target_simplified_architecture == "x86" and ("lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir):
-                filtered_dirs.add(dir)
-        if len(filtered_dirs) == 0:
-            filtered_dirs = dirs
-
-        filtered_dirs = filtered_dirs.union(os.path.dirname(dep.lib_file) for dep in dependencies)
-
-        prefix_paths: T.Set[str] = set()
-        for dep in dependencies:
-            lib_dir = os.path.dirname(dep.lib_file)
-            if lib_dir.endswith(("lib", "lib/")):
-                prefix_paths.add(os.path.join(lib_dir, ".."))
-
-        if len(filtered_dirs) > 0:
-            lib_path_str = ';'.join(filtered_dirs)
-            include_path_str = ';'.join(package.find_closest_include_dir(dir) or "" for dir in filtered_dirs)
-            pkg_dir_str = ';'.join(os.path.join(dir, "pkgconfig") for dir in filtered_dirs)
-            prefix_path_str = ';'.join(prefix_paths)
-            os.environ["PKG_CONFIG_PATH"] = pkg_dir_str
-            os.environ["PKG_CONFIG_LIBDIR"] = pkg_dir_str
-            args.extend([
-                f"-DCMAKE_INCLUDE_PATH={include_path_str}",
-                f"-DCMAKE_LIBRARY_PATH={lib_path_str}",
-                f"-DCMAKE_PREFIX_PATH={prefix_path_str}",
-                "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF",
-                "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
-                "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
-                "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=NEVER",
-            ])
-
-    cmake_generator: T.Tuple[str, ...] = tuple()
-    ninja = shutil.which("ninja")
-    if ninja is not None:
-        cmake_generator = ("-G", "Ninja")
-
-    if run_command(config, [cmake_path, *cmake_generator, path, *args, *additional_args]) != 0:
-        raise PowerMakeRuntimeError("Unable to run cmake")
