@@ -226,3 +226,24 @@ class LinkerMinGWLD(LinkerLD):
     # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
     def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-ld", "ld.exe"]):
         super().__init__(path)
+
+class LinkerLLVM_Link(Linker):
+    type: T.ClassVar = "llvm-link"
+
+    def __init__(self, path: T.Union[str, T.List[str]] = "llvm-link"):
+        super().__init__(path)
+
+    def format_args(self, shared_libs: T.List[str], flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+        return self.translate_flags(flags)
+
+    def basic_link_command(self, outputfile: str, objectfiles: T.Iterable[str], archives: T.List[str] = [], args: T.List[str] = []) -> T.List[str]:
+        return [self.path, "-o", outputfile, *objectfiles, *archives, *args]
+
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            return subprocess.run([self.path, *arg, get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+        else:
+            return subprocess.run([self.path, arg, get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
+
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
+        return set()

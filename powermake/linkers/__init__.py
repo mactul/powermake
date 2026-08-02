@@ -52,7 +52,7 @@
 import typing as T
 
 from .common import Linker
-from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus, LinkerMinGW, LinkerMinGWPlusPlus, LinkerMinGWLD
+from .gnu import LinkerGNU, LinkerLD, LinkerGCC, LinkerClang, LinkerGPlusPlus, LinkerClangPlusPlus, LinkerMinGW, LinkerMinGWPlusPlus, LinkerMinGWLD, LinkerLLVM_Link
 from .msvc import LinkerMSVC, LinkerClang_CL
 
 __all__ = [
@@ -67,7 +67,8 @@ __all__ = [
     "LinkerMinGWPlusPlus",
     "LinkerMinGWLD",
     "LinkerMSVC",
-    "LinkerClang_CL"
+    "LinkerClang_CL",
+    "LinkerLLVM_Link"
 ]
 
 _linker_types: T.Dict[str, T.Callable[[], Linker]] = {
@@ -82,7 +83,8 @@ _linker_types: T.Dict[str, T.Callable[[], Linker]] = {
     "clang-cl": LinkerClang_CL,
     "mingw": LinkerMinGW,
     "mingw++": LinkerMinGWPlusPlus,
-    "mingw-ld": LinkerMinGWLD
+    "mingw-ld": LinkerMinGWLD,
+    "llvm-link": LinkerLLVM_Link,
 }
 
 
