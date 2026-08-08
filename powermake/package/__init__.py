@@ -100,7 +100,7 @@ def linux_escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]
     global _privilege_escalator
 
     if os.getuid() == 0:
-        return []
+        return command
 
     if _privilege_escalator is None:
         for auth in (pref, ["pkexec"], ["run0", "--background="], ["sudo"], ["doas"], ["su", "-c"]):
