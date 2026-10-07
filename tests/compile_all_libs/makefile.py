@@ -23,22 +23,27 @@ def on_build(config: powermake.Config):
     libs.append(("json-c", "json-c"))
     libs.append(("freetype", "freetype"))
     libs.append(("harfbuzz", "harfbuzz"))
-    libs.append(("curl", "curl"))
+
+    if not config.target_is_windows() or config.target_is_mingw():
+        libs.remove(("curl_imp", "curl"))
+        libs.append(("curl", "curl"))
+
+    libs.remove(("glfw3", "glfw"))
 
     if config.target_is_windows():
-        libs.remove(("z", "zlib"))
+        libs.append(("glfw3dll", "glfw"))
     else:
+        libs.append(("glfw", "glfw"))
+
+    if not config.target_is_windows():
         libs.remove(("zs", "zlib"))
 
     if config.target_is_windows() and not config.target_is_mingw():
-        libs.remove(("SDL2_image", "SDL_image"))
-        libs.remove(("SDL3_image", "SDL_image"))
-        libs.remove(("SDL3_ttf", "SDL_ttf"))
         libs.remove(("png", "libpng"))
-    else:
-        libs.remove(("SDL2_image-static", "SDL_image"))
-        libs.remove(("SDL3_image-static", "SDL_image"))
-        libs.remove(("SDL3_ttf-static", "SDL_ttf"))
+
+    libs.remove(("SDL2_image-static", "SDL_image"))
+    libs.remove(("SDL3_image-static", "SDL_image"))
+    libs.remove(("SDL3_ttf-static", "SDL_ttf"))
 
     libs.sort()  # We don't really care about the order, but we want something predictible
 

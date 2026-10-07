@@ -1,6 +1,7 @@
 name: Build all supported libs on all platforms
 
 on:
+  push:
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * 1' # runs at 2 AM UTC on Monday.

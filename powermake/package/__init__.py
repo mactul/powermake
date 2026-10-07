@@ -92,7 +92,7 @@ class ExtType(Enum):
     LIB_DYLIB = "\\.dylib"
     "Files ending with .dylib (ex: ssl.dylib)"
 
-DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL, ExtType.LIB_DYLIB]
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_SO, ExtType.LIB_DYLIB, ExtType.LIB_A, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
 
 
 _privilege_escalator: T.Union[None, T.List[str]] = None
@@ -537,15 +537,10 @@ def linux_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
             return False
         if ext == ExtType.LIB_A:
             return True
-    return True  # True by default if nothing found
+    return False  # False by default if nothing found
 
 def windows_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
-    for ext in ext_pref_order:
-        if ext == ExtType.LIB_DLL:
-            return False
-        if ext == ExtType.LIB_DLL_A or ext == ExtType.LIB_LIB:
-            return True
-    return True  # True by default if nothing found
+    return ExtType.LIB_DLL not in ext_pref_order
 
 def macos_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
     for ext in ext_pref_order:
@@ -553,7 +548,7 @@ def macos_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
             return False
         if ext == ExtType.LIB_A:
             return True
-    return True  # True by default if nothing found
+    return False  # False by default if nothing found
 
 def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None], bool]:
     cache_modified = False
