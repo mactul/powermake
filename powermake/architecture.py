@@ -132,7 +132,7 @@ def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, No
     return (None, toolchain_name)
 
 
-def search_new_toolchain(toolchain_name: str, host_architecture: str, required_architecture: str) -> T.Union[str, None]:
+def search_new_toolchain(toolchain_path: str, toolchain_name: str, host_architecture: str, required_architecture: str) -> T.Union[str, None]:
     """
     Search a new toolchain name that better matches the architecture than the current toolchain.
 
@@ -160,13 +160,13 @@ def search_new_toolchain(toolchain_name: str, host_architecture: str, required_a
 
     arch, toolchain_suffix = split_toolchain_architecture(toolchain_name)
     if arch == required_architecture:
-        return toolchain_name
+        return toolchain_path
 
     if arch is None:
         if host_architecture in ("x64", "x86") and required_architecture in ("x64", "x86"):
-            return toolchain_name
+            return toolchain_path
         if host_architecture == required_architecture:
-            return toolchain_name
+            return toolchain_path
 
     if required_architecture == "x64":
         if shutil.which("x86_64-" + toolchain_suffix) is not None:

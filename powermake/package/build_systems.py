@@ -174,6 +174,8 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
 
     if prefer_static:
         args.append('-DBUILD_SHARED_LIBS=OFF')
+    else:
+        args.append('-DBUILD_SHARED_LIBS=ON')
 
     dirs, prefix_paths = _set_pkg_environment(config, dependencies)
 

@@ -178,10 +178,10 @@ class GitRepo:
         if makefile_temp_dir is not None:
             makefile_temp_dir.cleanup()
 
-    def _suggested_min_ver(self) -> T.Union[Version | None]:
+    def _suggested_min_ver(self) -> T.Union[Version, None]:
         return None
 
-    def _suggested_max_ver(self) -> T.Union[Version | None]:
+    def _suggested_max_ver(self) -> T.Union[Version, None]:
         return None
 
 
@@ -189,8 +189,8 @@ class DefaultGitRepos(GitRepo):
     _default_packages = {
         "SDL2": ("SDL", tuple(), ("2.0", "2.*")),
         "SDL3": ("SDL", tuple(), ("3.0", "3.*")),
-        "SDL2_ttf": ("SDL_ttf", ("--cmake-flag=-DCMAKE_POLICY_VERSION_MINIMUM=3.5", "--dependency=SDL2,2.0,2.*", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), ("2.0", "2.*")),
-        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
+        "SDL2_ttf": ("SDL_ttf", ("--cmake-flag=-DCMAKE_POLICY_VERSION_MINIMUM=3.5", "--dependency=SDL2,2.0,2.*", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--need-libmath"), ("2.0", "2.*")),
+        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--need-libmath", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
         "SDL3_ttf-static": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
         "SDL2_image": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
         "SDL3_image": ("SDL_image", ("--dependency=SDL3,3.0,3.*", ), ("3.0", "3.*")),
@@ -208,10 +208,11 @@ class DefaultGitRepos(GitRepo):
         "z": ("zlib", tuple(), None),
         "zs": ("zlib", tuple(), None),
         "psl": ("libpsl", tuple(), None),
+        "curl_imp": ("curl", tuple(), None),
     }
     _preconfigured_repos: T.Dict[str, _RepoInfo] = {
-        "SDL": _RepoInfo("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DSDL_SHARED=ON", "--cmake-flag=-DSDL_STATIC=ON"), static_flags=tuple()),
-        "SDL_ttf": _RepoInfo("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=tuple(), static_flags=("--cmake-static", )),
+        "SDL": _RepoInfo("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DSDL_SHARED=ON", "--cmake-flag=-DSDL_STATIC=ON", "--copy-tree=../android-project/app/src/main/java/org/,src/"), static_flags=tuple()),
+        "SDL_ttf": _RepoInfo("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DSDLTTF_SAMPLES=OFF", ), static_flags=("--cmake-static", )),
         "SDL_image": _RepoInfo("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=tuple(), static_flags=("--cmake-static", )),
         "boringssl": _RepoInfo("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*"), additional_cmdline=("--cmake-flag=-DBUILD_TESTING=off", ), static_flags=tuple()),
         "libressl": _RepoInfo("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--autogen-sh", ), static_flags=tuple()),
@@ -221,7 +222,7 @@ class DefaultGitRepos(GitRepo):
         "libzip": _RepoInfo("https://github.com/nih-at/libzip", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*brian.*", ), additional_cmdline=tuple(), static_flags=tuple()),
         "glfw": _RepoInfo("https://github.com/glfw/glfw.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=tuple(), static_flags=tuple()),
         "json-c": _RepoInfo("https://github.com/json-c/json-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DBUILD_APPS=off", "--cmake-flag=-DBUILD_TESTING=off", "--cmake-flag=-DDISABLE_WERROR=on"), static_flags=tuple()),
-        "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*MS.*", ".*py.*"), additional_cmdline=("--remove-one-subfolder=mariadb", ), static_flags=tuple()),
+        "mariadb-connector-c": _RepoInfo("https://github.com/mariadb-corporation/mariadb-connector-c.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", (".*MS.*", ".*py.*"), additional_cmdline=("--remove-one-subfolder=mariadb", "--cmake-flag=-DWITH_UNIT_TESTS=OFF"), static_flags=tuple()),
         "freetype": _RepoInfo("https://gitlab.freedesktop.org/freetype/freetype.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ('CACHE.*', 'DATE.*'), additional_cmdline=("--dependency=z,None,None", ), static_flags=tuple()),
         "zlib": _RepoInfo("https://github.com/madler/zlib.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DZLIB_BUILD_TESTING=OFF", ), static_flags=tuple()),
         "harfbuzz": _RepoInfo("https://github.com/harfbuzz/harfbuzz.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DHB_HAVE_FREETYPE=ON", "--dependency=freetype,None,None", "--dependency=z,None,None,force"), static_flags=tuple()),
@@ -265,7 +266,7 @@ class DefaultGitRepos(GitRepo):
             raise PowerMakeRuntimeError("Unable to find any package that meets the requirements.")
         return super()._get_server_versions()
 
-    def _suggested_min_ver(self) -> T.Union[Version | None]:
+    def _suggested_min_ver(self) -> T.Union[Version, None]:
         if self.libname in self._default_packages:
             range = self._default_packages[self.libname][2]
             if range is None:
@@ -273,7 +274,7 @@ class DefaultGitRepos(GitRepo):
             return parse_version(range[0])
         return None
 
-    def _suggested_max_ver(self) -> T.Union[Version | None]:
+    def _suggested_max_ver(self) -> T.Union[Version, None]:
         if self.libname in self._default_packages:
             range = self._default_packages[self.libname][2]
             if range is None:

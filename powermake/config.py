@@ -61,6 +61,7 @@ from .package.lib import Lib
 from .cache import get_cache_dir
 from .display import error_text
 from .tools import ToolPrimer, EnforcedType
+from .android_sdk import download_android_sdk
 from .exceptions import PowerMakeRuntimeError
 from .search_visual_studio import load_msvc_environment
 from .linkers import Linker, GenericLinker, get_all_linker_types
@@ -427,6 +428,8 @@ class Config:
         self.compilation_unit = compilation_unit
         self.nb_total_operations = 0
 
+        self.sdk_path = os.path.expanduser("~/.powermake/android-sdk")
+
         self.c_compiler: T.Union[Compiler, None] = None
         self.cpp_compiler: T.Union[Compiler, None] = None
         self.as_compiler: T.Union[Compiler, None] = None
@@ -646,7 +649,10 @@ class Config:
         target_arch_detected = False
         if self.target_architecture == "":
             target_arch_detected = True
-            self.target_architecture = platform.machine()
+            if self.target_is_android():
+                self.target_architecture = "aarch64"  # For Android it's safer to bet on aarch64, we are always cross-compiling anyway.
+            else:
+                self.target_architecture = platform.machine()
         if self.host_architecture == "":
             self.host_architecture = platform.machine()
 
@@ -657,6 +663,13 @@ class Config:
             primer = primers_dict[key]
             if primer.tool_path_specified:
                 path = path or primer.tool_path
+        if path is None and self.target_is_android():
+            path = os.path.join(self.sdk_path, "ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang")
+            c_compiler_primer.tool_path = path
+            c_compiler_primer.tool_type = "clang"
+            archiver_primer.tool_path = os.path.join(self.sdk_path, "ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar")
+            archiver_primer.tool_type = "llvm-ar"
+            archiver_primer.tool_path_specified = True
         toolchain_prefix = split_toolchain_prefix(path)[0]
 
         if target_arch_detected and path is not None:
@@ -773,6 +786,10 @@ class Config:
             if env is not None:
                 for var in env:
                     os.environ[var] = env[var]
+        
+        if self.target_is_android():
+            download_android_sdk(self.sdk_path, self.verbosity)
+            self.add_flags("-fPIC")
 
     def reload_tools(self) -> None:
         self.reload_env()
@@ -782,7 +799,7 @@ class Config:
                     tool.reload()
                 else:
                     tool_name = os.path.basename(tool.path)
-                    path = search_new_toolchain(tool_name, self.host_simplified_architecture, self.target_simplified_architecture)
+                    path = search_new_toolchain(tool.path, tool_name, self.host_simplified_architecture, self.target_simplified_architecture)
                     if path is None:
                         tool.path = ""
                         continue
@@ -920,13 +937,16 @@ class Config:
         return self.target_operating_system.lower().startswith("win")
 
     def target_is_linux(self) -> bool:
-        return self.target_operating_system.lower().startswith("linux")
+        return self.target_operating_system.lower().startswith("linux") or self.target_is_android()
 
     def target_is_macos(self) -> bool:
         return self.target_operating_system.lower().startswith("darwin")
 
     def target_is_mingw(self) -> bool:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
+    
+    def target_is_android(self) -> bool:
+        return self.target_operating_system.lower().startswith("android")
 
     def add_defines(self, *defines: str) -> None:
         self.defines.extend(defines)
