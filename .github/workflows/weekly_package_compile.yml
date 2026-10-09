@@ -80,6 +80,11 @@ jobs:
             target_arch: x86
             cross_os: true
 
+          - host_os: ubuntu-latest
+            target_os: android
+            target_arch: arm64
+            cross_os: true
+
     runs-on: ${{ matrix.host_os }}
     steps:
       - uses: actions/checkout@v7
@@ -129,7 +134,7 @@ jobs:
           libpipewire-0.3-dev:i386 libwayland-dev:i386 libdecor-0-dev:i386 libxinerama-dev:i386
 
       - name: Install build deps (ubuntu)
-        if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch != 'arm64' || matrix.host_os == 'ubuntu-24.04-arm'
+        if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch != 'arm64' || matrix.host_os == 'ubuntu-24.04-arm' || matrix.target_os == 'android'
         run: |
           sudo apt-get install -y meson cmake autoconf automake nasm ninja-build gnome-desktop-testing libasound2-dev \
           libaudio-dev libfribidi-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
@@ -139,7 +144,7 @@ jobs:
           libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev libxinerama-dev
 
       - name: Install build deps (ubuntu cross arm64)
-        if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch == 'arm64'
+        if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch == 'arm64' && matrix.target_os != 'android'
         run: |
           sudo dpkg --add-architecture arm64
           sudo sed -i '/^Types: deb$/a Architectures: amd64 i386' /etc/apt/sources.list.d/ubuntu.sources

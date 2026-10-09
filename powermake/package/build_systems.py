@@ -187,11 +187,16 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
             f"-DCMAKE_INCLUDE_PATH={include_path_str}",
             f"-DCMAKE_LIBRARY_PATH={lib_path_str}",
             f"-DCMAKE_PREFIX_PATH={prefix_path_str}",
-            "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF",
-            "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
-            "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
-            "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=NEVER",
+            f"-DCMAKE_FIND_ROOT_PATH={prefix_path_str}",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
         ])
+        if not config.target_is_android():
+            args.extend([
+                "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
+            ])
 
     cmake_generator: T.Tuple[str, ...] = tuple()
     ninja = shutil.which("ninja")
