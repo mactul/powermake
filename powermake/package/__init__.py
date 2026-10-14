@@ -698,4 +698,25 @@ def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/i
 
     lib = os.path.realpath(lib)
 
-    return Lib(includedir=include, lib_file=lib, version=version, soname=get_soname(config, lib), is_system=is_system)
+
+    dependencies: T.List[Lib] = []
+    try:
+        with open(os.path.join(os.path.dirname(lib), "..", "powermake_dependencies.txt"), "r") as file:
+            while True:
+                line = file.readline()
+                if not line:
+                    break
+                if line.count(",") != 4:
+                    continue
+
+                dep = line.strip().split(",")
+                dep_file = dep[0]
+                dep_includedir = dep[1]
+                dep_version = parse_version(dep[2])
+                dep_soname = None if dep[3] == "None" else dep[3]
+                dep_is_system = dep[4] == "True"
+                dependencies.append(Lib(includedir=dep_includedir, lib_file=dep_file, version=dep_version, soname=dep_soname, is_system=dep_is_system, dependencies=[]))
+    except OSError:
+        pass
+
+    return Lib(includedir=include, lib_file=lib, version=version, soname=get_soname(config, lib), is_system=is_system, dependencies=dependencies)

@@ -60,3 +60,4 @@ class Lib:
     lib_file: str
     soname: T.Union[str, None]
     is_system: bool
+    dependencies: T.List[Lib]

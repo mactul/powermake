@@ -1,7 +1,6 @@
 import os
 import shlex
 import shutil
-import tempfile
 import subprocess
 import typing as T
 from .lib import Lib
@@ -98,6 +97,8 @@ def run_meson(config: Config, build_dir: str, *additional_args: str, prefer_stat
 
     _set_pkg_environment(config, dependencies)
 
+    config._package_libs.extend(dependencies)
+
     makedirs(build_dir)
 
     crossfile_path = os.path.join(build_dir, "powermake_meson_crossfile")
@@ -115,6 +116,8 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     cmake_path = shutil.which("cmake")
     if cmake_path is None:
         raise PowerMakeRuntimeError("Unable to found cmake executable")
+    
+    config._package_libs.extend(dependencies)
 
     args = []
     if config.c_compiler is not None:

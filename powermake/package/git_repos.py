@@ -189,9 +189,9 @@ class DefaultGitRepos(GitRepo):
     _default_packages = {
         "SDL2": ("SDL", tuple(), ("2.0", "2.*")),
         "SDL3": ("SDL", tuple(), ("3.0", "3.*")),
-        "SDL2_ttf": ("SDL_ttf", ("--cmake-flag=-DCMAKE_POLICY_VERSION_MINIMUM=3.5", "--dependency=SDL2,2.0,2.*", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--need-libmath"), ("2.0", "2.*")),
-        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--need-libmath", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
-        "SDL3_ttf-static": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
+        "SDL2_ttf": ("SDL_ttf", ("--cmake-flag=-DCMAKE_POLICY_VERSION_MINIMUM=3.5", "--dependency=SDL2,2.0,2.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--need-libmath", "--cmake-flag=-DSDL2TTF_SAMPLES=OFF", "--cmake-flag=-DSDL2TTF_VENDORED=OFF"), ("2.0", "2.*")),
+        "SDL3_ttf": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--need-libmath", "--cmake-flag=-DSDLTTF_SAMPLES=OFF", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
+        "SDL3_ttf-static": ("SDL_ttf", ("--dependency=SDL3,3.0,3.*", "--dependency=harfbuzz,None,None", "--dependency=freetype,None,None", "--dependency=z,None,None,force", "--cmake-flag=-DSDLTTF_SAMPLES=OFF", "--cmake-flag=-DSDLTTF_VENDORED=OFF"), ("3.0", "3.*")),
         "SDL2_image": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
         "SDL3_image": ("SDL_image", ("--dependency=SDL3,3.0,3.*", ), ("3.0", "3.*")),
         "SDL2_image-static": ("SDL_image", ("--dependency=SDL2,2.0,2.*", ), ("2.0", "2.*")),
@@ -212,7 +212,7 @@ class DefaultGitRepos(GitRepo):
     }
     _preconfigured_repos: T.Dict[str, _RepoInfo] = {
         "SDL": _RepoInfo("https://github.com/libsdl-org/SDL.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DSDL_SHARED=ON", "--cmake-flag=-DSDL_STATIC=ON", "--copy-tree=../android-project/app/src/main/java/org/,src/"), static_flags=tuple()),
-        "SDL_ttf": _RepoInfo("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--cmake-flag=-DSDLTTF_SAMPLES=OFF", ), static_flags=("--cmake-static", )),
+        "SDL_ttf": _RepoInfo("https://github.com/libsdl-org/SDL_ttf.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=tuple(), static_flags=("--cmake-static", )),
         "SDL_image": _RepoInfo("https://github.com/libsdl-org/SDL_image.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=tuple(), static_flags=("--cmake-static", )),
         "boringssl": _RepoInfo("https://boringssl.googlesource.com/boringssl", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", ("fips.*", "version.*"), additional_cmdline=("--cmake-flag=-DBUILD_TESTING=off", ), static_flags=tuple()),
         "libressl": _RepoInfo("https://github.com/libressl/portable.git", "build/makefile.py", "https://github.com/mactul/powermake-repos.git", "generic/cmake/cmake_makefile.py", tuple(), additional_cmdline=("--autogen-sh", ), static_flags=tuple()),

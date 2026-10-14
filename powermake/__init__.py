@@ -383,6 +383,13 @@ def archive_files(config: Config, object_files: T.Iterable[str], archive_name: T
         delete_files_from_disk(output_file)
     return Operation(output_file, object_files, config, command, "AR").execute(force=force)
 
+def _get_recursives_deps(libs: T.List[package.Lib]) -> T.List[package.Lib]:
+    deps: T.List[package.Lib] = []
+    for lib in libs:
+        if len(lib.dependencies) > 0:
+            deps.extend(_get_recursives_deps(lib.dependencies))
+        deps.append(lib)
+    return deps
 
 def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[str] = [], executable_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
     """
@@ -552,7 +559,7 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     archives.extend(lib.lib_file for lib in reversed(config._package_libs))
 
     config.add_shared_linker_flags("-static-libstdc++")
-    libmain = link_shared_lib(config, object_files, archives=archives, lib_name="libmain.so")
+    libmain = link_shared_lib(config, object_files, archives=archives, lib_name="libmain")
 
     android_jar = os.path.join(config.sdk_path, "platforms/android-35/android.jar")
 
@@ -594,7 +601,12 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     with zipfile.ZipFile("build/.objs/app.apk", "a") as z:
         z.write("build/.objs/dex/classes.dex", "classes.dex", zipfile.ZIP_DEFLATED)
         z.write(libmain, "lib/arm64-v8a/libmain.so", zipfile.ZIP_STORED)
-        for lib in config._package_libs:
+        deps = _get_recursives_deps(config._package_libs)
+        written_deps: T.Set[str] = set()
+        for lib in deps:
+            if lib.lib_file in written_deps:
+                continue
+            written_deps.add(lib.lib_file)
             z.write(lib.lib_file, f"lib/arm64-v8a/{lib.soname or os.path.basename(lib.lib_file)}", zipfile.ZIP_STORED)
         for src, dest in additional_files:
             z.write(src, dest, zipfile.ZIP_STORED)
