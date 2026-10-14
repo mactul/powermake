@@ -456,7 +456,9 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
                 elif os.path.exists(alternative_dll_path):
                     shutil.copy2(alternative_dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
             elif not lib.lib_file.endswith(".a"):
-                shutil.copy2(lib.lib_file, os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file)))
+                out = os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file))
+                print("Copying", lib.lib_file, "into", out)
+                shutil.copy2(lib.lib_file, out)
 
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "LD").execute(force=force)

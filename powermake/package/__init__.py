@@ -117,8 +117,26 @@ def linux_escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]
         return [*_privilege_escalator, shlex.join(command)]
     return [*_privilege_escalator, *command]
 
+def get_macos_soname(config: Config, lib_path: str) -> T.Union[str, None]:
+    if config.linker is None:
+        return None
+    
+    objdump_path = (split_toolchain_prefix(config.linker.path)[0] or os.path.dirname(config.linker.path)) + "otool"
+
+    try:
+        lines = subprocess.check_output([objdump_path, "-D", lib_path], encoding="utf-8").splitlines()
+        if len(lines) == 0:
+            return None
+        print(lines[-1])
+        return os.path.basename(lines[-1])
+    except (subprocess.CalledProcessError, OSError):
+        return None
+
 
 def get_soname(config: Config, lib_path: str) -> T.Union[str, None]:
+    if config.target_is_macos():
+        return get_macos_soname(config, lib_path)
+
     if config.linker is None:
         return None
 

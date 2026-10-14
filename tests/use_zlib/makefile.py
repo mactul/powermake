@@ -19,6 +19,7 @@ def on_build(config: powermake.Config):
     exe = powermake.link_files(config, objects)
 
     r, out = powermake.run_command_get_output(config, command=[exe], custom_info_msg="Testing the installed version")
+    powermake.utils.print_bytes(out)
     assert(r == 0)
     version = vp.parse_version(out.decode().strip().rsplit("\n", maxsplit=1)[-1].strip())
     assert(version >= vp.parse_version("v1.3.2"))
