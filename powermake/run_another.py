@@ -170,6 +170,9 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
     if propagate_cmdline_add_flag:
         for flag in config._args_parsed.add_flag:
             command.append(f"--add-flag={flag}")
+    
+    if config._args_parsed.pkg_install_noconfirm:
+        command.append("--pkg-install-noconfirm")
 
     env = os.environ.copy()
     if use_parent_toolchain:

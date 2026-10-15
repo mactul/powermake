@@ -67,7 +67,7 @@ _python_powermake_global() {
                     {-o+,--compile-commands-dir=}'[compile_commands.json output dir]:dir:_directories' \
                     '--clangd-compat[clang-compatible compile_commands.json]' \
                     {-m,--makefile}'[generate a GNU Makefile]' \
-                    '--os=[target operating system]:os:(Windows Linux macOS)' \
+                    '--os=[target operating system]:os:(Windows Linux macOS Android)' \
                     '--arch=[target architecture]:arch:(x64 x86 arm64 arm32)' \
                     '*--add-flag=-[add a compiler/linker flag]:flag:_powermake_add_flag' \
                     '--retransmit-colors[keep ANSI color codes intact]' \

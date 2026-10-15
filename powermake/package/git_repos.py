@@ -152,8 +152,6 @@ class GitRepo:
             shutil.copy(self.src_makefile_path, os.path.join(temp_dir.name, self.dst_makefile_path))
 
         cmdline = ["--install", install_path, *self.additional_cmdline]
-        if config._args_parsed.pkg_install_noconfirm:
-            cmdline.append("--pkg-install-noconfirm")
 
         run_another_powermake(config, join_absolute_paths(temp_dir.name, os.path.normpath(os.path.join("/", self.dst_makefile_path))), rebuild=True, debug=False, command_line_args=cmdline)
 
