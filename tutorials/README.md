@@ -20,3 +20,4 @@ This section is not meant to show every argument of every function, the idea is 
 - [Multiple Targets](./04-multiple-targets/README.md)
 - [Configuration and Crosscompilation](./05-configuration-and-crosscompilation/README.md)
 - [Package Manager](./06-package-manager/README.md)
+- [An Android app with SDL3](./07-sdl3-android-app/README.md)
