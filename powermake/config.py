@@ -429,6 +429,7 @@ class Config:
         self.nb_total_operations = 0
 
         self.sdk_path = os.path.expanduser("~/.powermake/android-sdk")
+        self.java_env: T.Dict[str, str] = {}
 
         self.c_compiler: T.Union[Compiler, None] = None
         self.cpp_compiler: T.Union[Compiler, None] = None
@@ -788,7 +789,24 @@ class Config:
                     os.environ[var] = env[var]
         
         if self.target_is_android():
-            download_android_sdk(self.sdk_path, self.verbosity)
+            if self.host_is_windows():
+                jdk_filename = "openjdk-21.0.2_windows-x64_bin.zip"
+                sdk_filename = "commandlinetools-win-15859902_latest.zip"
+            elif self.host_is_linux():
+                if self.host_simplified_architecture == "arm64":
+                    jdk_filename = "openjdk-21.0.2_linux-aarch64_bin.tar.gz"
+                else:
+                    jdk_filename = "openjdk-21.0.2_linux-x64_bin.tar.gz"
+                sdk_filename = "commandlinetools-linux-15859902_latest.zip"
+            elif self.host_is_macos() and self.host_simplified_architecture == "arm64":
+                jdk_filename = "openjdk-22_macos-aarch64_bin.tar.gz"
+                sdk_filename = "commandlinetools-mac_arm64-15859902_latest.zip"
+            elif self.host_is_macos():
+                jdk_filename = "openjdk-22_macos-x64.tar.gz"
+                sdk_filename = "commandlinetools-mac_x86_64-15859902_latest.zip"
+            else:
+                raise NotImplementedError("Host platform not supported for Android compilation, we recommend Linux, it's the most tested")
+            self.java_env = download_android_sdk(self.sdk_path, self.verbosity, jdk_filename, sdk_filename)
             self.add_flags("-fPIC")
 
     def reload_tools(self) -> None:

@@ -566,12 +566,12 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     android_jar = os.path.join(config.sdk_path, "platforms/android-35/android.jar")
 
     makedirs("build/.objs/classes/")
-    if run_command(config, ["javac", "-d", "build/.objs/classes", "-cp", android_jar, *java_files]) != 0:
+    if run_command(config, [os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/javac{'.exe' if config.host_is_windows() else ''}"), "-d", "build/.objs/classes", "-cp", android_jar, *java_files], env=config.java_env) != 0:
         raise PowerMakeRuntimeError("Java compilation failed")
 
     class_files = get_files("build/.objs/classes/**/*.class")
     makedirs("build/.objs/dex/")
-    if run_command(config, [os.path.join(config.sdk_path, "build-tools/35.0.1/d8"), "--lib", android_jar, "--min-api", "24", "--output", "build/.objs/dex", *class_files]) != 0:
+    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/d8{'.exe' if config.host_is_windows() else ''}"), "--lib", android_jar, "--min-api", "24", "--output", "build/.objs/dex", *class_files], env=config.java_env) != 0:
         raise PowerMakeRuntimeError("Java link failed")
     
     if not os.path.exists(manifest_path):
@@ -597,7 +597,7 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     </application>
 </manifest>""")
     
-    if run_command(config, [os.path.join(config.sdk_path, "build-tools/35.0.1/aapt2"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path]) != 0:
+    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path]) != 0:
         raise PowerMakeRuntimeError("apk creation failed")
 
     with zipfile.ZipFile("build/.objs/app.apk", "a") as z:
@@ -614,10 +614,10 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
             z.write(src, dest, zipfile.ZIP_STORED)
 
     makedirs(os.path.dirname(output_file))
-    if run_command(config, [os.path.join(config.sdk_path, "build-tools/35.0.1/zipalign"), "-f", "-p", "4", "build/.objs/app.apk", output_file]) != 0:
+    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/zipalign{'.exe' if config.host_is_windows() else ''}"), "-f", "-p", "4", "build/.objs/app.apk", output_file]) != 0:
         raise PowerMakeRuntimeError("apk align failed")
     
-    if run_command(config, [os.path.join(config.sdk_path, "build-tools/35.0.1/apksigner"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password}) != 0:
+    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.exe' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}) != 0:
         raise PowerMakeRuntimeError("apk align failed")
     
     return output_file
@@ -627,7 +627,9 @@ def create_android_keystore(config: Config, path: str, password: str, keysize: i
     if os.path.exists(path):
         print(warning_text('WARNING: Android keystore already exists, skipping'))
         return
-    if run_command(config, ["keytool", "-genkeypair", "-keystore", path, "-storepass", password, "-keypass", password, "-keyalg", "RSA", "-keysize", str(keysize), "-validity", str(days_of_validity), "-dname", f"CN={CN}"], custom_info_msg="Generating Android keystore") != 0:
+    
+    print_info("Generating Android keystore", config.verbosity)
+    if subprocess.run([os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/keytool{'.exe' if config.host_is_windows() else ''}"), "-genkeypair", "-keystore", path, "-storepass", password, "-keypass", password, "-keyalg", "RSA", "-keysize", str(keysize), "-validity", str(days_of_validity), "-dname", f"CN={CN}"], env=config.java_env).returncode != 0:
         raise PowerMakeRuntimeError("Android keystore generation failed")
 
 
