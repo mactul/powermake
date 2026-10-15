@@ -48,6 +48,7 @@
 # contributions.
 # ---------------------------------------------------------------------------
 
+from __future__ import annotations
 import typing as T
 from dataclasses import dataclass
 from ..version_parser import Version
