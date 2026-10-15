@@ -51,6 +51,7 @@
 
 import os
 import sys
+import hashlib
 import tempfile
 import typing as T
 import __main__ as __makefile__
@@ -156,3 +157,26 @@ def get_empty_file() -> str:
         file.close()
 
     return _empty_file
+
+def get_folder_hash(folder_path: str) -> str:
+    hasher = hashlib.sha256()
+
+    for root, dirs, files in os.walk(folder_path):
+        # Maintain consistent hash order
+        dirs.sort()
+        for file in sorted(files):
+            full_path = os.path.join(root, file)
+            
+            # Hash the relative path so moving the root folder doesn't change it, 
+            # but changing internal file names or structures does.
+            rel_path = os.path.relpath(full_path, folder_path)
+            hasher.update(rel_path.encode('utf-8'))
+
+            try:
+                with open(full_path, 'rb') as f:
+                    while chunk := f.read(8192):
+                        hasher.update(chunk)
+            except (PermissionError, FileNotFoundError):
+                continue  # Skip files that can't be read
+
+    return hasher.hexdigest()

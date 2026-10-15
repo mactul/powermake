@@ -52,6 +52,7 @@
 import os
 import re
 import glob
+import json
 import shlex
 import shutil
 import zipfile
@@ -63,7 +64,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from . import compilers, linkers, archivers, shared_linkers, zsh_completions, package
 from .config import Config
-from .utils import makedirs
+from .utils import makedirs, get_folder_hash
 from .tools import EnforcedFlag
 from .__version__ import __version__
 from . import utils, display, generation
@@ -518,7 +519,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
     command = config.shared_linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "SHLD").execute(force=force)
 
-def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: T.Iterable[str], keystore_path: str, keystore_password: str, archives: T.List[str] = [], additional_files: T.Iterable[T.Tuple[str, str]] = [], manifest_path: str = "./AndroidManifest.xml", executable_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
+def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: T.Iterable[str], keystore_path: str, keystore_password: str, archives: T.List[str] = [], additional_files: T.List[T.Tuple[str, str]] = [], manifest_path: str = "./AndroidManifest.xml", executable_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
     """
     Create an executable from a list of object files and a list of archive files.
 
@@ -565,14 +566,37 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
 
     android_jar = os.path.join(config.sdk_path, "platforms/android-35/android.jar")
 
-    makedirs("build/.objs/classes/")
-    if run_command(config, [os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/javac{'.exe' if config.host_is_windows() else ''}"), "-d", "build/.objs/classes", "-cp", android_jar, *java_files], env=config.java_env) != 0:
-        raise PowerMakeRuntimeError("Java compilation failed")
+    java_files_set = set(java_files)
+    up_to_date = False
+    try:
+        with open("build/.objs/java_cache.json", "r") as file:
+            java_cache = json.load(file)
+            up_to_date = java_files_set == set(java_cache["java_files"]) and get_folder_hash("build/.objs/classes/") == java_cache["classes_folder_hash"]
+    except OSError:
+        pass
+
+    if config.rebuild or not up_to_date:
+        delete_files_from_disk("build/.objs/classes/")
+        makedirs("build/.objs/classes/")
+        if run_command(config, [os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/javac{'.exe' if config.host_is_windows() else ''}"), "-d", "build/.objs/classes", "-cp", android_jar, *java_files_set], env=config.java_env, target="classes") != 0:
+            raise PowerMakeRuntimeError("Java compilation failed")
+        with open("build/.objs/java_cache.json", "w") as file:
+            java_cache = {
+                "java_files": list(java_files_set),
+                "classes_folder_hash": get_folder_hash("build/.objs/classes/")
+            }
+            json.dump(java_cache, file)
 
     class_files = get_files("build/.objs/classes/**/*.class")
     makedirs("build/.objs/dex/")
-    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/d8{'.exe' if config.host_is_windows() else ''}"), "--lib", android_jar, "--min-api", "24", "--output", "build/.objs/dex", *class_files], env=config.java_env) != 0:
-        raise PowerMakeRuntimeError("Java link failed")
+    run_command_if_needed(
+        config,
+        outputfile="build/.objs/dex/classes.dex",
+        dependencies=class_files,
+        command = [os.path.join(config.sdk_path, f"build-tools/35.0.1/d8{'.exe' if config.host_is_windows() else ''}"), "--lib", android_jar, "--min-api", "24", "--output", "build/.objs/dex", *class_files],
+        env=config.java_env
+    )
+    
     
     if not os.path.exists(manifest_path):
         with open(manifest_path, "w") as file:
@@ -597,28 +621,32 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     </application>
 </manifest>""")
     
-    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path]) != 0:
-        raise PowerMakeRuntimeError("apk creation failed")
+    if needs_update(outputfile="build/.objs/app.apk", dependencies={android_jar, manifest_path, "build/.objs/dex/classes.dex", libmain, *(src for src, _ in additional_files)}, additional_includedirs=[]):
+        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path], custom_info_msg="Creating APK archive") != 0:
+            raise PowerMakeRuntimeError("apk creation failed")
 
-    with zipfile.ZipFile("build/.objs/app.apk", "a") as z:
-        z.write("build/.objs/dex/classes.dex", "classes.dex", zipfile.ZIP_DEFLATED)
-        z.write(libmain, "lib/arm64-v8a/libmain.so", zipfile.ZIP_STORED)
-        deps = _get_recursives_deps(config._package_libs)
-        written_deps: T.Set[str] = set()
-        for lib in deps:
-            if lib.lib_file in written_deps:
-                continue
-            written_deps.add(lib.lib_file)
-            z.write(lib.lib_file, f"lib/arm64-v8a/{lib.soname or os.path.basename(lib.lib_file)}", zipfile.ZIP_STORED)
-        for src, dest in additional_files:
-            z.write(src, dest, zipfile.ZIP_STORED)
+        with zipfile.ZipFile("build/.objs/app.apk", "a") as z:
+            z.write("build/.objs/dex/classes.dex", "classes.dex", zipfile.ZIP_DEFLATED)
+            z.write(libmain, "lib/arm64-v8a/libmain.so", zipfile.ZIP_STORED)
+            deps = _get_recursives_deps(config._package_libs)
+            written_deps: T.Set[str] = set()
+            for lib in deps:
+                if lib.lib_file in written_deps:
+                    continue
+                written_deps.add(lib.lib_file)
+                print_debug_info(f"Adding {lib.lib_file} to build/.objs/app.apk", config.verbosity)
+                z.write(lib.lib_file, f"lib/arm64-v8a/{lib.soname or os.path.basename(lib.lib_file)}", zipfile.ZIP_STORED)
+            for src, dest in additional_files:
+                print_debug_info(f"Adding {src} to build/.objs/app.apk", config.verbosity)
+                z.write(src, dest, zipfile.ZIP_STORED)
 
     makedirs(os.path.dirname(output_file))
-    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/zipalign{'.exe' if config.host_is_windows() else ''}"), "-f", "-p", "4", "build/.objs/app.apk", output_file]) != 0:
-        raise PowerMakeRuntimeError("apk align failed")
-    
-    if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.exe' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}) != 0:
-        raise PowerMakeRuntimeError("apk align failed")
+    if needs_update(output_file, dependencies={"build/.objs/app.apk"}, additional_includedirs=[]):
+        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/zipalign{'.exe' if config.host_is_windows() else ''}"), "-f", "-p", "4", "build/.objs/app.apk", output_file], custom_info_msg="Aligning APK") != 0:
+            raise PowerMakeRuntimeError("apk align failed")
+        
+        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.exe' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}, custom_info_msg="Signing APK") != 0:
+            raise PowerMakeRuntimeError("apk align failed")
     
     return output_file
 
