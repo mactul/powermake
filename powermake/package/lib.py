@@ -50,6 +50,7 @@
 
 import typing as T
 from dataclasses import dataclass
+from __future__ import annotations
 from ..version_parser import Version
 
 
