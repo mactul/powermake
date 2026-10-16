@@ -68,7 +68,7 @@ parser = powermake.ArgumentParser()
 Here we are creating the parser object, that contains all PowerMake commands already registered.
 
 ```py
-parser.add_argument("--hello", description="some random argument", action="store_true")
+parser.add_argument("--hello", help="some random argument", action="store_true")
 ```
 We add a new argument named `--hello`, because we put `action="store_true"`, this argument will be a boolean, `True` if the flag is on the command line, else `False`.
 

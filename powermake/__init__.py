@@ -631,6 +631,8 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
             deps = _get_recursives_deps(config._package_libs)
             written_deps: T.Set[str] = set()
             for lib in deps:
+                if lib.lib_file.endswith(".a"):
+                    continue
                 if lib.lib_file in written_deps:
                     continue
                 written_deps.add(lib.lib_file)

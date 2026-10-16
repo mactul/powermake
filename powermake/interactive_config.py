@@ -123,7 +123,7 @@ class InteractiveConfig:
             answer = multiple_choices("What do you want to configure ?", choices, [i for i in range(1, len(choices) + 1)])
 
             if answer == 1:
-                self.target_operating_system = multiple_choices("Select the target operating system", [None, "Linux", "Windows", "MacOS", "Write my own string"])
+                self.target_operating_system = multiple_choices("Select the target operating system", [None, "Linux", "Windows", "MacOS", "Android", "Write my own string"])
                 if self.target_operating_system == "Write my own string":
                     self.target_operating_system = input("Operating System: ")
             elif answer == 2:

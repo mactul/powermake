@@ -248,7 +248,7 @@ def on_install(config: powermake.Config, location: str):
 
     # This ensures that the file "my_time.h" will be exported into /usr/local/include/my_time/my_time.h
     # The .so will be copied into /usr/local/lib/my_time.so
-    config.add_exported_headers("my_time.h", subfolder="my_time")
+    config.add_exported_headers("./include/my_time.h", subfolder="my_time")
 
     # After setting everything, we call the "normal" install function, so everything will be exported with the good format, we are going to have good debug prints depending on the verbosity level, etc...
     powermake.default_on_install(config, location)

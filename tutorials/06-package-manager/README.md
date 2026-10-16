@@ -176,18 +176,19 @@ In the example, we use a makefile.py that runs generic cmake commands. It can be
 
 ### Choosing static or dynamic libraries
 
-By default, `powermake.package.find_lib` tries to use static libraries when they are available.  
+By default, `powermake.package.find_lib` uses dynamic libraries when they are available.
+If the libraries are not system ones, they are automatically copied in the build folder, and the rpath of the executable is modified so everything can be exported together.  
 This is the preference order used by default:
 ```py
 from powermake.package import ExtType
 
-DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_A, ExtType.LIB_SO, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL, ExtType.LIB_DYLIB]
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_SO, ExtType.LIB_DYLIB, ExtType.LIB_A, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
 ```
 
 You can change this order and even remove entries if you want.  
-This example only accepts .so and .dll (it prefers .so, but since a linker that accepts .so doesn't accept .dll and vice-versa, the order doesn't matter much).
+This example only accepts .a and .dylib, always prefering a static lib to a dynamic one.
 ```py
-lib = powermake.package.find_lib(config, "ssl", ext_pref_order=[powermake.package.ExtType.LIB_SO, powermake.package.ExtType.LIB_DLL])
+lib = powermake.package.find_lib(config, "ssl", ext_pref_order=[powermake.package.ExtType.LIB_A, powermake.package.ExtType.LIB_DYLIB])
 config.add_lib(lib)
 ```
 
@@ -201,7 +202,7 @@ from powermake.package import ExtType
 def on_build(config: powermake.Config):
     files = powermake.get_files("**/*.c")
 
-    lib = powermake.package.find_lib(config, "ssl", ext_pref_order=[.ExtType.LIB_SO, ExtType.LIB_DLL])
+    lib = powermake.package.find_lib(config, "ssl", ext_pref_order=[powermake.package.ExtType.LIB_A, powermake.package.ExtType.LIB_DYLIB])
     config.add_lib(lib)
 
     objects = powermake.compile_files(config, files)
