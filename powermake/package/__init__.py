@@ -92,7 +92,7 @@ class ExtType(Enum):
     LIB_DYLIB = "\\.dylib"
     "Files ending with .dylib (ex: ssl.dylib)"
 
-DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_SO, ExtType.LIB_DYLIB, ExtType.LIB_A, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_SO, ExtType.LIB_DYLIB, ExtType.LIB_DLL_A, ExtType.LIB_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
 
 
 _privilege_escalator: T.Union[None, T.List[str]] = None
@@ -124,18 +124,50 @@ def get_macos_soname(config: Config, lib_path: str) -> T.Union[str, None]:
     objdump_path = (split_toolchain_prefix(config.linker.path)[0] or os.path.dirname(config.linker.path)) + "otool"
 
     try:
-        lines = subprocess.check_output([objdump_path, "-D", lib_path], encoding="utf-8").splitlines()
+        lines = subprocess.check_output([objdump_path, "-D", lib_path], encoding="utf-8", stderr=subprocess.DEVNULL).splitlines()
         if len(lines) == 0:
             return None
-        print(lines[-1])
         return os.path.basename(lines[-1])
     except (subprocess.CalledProcessError, OSError):
         return None
 
 
+def get_mingw_soname(config: Config, lib_path: str) -> T.Union[str, None]:
+    if config.linker is None:
+        return None
+
+    dlltool_path = (split_toolchain_prefix(config.linker.path)[0] or os.path.dirname(config.linker.path)) + "dlltool"
+    try:
+        return subprocess.check_output([dlltool_path, "-I", lib_path], encoding="utf-8", stderr=subprocess.DEVNULL).strip()
+    except (subprocess.CalledProcessError, OSError):
+        return None
+
+def get_msvc_soname(config: Config, lib_path: str) -> T.Union[str, None]:
+    if config.linker is None:
+        return None
+
+    dumpbin_path = shutil.which("dumpbin")
+    if dumpbin_path is None:
+        return None
+    try:
+        lines = subprocess.check_output([dumpbin_path, "/symbols", lib_path], encoding="utf-8", stderr=subprocess.DEVNULL).splitlines()
+        for line in lines:
+            i = line.find(" __IMPORT_DESCRIPTOR_")
+            if i != -1:
+                return line[i + len(" __IMPORT_DESCRIPTOR_"):].strip() + ".dll"
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    return None
+
 def get_soname(config: Config, lib_path: str) -> T.Union[str, None]:
     if config.target_is_macos():
         return get_macos_soname(config, lib_path)
+    
+    if config.target_is_mingw():
+        return get_mingw_soname(config, lib_path)
+    
+    if config.target_is_windows():
+        return get_msvc_soname(config, lib_path)
 
     if config.linker is None:
         return None
@@ -143,7 +175,7 @@ def get_soname(config: Config, lib_path: str) -> T.Union[str, None]:
     objdump_path = (split_toolchain_prefix(config.linker.path)[0] or os.path.dirname(config.linker.path)) + "objdump"
 
     try:
-        lines = subprocess.check_output([objdump_path, "-p", lib_path], encoding="utf-8").splitlines()
+        lines = subprocess.check_output([objdump_path, "-p", lib_path], encoding="utf-8", stderr=subprocess.DEVNULL).splitlines()
         for line in lines:
             if "SONAME" in line:
                 return line.split()[-1]
@@ -333,7 +365,7 @@ def create_main_object(config: Config) -> T.Tuple[tempfile.TemporaryDirectory[st
 
     cmd = compiler.basic_compile_command(os.path.join(temp_dir.name, "main.o"), os.path.join(temp_dir.name, "main.c"), args=compiler.format_args([], [], flags))
     if subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
-        raise PowerMakeRuntimeError(f"Enable to compile an empty main program with {compiler}")
+        raise PowerMakeRuntimeError(f"Unable to compile an empty main program with {compiler}")
 
     return temp_dir, os.path.join(temp_dir.name, "main.o")
 

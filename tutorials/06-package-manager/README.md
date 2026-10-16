@@ -182,7 +182,7 @@ This is the preference order used by default:
 ```py
 from powermake.package import ExtType
 
-DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_SO, ExtType.LIB_DYLIB, ExtType.LIB_A, ExtType.LIB_DLL_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
+DEFAULT_EXT_PREF_ORDER = [ExtType.LIB_SO, ExtType.LIB_DYLIB, ExtType.LIB_DLL_A, ExtType.LIB_A, ExtType.LIB_LIB, ExtType.LIB_DLL]
 ```
 
 You can change this order and even remove entries if you want.  

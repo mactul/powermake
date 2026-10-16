@@ -171,7 +171,10 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
             try:
                 sdk = subprocess.check_output([xcrun, "--sdk", "macosx", "--show-sdk-path"], encoding="utf-8").strip()
                 framework_path = os.path.join(sdk, "System/Library/Frameworks")
-                args.append(f"-DCMAKE_FRAMEWORK_PATH={framework_path}")
+                args.extend([
+                    f"-DCMAKE_FRAMEWORK_PATH={framework_path}",
+                    "-DCMAKE_FIND_FRAMEWORK=LAST"
+                ])
             except subprocess.CalledProcessError:
                 pass
 
@@ -192,10 +195,13 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
             f"-DCMAKE_PREFIX_PATH={prefix_path_str}",
             f"-DCMAKE_FIND_ROOT_PATH={prefix_path_str}",
             "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY",
-            "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
-            "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
         ])
-        if not config.target_is_android():
+        if config.target_is_android():
+            args.extend([
+                "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
+            ])
+        else:
             args.extend([
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",

@@ -447,15 +447,17 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     archives.extend(lib.lib_file for lib in reversed(config._package_libs))
 
-    for lib in config._package_libs:
-        if not lib.is_system:
+    deps = _get_recursives_deps(config._package_libs)
+    for lib in deps:
+        if not lib.is_system or config.target_is_windows():
             if lib.lib_file.endswith(".dll.a") or lib.lib_file.endswith(".lib"):
-                dll_path = lib.lib_file[:-2] if lib.lib_file.endswith(".dll.a") else (lib.lib_file[:-3] + "dll")
-                alternative_dll_path = os.path.join(os.path.dirname(lib.lib_file), "../bin", os.path.basename(dll_path))
+                dll_name = lib.soname or os.path.basename(lib.lib_file[:-2] if lib.lib_file.endswith(".dll.a") else (lib.lib_file[:-3] + "dll"))
+                dll_path = os.path.join(os.path.dirname(lib.lib_file), dll_name)
+                alternative_dll_path = os.path.join(os.path.dirname(lib.lib_file), "../bin", dll_name)
                 if os.path.exists(dll_path):
-                    shutil.copy2(dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
+                    shutil.copy2(dll_path, os.path.join(output_dir, dll_name))
                 elif os.path.exists(alternative_dll_path):
-                    shutil.copy2(alternative_dll_path, os.path.join(output_dir, os.path.basename(dll_path)))
+                    shutil.copy2(alternative_dll_path, os.path.join(output_dir, dll_name))
             elif not lib.lib_file.endswith(".a"):
                 out = os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file))
                 print("Copying", lib.lib_file, "into", out)
