@@ -52,9 +52,18 @@ def on_build(config: powermake.Config):
 
     success = {}
 
+    objects = powermake.compile_files(config, {"main.c"})
+
     for libname, package_name in libs:
+        new_config = config.copy()
         try:
-            powermake.package.find_lib(config, libname, package_name=package_name, install_dir=install_dir, disable_system_packages=True)
+            lib = powermake.package.find_lib(config, libname, package_name=package_name, install_dir=install_dir, disable_system_packages=True)
+            config.add_lib(lib)
+            if not config.target_is_android():
+                exe = powermake.link_files(config, objects, force=True)
+                if config.host_simplified_architecture == config.target_simplified_architecture and config.host_operating_system.lower() == config.target_operating_system.lower():
+                    if powermake.run_command(config, [exe]) != 0:
+                        raise powermake.PowerMakeRuntimeError(f"Program {exe} doesn't work")
             success[(libname, package_name)] = True
         except powermake.PowerMakeRuntimeError as e:
             print(e)
