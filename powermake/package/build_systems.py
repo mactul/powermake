@@ -112,6 +112,14 @@ def run_meson(config: Config, build_dir: str, *additional_args: str, prefer_stat
     return
 
 
+def _add_to_existing_arg(args: T.List[str], arg_prefix: str, to_add: str, sep: str) -> None:
+    for i in range(len(args)):
+        if args[i].startswith(arg_prefix):
+            args[i] = args[i] + sep + to_add
+            return
+    args.append(arg_prefix + to_add)
+                        
+
 def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False, dependencies: T.Iterable[Lib] = []) -> None:
     cmake_path = shutil.which("cmake")
     if cmake_path is None:
@@ -119,7 +127,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     
     config._package_libs.extend(dependencies)
 
-    args = []
+    args: T.List[str] = []
     if config.c_compiler is not None:
         args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
         if config.target_simplified_architecture == "x86":
@@ -206,11 +214,33 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
             ])
+    
+    cumulative_flags = {
+        "-DCMAKE_C_FLAGS=": ' ',
+        "-DCMAKE_CXX_FLAGS=": ' ',
+        "-DCMAKE_ASM_FLAGS=": ' ',
+        "-DCMAKE_INCLUDE_PATH=": ';',
+        "-DCMAKE_LIBRARY_PATH=": ';',
+        "-DCMAKE_PREFIX_PATH=": ';',
+        "-DCMAKE_FIND_ROOT_PATH=": ';'
+    }
+    
+    for arg in additional_args:
+        if arg in args:
+            continue
+        i = arg.find('=')
+        if i != -1:
+            i += 1
+            if arg[:i] in cumulative_flags:
+                _add_to_existing_arg(args, arg[:i], arg[i:], cumulative_flags[arg[:i]])
+                continue
+        args.append(arg)
+
 
     cmake_generator: T.Tuple[str, ...] = tuple()
     ninja = shutil.which("ninja")
     if ninja is not None:
         cmake_generator = ("-G", "Ninja")
 
-    if run_command(config, [cmake_path, *cmake_generator, path, *args, *additional_args]) != 0:
+    if run_command(config, [cmake_path, *cmake_generator, path, *args]) != 0:
         raise PowerMakeRuntimeError("Unable to run cmake")
