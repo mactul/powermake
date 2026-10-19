@@ -212,8 +212,19 @@ class LinkerMinGW(LinkerGNU):
     # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
     def __init__(self, path: T.Union[str, T.List[str]] = ["x86_64-w64-mingw32-gcc", "gcc.exe"]):
         super().__init__(path)
+    
+    def check_if_arg_exists(self, arg: T.Union[str, T.Tuple[str, ...]]) -> bool:
+        if isinstance(arg, tuple):
+            for a in arg:
+                if a.startswith("-Wl,-z"):
+                    return False
+        else:
+            if arg.startswith("-Wl,-z"):
+                return False
+        return super().check_if_arg_exists(arg)
 
-class LinkerMinGWPlusPlus(LinkerGNU):
+
+class LinkerMinGWPlusPlus(LinkerMinGW):
     type: T.ClassVar = "mingw++"
 
     # We need the .exe so there is no way under Linux to ask mingw and end up with gcc
