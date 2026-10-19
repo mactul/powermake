@@ -692,12 +692,20 @@ class Config:
         ## The first tool on the last will be loaded often, the last on the list will only be loaded if no other tool is disponible.
         ## New tools should be added at the end to avoid changing the default powermake behavior.
         if self.target_is_windows():
-            self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "mingw", "msvc", "gcc", "clang-cl", "clang"))
-            self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "mingw++", "msvc", "g++", "clang-cl", "clang++"))
-            self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "mingw", "gcc", "clang"))
-            self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "mingw", "msvc", "ar", "llvm-ar"))
-            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
-            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            if self.host_is_windows():
+                self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "mingw", "msvc", "gcc", "clang-cl", "clang"))
+                self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "mingw++", "msvc", "g++", "clang-cl", "clang++"))
+                self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "mingw", "gcc", "clang"))
+                self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "mingw", "msvc", "ar", "llvm-ar"))
+                self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+                self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "mingw++", "msvc", "g++", "clang++", "clang-cl", "gcc", "clang"))
+            else:
+                self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "mingw", "clang-cl"))
+                self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "mingw++", "clang-cl"))
+                self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "mingw"))
+                self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "mingw", "llvm-ar"))
+                self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "mingw++", "clang-cl"))
+                self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "mingw++", "clang-cl"))
         else:
             self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "gcc", "clang"))
             self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "g++", "clang++"))
