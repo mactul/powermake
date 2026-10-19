@@ -35,7 +35,7 @@ def download_and_extract(url: str, path: str) -> None:
 def download_android_sdk(sdk_path: str, verbosity: int, jdk_filename: str = "openjdk-21.0.2_linux-x64_bin.tar.gz", sdk_filename: str = "commandlinetools-linux-15859902_latest.zip") -> T.Dict[str, str]:
     java_environ = {
         "JAVA_HOME": os.path.join(sdk_path, "jdk", "jdk-21.0.2"),
-        "PATH": f"{os.path.join(sdk_path, "jdk", "jdk-21.0.2", "bin")}{os.pathsep}{os.environ["PATH"]}"
+        "PATH": f"{os.path.join(sdk_path, 'jdk', 'jdk-21.0.2', 'bin')}{os.pathsep}{os.environ['PATH']}"
     }
 
     lock_file = os.path.join(sdk_path, ".lock")
