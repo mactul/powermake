@@ -209,6 +209,19 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
             ])
+
+            args.extend([
+                f"-DCMAKE_TOOLCHAIN_FILE={os.path.join(config.sdk_path, 'ndk/27.3.13750724/build/cmake/android.toolchain.cmake')}",
+                "-DANDROID_PLATFORM=24"
+            ])
+            android_abis = {
+                'arm64': 'arm64-v8a',
+                'arm32': 'armeabi-v7a',
+                'x64': 'x86_64',
+                'x86': 'x86'
+            }
+            if config.target_simplified_architecture in android_abis:
+                args.append(f"-DANDROID_ABI={android_abis[config.target_simplified_architecture]}")
         else:
             args.extend([
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",

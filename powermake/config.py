@@ -665,10 +665,24 @@ class Config:
             if primer.tool_path_specified:
                 path = path or primer.tool_path
         if path is None and self.target_is_android():
-            path = os.path.join(self.sdk_path, "ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang")
+            host_toolchain_folder = "linux-x86_64"
+            if self.host_is_windows():
+                host_toolchain_folder = "windows-x86_64"
+            elif self.host_is_macos():
+                host_toolchain_folder = "darwin-x86_64"
+
+            host_toolchain_c_compiler = "aarch64-linux-android24-clang"
+            if self.target_simplified_architecture == "arm32":
+                host_toolchain_c_compiler = "armv7a-linux-androideabi24-clang"
+            elif self.target_simplified_architecture == "x86":
+                host_toolchain_c_compiler = "i686-linux-android24-clang"
+            elif self.target_simplified_architecture == "x64":
+                host_toolchain_c_compiler = "x86_64-linux-android24-clang"
+
+            path = os.path.join(self.sdk_path, f"ndk/27.3.13750724/toolchains/llvm/prebuilt/{host_toolchain_folder}/bin/{host_toolchain_c_compiler}")
             c_compiler_primer.tool_path = path
             c_compiler_primer.tool_type = "clang"
-            archiver_primer.tool_path = os.path.join(self.sdk_path, "ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar")
+            archiver_primer.tool_path = os.path.join(self.sdk_path, f"ndk/27.3.13750724/toolchains/llvm/prebuilt/{host_toolchain_folder}/bin/llvm-ar")
             archiver_primer.tool_type = "llvm-ar"
             archiver_primer.tool_path_specified = True
         toolchain_prefix = split_toolchain_prefix(path)[0]

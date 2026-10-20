@@ -521,7 +521,7 @@ def link_shared_lib(config: Config, object_files: T.Iterable[str], archives: T.L
     command = config.shared_linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "SHLD").execute(force=force)
 
-def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: T.Iterable[str], keystore_path: str, keystore_password: str, archives: T.List[str] = [], additional_files: T.List[T.Tuple[str, str]] = [], manifest_path: str = "./AndroidManifest.xml", executable_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
+def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: T.Iterable[str], keystore_path: str, keystore_password: str, archives: T.List[str] = [], additional_files: T.List[T.Tuple[str, str]] = [], manifest_path: str = "./AndroidManifest.xml", res_path: T.Union[str, None] = None, executable_name: T.Union[str, None] = None, force: T.Union[bool, None] = None) -> str:
     """
     Create an executable from a list of object files and a list of archive files.
 
@@ -622,14 +622,31 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
         </activity>
     </application>
 </manifest>""")
+
+    if res_path is not None:
+        res_files = get_files(os.path.join(res_path, "**/*"))
+        run_command_if_needed(
+            config,
+            outputfile="build/.objs/apk_res.zip",
+            dependencies=res_files,
+            command=[os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "compile", "-o", "build/.objs/apk_res.zip", "--dir", res_path],
+            custom_info_msg="Compiling APK res"
+        )
     
-    if needs_update(outputfile="build/.objs/app.apk", dependencies={android_jar, manifest_path, "build/.objs/dex/classes.dex", libmain, *(src for src, _ in additional_files)}, additional_includedirs=[]):
-        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path], custom_info_msg="Creating APK archive") != 0:
+    if needs_update(outputfile="build/.objs/app.apk", dependencies={android_jar, manifest_path, "build/.objs/dex/classes.dex", libmain, *(src for src, _ in additional_files), *(("build/.objs/apk_res.zip", ) if res_path is not None else tuple())}, additional_includedirs=[]):
+        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path, *(("-R", "build/.objs/apk_res.zip") if res_path is not None else tuple())], custom_info_msg="Creating APK archive") != 0:
             raise PowerMakeRuntimeError("apk creation failed")
 
+        android_abis = {
+            'arm64': 'arm64-v8a',
+            'arm32': 'armeabi-v7a',
+            'x64': 'x86_64',
+            'x86': 'x86'
+        }
+        abi = android_abis[config.target_simplified_architecture] if config.target_simplified_architecture in android_abis else "arm64-v8a"
         with zipfile.ZipFile("build/.objs/app.apk", "a") as z:
             z.write("build/.objs/dex/classes.dex", "classes.dex", zipfile.ZIP_DEFLATED)
-            z.write(libmain, "lib/arm64-v8a/libmain.so", zipfile.ZIP_STORED)
+            z.write(libmain, f"lib/{abi}/libmain.so", zipfile.ZIP_STORED)
             deps = _get_recursives_deps(config._package_libs)
             written_deps: T.Set[str] = set()
             for lib in deps:
@@ -639,7 +656,7 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
                     continue
                 written_deps.add(lib.lib_file)
                 print_debug_info(f"Adding {lib.lib_file} to build/.objs/app.apk", config.verbosity)
-                z.write(lib.lib_file, f"lib/arm64-v8a/{lib.soname or os.path.basename(lib.lib_file)}", zipfile.ZIP_STORED)
+                z.write(lib.lib_file, f"lib/{abi}/{lib.soname or os.path.basename(lib.lib_file)}", zipfile.ZIP_STORED)
             for src, dest in additional_files:
                 print_debug_info(f"Adding {src} to build/.objs/app.apk", config.verbosity)
                 z.write(src, dest, zipfile.ZIP_STORED)
