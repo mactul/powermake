@@ -78,6 +78,8 @@ CC=x86_64-w64-mingw32-gcc coverage run -a ./library/makefile.py --shared-lib || 
 coverage run -a ./use_zlib/makefile.py -rv --pkg-install-noconfirm || failure
 coverage run -a ./use_zlib/makefile.py -rv --os windows --arch x86 --pkg-install-noconfirm || failure
 
+coverage run -a ./mouse_trail/makefile.py -rv --os Android --pkg-install-noconfirm || failure
+
 rm -rf ./multiplatform/.vscode
 coverage run -a ./multiplatform/makefile.py --generate-vscode || failure
 if [ ! -f "./multiplatform/.vscode/launch.json" ] || [ ! -f "./multiplatform/.vscode/tasks.json" ]

@@ -25,6 +25,8 @@ SET CC=cl
 py ./use_zlib/makefile.py -rv --pkg-install-noconfirm || goto :failed
 SET CC=
 
+py ./mouse_trail/makefile.py -rv --os Android --pkg-install-noconfirm || goto :failed
+
 goto :EOF
 
 :failed

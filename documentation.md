@@ -1,142 +1,148 @@
 <!-- This file, being part of the documentation is excluded from AI restrictions of the license -->
 # PowerMake
 
-- [PowerMake](#powermake)
-  - [__Installation__](#installation)
-    - [Install from Pypi: (RECOMMENDED)](#install-from-pypi-recommended)
-    - [install from sources: (NOT RECOMMENDED)](#install-from-sources-not-recommended)
-  - [__Quick Example__](#quick-example)
-  - [__More examples__](#more-examples)
-  - [Documentation](#documentation)
-    - [Generating a PowerMake](#generating-a-powermake)
-    - [Command line arguments](#command-line-arguments)
-    - [Toolchain detection](#toolchain-detection)
-    - [PowerMake flags translation](#powermake-flags-translation)
-    - [powermake.run](#powermakerun)
-    - [powermake.Config](#powermakeconfig)
-      - [Members](#members)
-        - [debug](#debug)
-        - [rebuild](#rebuild)
-        - [nb\_total\_operations](#nb_total_operations)
-        - [target\_name](#target_name)
-        - [nb\_jobs](#nb_jobs)
-        - [compile\_commands\_dir](#compile_commands_dir)
-        - [host\_operating\_system](#host_operating_system)
-        - [target\_operating\_system](#target_operating_system)
-        - [host\_architecture](#host_architecture)
-        - [target\_architecture](#target_architecture)
-        - [c\_compiler](#c_compiler)
-        - [cpp\_compiler](#cpp_compiler)
-        - [as\_compiler](#as_compiler)
-        - [asm\_compiler](#asm_compiler)
-        - [rc\_compiler](#rc_compiler)
-        - [archiver](#archiver)
-        - [linker](#linker)
-        - [shared\_linker](#shared_linker)
-        - [obj\_build\_directory](#obj_build_directory)
-        - [lib\_build\_directory](#lib_build_directory)
-        - [exe\_build\_directory](#exe_build_directory)
-        - [defines](#defines)
-        - [additional\_includedirs](#additional_includedirs)
-        - [shared\_libs](#shared_libs)
-        - [c\_flags](#c_flags)
-        - [cpp\_flags](#cpp_flags)
-        - [c\_cpp\_flags](#c_cpp_flags)
-        - [as\_flags](#as_flags)
-        - [asm\_flags](#asm_flags)
-        - [rc\_flags](#rc_flags)
-        - [c\_cpp\_as\_asm\_flags](#c_cpp_as_asm_flags)
-        - [ar\_flags](#ar_flags)
-        - [ld\_flags](#ld_flags)
-        - [shared\_linker\_flags](#shared_linker_flags)
-        - [flags](#flags)
-        - [exported\_headers](#exported_headers)
-      - [Methods](#methods)
-        - [set\_debug()](#set_debug)
-        - [set\_optimization()](#set_optimization)
-        - [set\_target\_architecture()](#set_target_architecture)
-        - [target\_is\_windows()](#target_is_windows)
-        - [target\_is\_linux()](#target_is_linux)
-        - [target\_is\_mingw()](#target_is_mingw)
-        - [target\_is\_macos()](#target_is_macos)
-        - [add\_defines()](#add_defines)
-        - [remove\_defines()](#remove_defines)
-        - [add\_shared\_libs()](#add_shared_libs)
-        - [remove\_shared\_libs()](#remove_shared_libs)
-        - [add\_includedirs()](#add_includedirs)
-        - [remove\_includedirs()](#remove_includedirs)
-        - [add\_flags()](#add_flags)
-        - [remove\_flags()](#remove_flags)
-        - [add\_c\_flags()](#add_c_flags)
-        - [remove\_c\_flags()](#remove_c_flags)
-        - [add\_cpp\_flags()](#add_cpp_flags)
-        - [remove\_cpp\_flags()](#remove_cpp_flags)
-        - [add\_c\_cpp\_flags()](#add_c_cpp_flags)
-        - [remove\_c\_cpp\_flags()](#remove_c_cpp_flags)
-        - [add\_as\_flags()](#add_as_flags)
-        - [remove\_as\_flags()](#remove_as_flags)
-        - [add\_asm\_flags()](#add_asm_flags)
-        - [remove\_asm\_flags()](#remove_asm_flags)
-        - [add\_c\_cpp\_as\_asm\_flags()](#add_c_cpp_as_asm_flags)
-        - [remove\_c\_cpp\_as\_asm\_flags()](#remove_c_cpp_as_asm_flags)
-        - [add\_rc\_flags()](#add_rc_flags)
-        - [remove\_rc\_flags()](#remove_rc_flags)
-        - [add\_ar\_flags()](#add_ar_flags)
-        - [remove\_ar\_flags()](#remove_ar_flags)
-        - [add\_ld\_flags()](#add_ld_flags)
-        - [remove\_ld\_flags()](#remove_ld_flags)
-        - [add\_shared\_linker\_flags()](#add_shared_linker_flags)
-        - [remove\_shared\_linker\_flags()](#remove_shared_linker_flags)
-        - [add\_exported\_headers()](#add_exported_headers)
-        - [remove\_exported\_headers()](#remove_exported_headers)
-        - [get\_cmdline\_additional\_flags()](#get_cmdline_additional_flags)
-        - [copy()](#copy)
-        - [empty\_copy()](#empty_copy)
-        - [add\_lib()](#add_lib)
-    - [powermake.default\_on\_clean](#powermakedefault_on_clean)
-    - [powermake.default\_on\_install](#powermakedefault_on_install)
-    - [powermake.get\_files](#powermakeget_files)
-    - [powermake.filter\_files](#powermakefilter_files)
-    - [powermake.compile\_files](#powermakecompile_files)
-    - [powermake.archive\_files](#powermakearchive_files)
-    - [powermake.link\_files](#powermakelink_files)
-    - [powermake.link\_shared\_lib](#powermakelink_shared_lib)
-    - [powermake.delete\_files\_from\_disk](#powermakedelete_files_from_disk)
-    - [powermake.run\_another\_powermake](#powermakerun_another_powermake)
-    - [powermake.run\_command\_if\_needed](#powermakerun_command_if_needed)
-    - [powermake.needs\_update](#powermakeneeds_update)
-    - [powermake.run\_command](#powermakerun_command)
-    - [powermake.run\_command\_get\_output](#powermakerun_command_get_output)
-    - [powermake.Operation](#powermakeoperation)
-      - [execute()](#execute)
-    - [powermake.version\_parser](#powermakeversion_parser)
-      - [powermake.version\_parser.Version](#powermakeversion_parserversion)
-      - [powermake.version\_parser.parse\_version](#powermakeversion_parserparse_version)
-      - [powermake.version\_parser.remove\_version\_frills](#powermakeversion_parserremove_version_frills)
-    - [powermake.package](#powermakepackage)
-      - [powermake.package.find\_lib](#powermakepackagefind_lib)
-      - [powermake.package.GitRepo](#powermakepackagegitrepo)
-      - [set\_external\_powermake\_makefile](#set_external_powermake_makefile)
-      - [set\_tags\_to\_exclude](#set_tags_to_exclude)
-      - [set\_additional\_cmdline](#set_additional_cmdline)
-    - [Having more control than what powermake.run offers](#having-more-control-than-what-powermakerun-offers)
-      - [powermake.ArgumentParser](#powermakeargumentparser)
-        - [add\_argument()](#add_argument)
-        - [parse\_args()](#parse_args)
-      - [powermake.generate\_config](#powermakegenerate_config)
-      - [powermake.run\_callbacks](#powermakerun_callbacks)
-    - [PowerMake toolchains internally](#powermake-toolchains-internally)
-      - [powermake.compilers.Compiler](#powermakecompilerscompiler)
-      - [powermake.archivers.Archiver](#powermakearchiversarchiver)
-      - [powermake.linkers.Linker](#powermakelinkerslinker)
-      - [powermake.shared\_linkers.SharedLinker](#powermakeshared_linkerssharedlinker)
-      - [Creating you own compiler](#creating-you-own-compiler)
-  - [Compatibility with other tools](#compatibility-with-other-tools)
-    - [Scan-Build](#scan-build)
-    - [LLVM CodeChecker](#llvm-codechecker)
-    - [LLVM libfuzzer](#llvm-libfuzzer)
-    - [GNU Make](#gnu-make)
-    - [Visual Studio Code](#visual-studio-code)
+<!-- toc -->
+
+- [__Installation__](#installation)
+  - [Install from Pypi: (RECOMMENDED)](#install-from-pypi-recommended)
+  - [install from sources: (NOT RECOMMENDED)](#install-from-sources-not-recommended)
+- [__Quick Example__](#quick-example)
+- [__More examples__](#more-examples)
+- [Documentation](#documentation)
+  - [Generating a PowerMake](#generating-a-powermake)
+  - [Command line arguments](#command-line-arguments)
+  - [Toolchain detection](#toolchain-detection)
+  - [PowerMake flags translation](#powermake-flags-translation)
+  - [powermake.run](#powermakerun)
+  - [powermake.Config](#powermakeconfig)
+    - [Members](#members)
+      - [debug](#debug)
+      - [rebuild](#rebuild)
+      - [nb_total_operations](#nb_total_operations)
+      - [target_name](#target_name)
+      - [nb_jobs](#nb_jobs)
+      - [compile_commands_dir](#compile_commands_dir)
+      - [host_operating_system](#host_operating_system)
+      - [target_operating_system](#target_operating_system)
+      - [host_architecture](#host_architecture)
+      - [target_architecture](#target_architecture)
+      - [c_compiler](#c_compiler)
+      - [cpp_compiler](#cpp_compiler)
+      - [as_compiler](#as_compiler)
+      - [asm_compiler](#asm_compiler)
+      - [rc_compiler](#rc_compiler)
+      - [archiver](#archiver)
+      - [linker](#linker)
+      - [shared_linker](#shared_linker)
+      - [obj_build_directory](#obj_build_directory)
+      - [lib_build_directory](#lib_build_directory)
+      - [exe_build_directory](#exe_build_directory)
+      - [defines](#defines)
+      - [additional_includedirs](#additional_includedirs)
+      - [shared_libs](#shared_libs)
+      - [c_flags](#c_flags)
+      - [cpp_flags](#cpp_flags)
+      - [c_cpp_flags](#c_cpp_flags)
+      - [as_flags](#as_flags)
+      - [asm_flags](#asm_flags)
+      - [rc_flags](#rc_flags)
+      - [c_cpp_as_asm_flags](#c_cpp_as_asm_flags)
+      - [ar_flags](#ar_flags)
+      - [ld_flags](#ld_flags)
+      - [shared_linker_flags](#shared_linker_flags)
+      - [flags](#flags)
+      - [exported_headers](#exported_headers)
+    - [Methods](#methods)
+      - [set_debug()](#set_debug)
+      - [set_optimization()](#set_optimization)
+      - [set_target_architecture()](#set_target_architecture)
+      - [target_is_windows()](#target_is_windows)
+      - [target_is_linux()](#target_is_linux)
+      - [target_is_mingw()](#target_is_mingw)
+      - [target_is_macos()](#target_is_macos)
+      - [target_is_android()](#target_is_android)
+      - [add_defines()](#add_defines)
+      - [remove_defines()](#remove_defines)
+      - [add_shared_libs()](#add_shared_libs)
+      - [remove_shared_libs()](#remove_shared_libs)
+      - [add_includedirs()](#add_includedirs)
+      - [remove_includedirs()](#remove_includedirs)
+      - [add_flags()](#add_flags)
+      - [remove_flags()](#remove_flags)
+      - [add_c_flags()](#add_c_flags)
+      - [remove_c_flags()](#remove_c_flags)
+      - [add_cpp_flags()](#add_cpp_flags)
+      - [remove_cpp_flags()](#remove_cpp_flags)
+      - [add_c_cpp_flags()](#add_c_cpp_flags)
+      - [remove_c_cpp_flags()](#remove_c_cpp_flags)
+      - [add_as_flags()](#add_as_flags)
+      - [remove_as_flags()](#remove_as_flags)
+      - [add_asm_flags()](#add_asm_flags)
+      - [remove_asm_flags()](#remove_asm_flags)
+      - [add_c_cpp_as_asm_flags()](#add_c_cpp_as_asm_flags)
+      - [remove_c_cpp_as_asm_flags()](#remove_c_cpp_as_asm_flags)
+      - [add_rc_flags()](#add_rc_flags)
+      - [remove_rc_flags()](#remove_rc_flags)
+      - [add_ar_flags()](#add_ar_flags)
+      - [remove_ar_flags()](#remove_ar_flags)
+      - [add_ld_flags()](#add_ld_flags)
+      - [remove_ld_flags()](#remove_ld_flags)
+      - [add_shared_linker_flags()](#add_shared_linker_flags)
+      - [remove_shared_linker_flags()](#remove_shared_linker_flags)
+      - [add_exported_headers()](#add_exported_headers)
+      - [remove_exported_headers()](#remove_exported_headers)
+      - [get_cmdline_additional_flags()](#get_cmdline_additional_flags)
+      - [copy()](#copy)
+      - [empty_copy()](#empty_copy)
+      - [add_lib()](#add_lib)
+  - [powermake.default_on_clean](#powermakedefault_on_clean)
+  - [powermake.default_on_install](#powermakedefault_on_install)
+  - [powermake.get_files](#powermakeget_files)
+  - [powermake.filter_files](#powermakefilter_files)
+  - [powermake.compile_files](#powermakecompile_files)
+  - [powermake.archive_files](#powermakearchive_files)
+  - [powermake.link_files](#powermakelink_files)
+  - [powermake.link_shared_lib](#powermakelink_shared_lib)
+  - [powermake.link_android_apk](#powermakelink_android_apk)
+  - [powermake.create_android_keystore](#powermakecreate_android_keystore)
+  - [powermake.delete_files_from_disk](#powermakedelete_files_from_disk)
+  - [powermake.run_another_powermake](#powermakerun_another_powermake)
+  - [powermake.run_command_if_needed](#powermakerun_command_if_needed)
+  - [powermake.needs_update](#powermakeneeds_update)
+  - [powermake.run_command](#powermakerun_command)
+  - [powermake.run_command_get_output](#powermakerun_command_get_output)
+  - [powermake.Operation](#powermakeoperation)
+    - [execute()](#execute)
+  - [powermake.version_parser](#powermakeversion_parser)
+    - [powermake.version_parser.Version](#powermakeversion_parserversion)
+    - [powermake.version_parser.parse_version](#powermakeversion_parserparse_version)
+    - [powermake.version_parser.remove_version_frills](#powermakeversion_parserremove_version_frills)
+  - [powermake.package](#powermakepackage)
+    - [powermake.package.find_lib](#powermakepackagefind_lib)
+    - [powermake.package.GitRepo](#powermakepackagegitrepo)
+    - [set_external_powermake_makefile](#set_external_powermake_makefile)
+    - [set_tags_to_exclude](#set_tags_to_exclude)
+    - [set_additional_cmdline](#set_additional_cmdline)
+  - [Having more control than what powermake.run offers](#having-more-control-than-what-powermakerun-offers)
+    - [powermake.ArgumentParser](#powermakeargumentparser)
+      - [add_argument()](#add_argument)
+      - [parse_args()](#parse_args)
+    - [powermake.generate_config](#powermakegenerate_config)
+    - [powermake.run_callbacks](#powermakerun_callbacks)
+  - [PowerMake toolchains internally](#powermake-toolchains-internally)
+    - [powermake.compilers.Compiler](#powermakecompilerscompiler)
+    - [powermake.archivers.Archiver](#powermakearchiversarchiver)
+    - [powermake.linkers.Linker](#powermakelinkerslinker)
+    - [powermake.shared_linkers.SharedLinker](#powermakeshared_linkerssharedlinker)
+    - [Creating you own compiler](#creating-you-own-compiler)
+- [Compatibility with other tools](#compatibility-with-other-tools)
+  - [Scan-Build](#scan-build)
+  - [LLVM CodeChecker](#llvm-codechecker)
+  - [LLVM libfuzzer](#llvm-libfuzzer)
+  - [GNU Make](#gnu-make)
+  - [Visual Studio Code](#visual-studio-code)
+
+<!-- /toc -->
 
 <!-- include:README.md#installation_and_examples -->
 ## __Installation__
@@ -1209,6 +1215,8 @@ def on_build(config: powermake.Config):
         config.add_defines("LINUX")
     elif config.target_is_macos():
         config.add_defines("DARWIN")
+    elif config.target_is_android():
+        config.add_defines("ANDROID")
     else:
         print("Warning: no define has been set")
 
@@ -1225,7 +1233,7 @@ def on_build(config: powermake.Config):
 config.target_is_linux()
 ```
 
-Returns `True` if the target operating system is Linux.
+Returns `True` if the target operating system is Linux or Android.
 This uses the [config.target_operating_system](#target_operating_system) member.
 
 <details>
@@ -1239,6 +1247,8 @@ def on_build(config: powermake.Config):
         config.add_defines("LINUX")
     elif config.target_is_macos():
         config.add_defines("DARWIN")
+    elif config.target_is_android():
+        config.add_defines("ANDROID")
     else:
         print("Warning: no define has been set")
 
@@ -1270,6 +1280,8 @@ def on_build(config: powermake.Config):
         config.add_defines("LINUX")
     elif config.target_is_macos():
         config.add_defines("DARWIN")
+    elif config.target_is_android():
+        config.add_defines("ANDROID")
     else:
         print("Warning: no define has been set")
 
@@ -1301,6 +1313,40 @@ def on_build(config: powermake.Config):
         config.add_defines("LINUX")
     elif config.target_is_macos():
         config.add_defines("DARWIN")
+    elif config.target_is_android():
+        config.add_defines("ANDROID")
+    else:
+        print("Warning: no define has been set")
+
+    files = powermake.get_files("**/*.c")
+    objects = powermake.compile_files(config, files)
+
+    powermake.link_files(config, objects)
+```
+
+</details>
+
+##### target_is_android()
+```py
+config.target_is_android()
+```
+
+Returns `True` if the target operating system is Android.
+This uses the [config.target_operating_system](#target_operating_system) member.
+
+<details>
+<summary>Example</summary>
+
+```py
+def on_build(config: powermake.Config):
+    if config.target_is_windows() or config.target_is_mingw():
+        config.add_defines("WIN32")
+    elif config.target_is_linux():
+        config.add_defines("LINUX")
+    elif config.target_is_macos():
+        config.add_defines("DARWIN")
+    elif config.target_is_android():
+        config.add_defines("ANDROID")
     else:
         print("Warning: no define has been set")
 
@@ -2059,14 +2105,91 @@ Returns the path of the shared library generated.
 > Don't forget to compile the `object_files` with the flag `-fPIC`.
 
 
-### powermake.delete_files_from_disk
+### powermake.link_android_apk
 ```py
-powermake.delete_files_from_disk(*filepaths: str)
+def link_android_apk(config: Config, object_files: Iterable[str], java_files: Iterable[str], keystore_path: str, keystore_password: str, archives: list[str] = [], additional_files: list[tuple[str, str]] = [], manifest_path: str = "./AndroidManifest.xml", res_path: str | None = None, executable_name: str | None = None, force: bool | None = None) -> str:
 ```
 
-Remove each filepath and skip if it doesn't exist.
+From a set of `.o` compiled with the Android toolchain (automatically selected when `--os=Android` is specified on the command line), the java files required to launch an android app (for example the files from SDL3 repository) and a cryptographic keystore, this function generates a valid signed APK ready to be deployed on Android.
+
+- `config` is a [powermake.Config](#powermakeconfig) object like the one given to the build callback.
+
+- `object_files` are the `.o` returned by [powermake.compile_files](#powermakecompile_files).
+
+- `java_files` are the `.java` files required to start the Android activity. You can for example use the files provided by SDL3:
+  ```py
+  sdl3_lib = powermake.package.find_lib(config, "SDL3")
+  java_files = powermake.get_files(os.path.join(sdl3_lib.includedir, "../src/**/*.java"))
+  ```
+
+- `keystore_path` is the path of a `.keystore` file containing the key to sign your APK. This file can be created by [powermake.create_android_keystore](#powermakecreate_android_keystore).
+
+- `keystore_password` is the password protecting the `.keystore` file.
+
+- `archives`: A list of static libraries to include
+
+- `manifest_path`: Where to find the Android Manifest, if the file doesn't exists, a default one is created.
+
+- `res_path`: The path of the folder containing Android resources to compile, like an icon for example (see [tutorial 7](./tutorials/07-sdl3-android-app/README.md)).
+
+- `executable_name`: The name to give to the APK, by default it will be `config.target_name`.
+
+- `force`: Wether to always re-link the APK. By default it's the value of `config.rebuild`.
+
+Returns the path of the APK generated.
+
+<details>
+<summary>Full file sample</summary>
+
+Note: see [tutorial 7](./tutorials/07-sdl3-android-app/README.md) for an explanation of this example.
+
+```py
+import os
+import powermake
+
+def on_build(config: powermake.Config):
+    config.add_flags("-Wall", "-Wextra")
+
+    sdl3_lib = powermake.package.find_lib(config, "SDL3")
+    config.add_lib(sdl3_lib)
+
+    files = powermake.get_files("**/*.c")
+
+    objects = powermake.compile_files(config, files)
+
+    if config.target_is_android():
+        if not os.path.exists("./debug.keystore"):
+            powermake.create_android_keystore(config, "./debug.keystore", password="android")
+
+        java_files = powermake.get_files(os.path.join(sdl3_lib.includedir, "../src/**/*.java"))
+        powermake.link_android_apk(config, objects, java_files, "./debug.keystore", keystore_password="android")
+    else:
+        powermake.link_files(config, objects)
+
+powermake.run("my_project", build_callback=on_build)
+```
+</details>
+
+
+### powermake.create_android_keystore
+```py
+def create_android_keystore(config: Config, path: str, password: str, keysize: int = 2048, days_of_validity: int = 10000, CN: str = "PowerMake") -> None:
+```
+
+This is a helper function that calls android keytool to create a `.keystore` file that can then be handed to [powermake.link_android_apk](#powermakelink_android_apk).
+
+
+### powermake.delete_files_from_disk
+```py
+powermake.delete_files_from_disk(*patterns: str)
+```
+
+Delete files and folders that match at least one of the patterns.
 
 This function is variadic.
+
+> [!WARNING]  
+> The files deleted by this function are permanently deleted, they are not moved in a trash.
 
 
 ### powermake.run_another_powermake
@@ -2106,7 +2229,7 @@ Raise a PowerMakeRuntimeError if the command fails.
   - `command` should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
   This list is then directly passed to `subprocess.run`
 
-- If `shell` is `False`:
+- If `shell` is `True`:
   - `command` should be a string representing the shell command.
 
 
@@ -2147,7 +2270,7 @@ If `shell` is `False`:
 - `command` should be a list like `argv`. The first element should be an executable and each following element will be distinct parameters.  
   This list is then directly passed to `subprocess.run`
 
-If `shell` is `False`:
+If `shell` is `True`:
 - `command` should be a string representing the shell command.
 
 `target` is currently only been used to print the name of the file generated, but in the future, it might be used to generate a Makefile.

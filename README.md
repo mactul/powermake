@@ -63,7 +63,7 @@ If you encounter issues fetching these links (you may be blocked by github robot
 
 ## __TLDR__
 
-Use PowerMake to write cross-platform makefiles.  
+Use PowerMake to write convenient cross-platform makefiles.  
 The idea is to create a python script and use python powermake library to compile all your project reliably with the least amount of effort as possible.
 
 Create a python script using one of the models in [**examples.md**](./examples.md)
@@ -133,7 +133,7 @@ PowerMake is a breeze for the developers that hate the opacity and lack of quali
 - Cross-Platform:
   - PowerMake can detect the compiler installed on your machine and give you an abstraction of the compiler syntax.
     - This currently works well with GCC/G++/Clang/Clang++/Clang-CL/MSVC/NASM/MASM, but other compilers will be added.
-  - It is constantly tested in CI on Linux, macOS and Windows, on multiple architectures and cross-compiling against multiple architectures. It should also work on BSD systems or other Unix-like.
+  - It is constantly tested in CI for Linux, macOS, Windows and Android, on multiple architectures and cross-compiling against multiple architectures. It should also work on BSD systems or other Unix-like.
 
 - No magic behaviors
   - Gives you complete control of what you are doing. Nothing is hidden and any behavior can be overwritten.

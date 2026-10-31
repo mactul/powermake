@@ -7,6 +7,7 @@ import tests_package
 import tests_display
 import tests_operation
 import tests_exceptions
+import tests_android_sdk
 import tests_architecture
 import tests_compile_commands
 import tests_flags_translation
@@ -22,6 +23,7 @@ if __name__ == "__main__":
     tests_display.run_tests()
     tests_operation.run_tests()
     tests_exceptions.run_tests()
+    tests_android_sdk.run_tests()
     tests_architecture.run_tests()
     tests_compile_commands.run_tests()
     tests_flags_translation.run_tests()

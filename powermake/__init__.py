@@ -595,11 +595,10 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
         config,
         outputfile="build/.objs/dex/classes.dex",
         dependencies=class_files,
-        command = [os.path.join(config.sdk_path, f"build-tools/35.0.1/d8{'.exe' if config.host_is_windows() else ''}"), "--lib", android_jar, "--min-api", "24", "--output", "build/.objs/dex", *class_files],
+        command = [os.path.join(config.sdk_path, f"build-tools/35.0.1/d8{'.bat' if config.host_is_windows() else ''}"), "--lib", android_jar, "--min-api", "24", "--output", "build/.objs/dex", *class_files],
         env=config.java_env
     )
-    
-    
+
     if not os.path.exists(manifest_path):
         with open(manifest_path, "w") as file:
             file.write(f"""<?xml version="1.0" encoding="utf-8"?>
@@ -612,7 +611,10 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
         <activity
             android:name="org.libsdl.app.SDLActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Material.NoActionBar">
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="layoutDirection|locale|orientation|uiMode|screenLayout|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
+        >
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -632,7 +634,7 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
             command=[os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "compile", "-o", "build/.objs/apk_res.zip", "--dir", res_path],
             custom_info_msg="Compiling APK res"
         )
-    
+
     if needs_update(outputfile="build/.objs/app.apk", dependencies={android_jar, manifest_path, "build/.objs/dex/classes.dex", libmain, *(src for src, _ in additional_files), *(("build/.objs/apk_res.zip", ) if res_path is not None else tuple())}, additional_includedirs=[]):
         if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/aapt2{'.exe' if config.host_is_windows() else ''}"), "link", "-o", "build/.objs/app.apk", "-I", android_jar, "--manifest", manifest_path, *(("-R", "build/.objs/apk_res.zip") if res_path is not None else tuple())], custom_info_msg="Creating APK archive") != 0:
             raise PowerMakeRuntimeError("apk creation failed")
@@ -665,10 +667,10 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     if needs_update(output_file, dependencies={"build/.objs/app.apk"}, additional_includedirs=[]):
         if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/zipalign{'.exe' if config.host_is_windows() else ''}"), "-f", "-p", "4", "build/.objs/app.apk", output_file], custom_info_msg="Aligning APK") != 0:
             raise PowerMakeRuntimeError("apk align failed")
-        
-        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.exe' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}, custom_info_msg="Signing APK") != 0:
+
+        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.bat' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}, custom_info_msg="Signing APK") != 0:
             raise PowerMakeRuntimeError("apk align failed")
-    
+
     return output_file
 
 
@@ -676,7 +678,7 @@ def create_android_keystore(config: Config, path: str, password: str, keysize: i
     if os.path.exists(path):
         print(warning_text('WARNING: Android keystore already exists, skipping'))
         return
-    
+
     print_info("Generating Android keystore", config.verbosity)
     if subprocess.run([os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/keytool{'.exe' if config.host_is_windows() else ''}"), "-genkeypair", "-keystore", path, "-storepass", password, "-keypass", password, "-keyalg", "RSA", "-keysize", str(keysize), "-validity", str(days_of_validity), "-dname", f"CN={CN}"], env=config.java_env).returncode != 0:
         raise PowerMakeRuntimeError("Android keystore generation failed")
@@ -684,7 +686,7 @@ def create_android_keystore(config: Config, path: str, password: str, keysize: i
 
 def delete_files_from_disk(*patterns: str) -> None:
     """
-    Delete files and folders match at least one of the patterns.
+    Delete files and folders that match at least one of the patterns.
 
     Warning: These files are permanently deleted.
     """
