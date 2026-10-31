@@ -104,7 +104,7 @@ def linux_escalate_command(command: T.List[str], pref: T.Union[None, T.List[str]
         return command
 
     if _privilege_escalator is None:
-        for auth in (pref, ["pkexec"], ["run0", "--background="], ["sudo"], ["doas"], ["su", "-c"]):
+        for auth in (pref, ["sudo"], ["pkexec"], ["run0", "--background="], ["doas"], ["su", "-c"]):
             if auth is None:
                 continue
             if shutil.which(auth[0]) is not None:
