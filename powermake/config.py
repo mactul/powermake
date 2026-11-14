@@ -821,10 +821,10 @@ class Config:
                     jdk_filename = "openjdk-21.0.2_linux-x64_bin.tar.gz"
                 sdk_filename = "commandlinetools-linux-15859902_latest.zip"
             elif self.host_is_macos() and self.host_simplified_architecture == "arm64":
-                jdk_filename = "openjdk-22_macos-aarch64_bin.tar.gz"
+                jdk_filename = "openjdk-21.0.2_macos-aarch64_bin.tar.gz"
                 sdk_filename = "commandlinetools-mac_arm64-15859902_latest.zip"
             elif self.host_is_macos():
-                jdk_filename = "openjdk-22_macos-x64.tar.gz"
+                jdk_filename = "openjdk-21.0.2_macos-x64_bin.tar.gz"
                 sdk_filename = "commandlinetools-mac_x86_64-15859902_latest.zip"
             else:
                 raise NotImplementedError("Host platform not supported for Android compilation, we recommend Linux, it's the most tested")
