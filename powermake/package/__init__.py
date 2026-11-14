@@ -58,14 +58,16 @@ import subprocess
 import typing as T
 from enum import Enum
 
+
 from .lib import Lib
 from .utils import find_closest_include_dir
 from .git_repos import GitRepo, DefaultGitRepos
 from .build_systems import run_cmake, run_meson
 
 from ..config import Config
-from ..exceptions import PowerMakeRuntimeError
 from ..utils import makedirs
+from ..tools import EnforcedFlag
+from ..exceptions import PowerMakeRuntimeError
 from ..architecture import split_toolchain_prefix
 from ..display import print_info, print_debug_info
 from ..version_parser import Version, parse_version, remove_version_frills, PreType
@@ -322,14 +324,15 @@ def get_possible_filepaths(config: Config, libname: str, ext_pref_order: T.List[
         return []
     dirs = config.linker.get_lib_dirs(config.ld_flags)
 
-    filtered_dirs: T.Set[str] = set()
-    for dir in dirs:
-        if config.target_simplified_architecture == "x86" and ("lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir):
-            filtered_dirs.add(dir)
+    filtered_dirs: T.List[str] = []
+    if config.target_simplified_architecture == "x86":
+        for dir in dirs:
+            if isinstance(dir, EnforcedFlag) or "lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir:
+                filtered_dirs.append(dir)
     if len(filtered_dirs) == 0:
         filtered_dirs = dirs
 
-    filepaths = []
+    filepaths: T.List[str] = []
     for dir in dirs:
         libs, _ = search_lib(dir, libname, get_non_match=False, ext_pref_order=ext_pref_order)
         if len(libs) == 0:

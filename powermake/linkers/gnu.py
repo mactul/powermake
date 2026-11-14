@@ -53,6 +53,8 @@ import os
 import subprocess
 import typing as T
 
+
+from ..tools import EnforcedFlag
 from ..utils import get_empty_file
 from .common import Linker
 
@@ -129,20 +131,36 @@ class LinkerGNU(Linker):
         else:
             return subprocess.run([self.path, arg, "-E", get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
-    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+        translated_flags = self.translate_flags(flags)
         try:
-            output = subprocess.check_output([self.path, *self.translate_flags(flags), "-print-search-dirs"], encoding="utf-8").split("\n")
+            output = subprocess.check_output([self.path, *translated_flags, "-print-search-dirs"], encoding="utf-8").split("\n")
         except subprocess.CalledProcessError:
-            return set()
+            return []
 
-        libraries = set()
+        libraries: T.List[str] = []
+
+        i = 0
+        while i < len(translated_flags):
+            dir: T.Union[str, None] = None
+            if translated_flags[i] == '-L':
+                i += 1
+                dir = translated_flags[i]
+            elif translated_flags[i].startswith("-L"):
+                dir = translated_flags[i][2:]
+            if dir is not None:
+                dir = os.path.realpath(dir)
+                if os.path.isdir(dir):
+                    libraries.append(EnforcedFlag(dir))
+            i += 1
+
         for line in output:
             if line.startswith("libraries: ="):
                 libs = line[len("libraries: ="):].split(':')
                 for lib in libs:
                     dir = os.path.realpath(lib)
-                    if os.path.isdir(dir):
-                        libraries.add(dir)
+                    if os.path.isdir(dir) and dir not in libraries:
+                        libraries.append(dir)
         return libraries
 
 
@@ -159,13 +177,29 @@ class LinkerLD(LinkerGNU):
         else:
             return subprocess.run([self.path, arg, "-w"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
-    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+        translated_flags = self.translate_flags(flags)
         try:
-            output = subprocess.check_output([self.path, *self.translate_flags(flags), "--verbose"], encoding="utf-8").split("\n")
+            output = subprocess.check_output([self.path, *translated_flags, "--verbose"], encoding="utf-8").split("\n")
         except subprocess.CalledProcessError:
-            return set()
+            return []
 
-        libraries = set()
+        libraries: T.List[str] = []
+
+        i = 0
+        while i < len(translated_flags):
+            dir: T.Union[str, None] = None
+            if translated_flags[i] == '-L':
+                i += 1
+                dir = translated_flags[i]
+            elif translated_flags[i].startswith("-L"):
+                dir = translated_flags[i][2:]
+            if dir is not None:
+                dir = os.path.realpath(dir)
+                if os.path.isdir(dir):
+                    libraries.append(EnforcedFlag(dir))
+            i += 1
+
         for line in output:
             if line.startswith("SEARCH_DIR"):
                 search_dirs = line.split(';')
@@ -173,8 +207,8 @@ class LinkerLD(LinkerGNU):
                     if len(d.strip()) == 0:
                         continue
                     dir = os.path.realpath(d.strip()[len('SEARCH_DIR("'):-2])
-                    if os.path.isdir(dir):
-                        libraries.add(dir)
+                    if os.path.isdir(dir) and dir not in libraries:
+                        libraries.append(dir)
         return libraries
 
 
@@ -256,5 +290,5 @@ class LinkerLLVM_Link(Linker):
         else:
             return subprocess.run([self.path, arg, get_empty_file()], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode == 0
 
-    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
-        return set()
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+        return []

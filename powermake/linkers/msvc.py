@@ -127,8 +127,8 @@ class LinkerMSVC(Linker):
         else:
             return subprocess.run([self.path, "/WX", arg], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL).returncode != 4044
 
-    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
-        return set(os.environ["LIB"].split(';'))
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+        return os.environ["LIB"].split(';')
 
 class LinkerClang_CL(LinkerMSVC):
     type = "clang-cl"

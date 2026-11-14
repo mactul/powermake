@@ -7,29 +7,39 @@ from .lib import Lib
 from .. import compilers
 from ..config import Config
 from ..utils import makedirs
+from ..tools import EnforcedFlag
 from .utils import find_closest_include_dir
 from ..exceptions import PowerMakeRuntimeError
 from ..operation import run_command
 
-def _set_pkg_environment(config: Config, dependencies: T.Iterable[Lib]) -> T.Tuple[T.Set[str], T.Set[str]]:
+def _set_pkg_environment(config: Config, dependencies: T.List[Lib]) -> T.Tuple[T.List[str], T.List[str]]:
     if config.linker is None:
-        return set(), set()
+        return [], []
 
     dirs = config.linker.get_lib_dirs(config.ld_flags)
-    filtered_dirs: T.Set[str] = set()
-    for dir in dirs:
-        if config.target_simplified_architecture == "x86" and ("lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir):
-            filtered_dirs.add(dir)
+
+    filtered_dirs: T.List[str] = []
+    if config.target_simplified_architecture == "x86":
+        for dir in dirs:
+            if isinstance(dir, EnforcedFlag) or "lib32" in dir or os.path.basename(dir) == "32" or "i386" in dir or "i686" in dir:
+                if dir not in filtered_dirs:
+                    filtered_dirs.append(dir)
     if len(filtered_dirs) == 0:
         filtered_dirs = dirs
 
-    filtered_dirs = filtered_dirs.union(os.path.dirname(dep.lib_file) for dep in dependencies)
+    for dep in dependencies:
+        dir = os.path.dirname(dep.lib_file)
+        if dir not in filtered_dirs:
+            filtered_dirs.append(dir)
 
-    prefix_paths: T.Set[str] = set()
+
+    prefix_paths: T.List[str] = []
     for dep in dependencies:
         lib_dir = os.path.dirname(dep.lib_file)
         if lib_dir.endswith(("lib", "lib/")):
-            prefix_paths.add(os.path.join(lib_dir, ".."))
+            path = os.path.realpath(os.path.join(lib_dir, ".."))
+            if path not in prefix_paths:
+                prefix_paths.append(path)
 
     if len(filtered_dirs) > 0:
         pkg_dir_str = os.pathsep.join(os.path.join(dir, "pkgconfig") for dir in filtered_dirs)
@@ -38,7 +48,7 @@ def _set_pkg_environment(config: Config, dependencies: T.Iterable[Lib]) -> T.Tup
     return filtered_dirs, prefix_paths
 
 
-def run_meson(config: Config, build_dir: str, *additional_args: str, prefer_static: bool = False, dependencies: T.Iterable[Lib] = []) -> None:
+def run_meson(config: Config, build_dir: str, *additional_args: str, prefer_static: bool = False, dependencies: T.List[Lib] = []) -> None:
     content = "[binaries]\n"
     if config.c_compiler is not None:
         content += f"c = '{config.c_compiler.path}'\n"
@@ -95,9 +105,11 @@ def run_meson(config: Config, build_dir: str, *additional_args: str, prefer_stat
 
     print(content)
 
-    _set_pkg_environment(config, dependencies)
+    deps = list(dependencies)  # Just to be sure it's not an iterable that can be consumed
 
-    config._package_libs.extend(dependencies)
+    _set_pkg_environment(config, deps)
+
+    config._package_libs.extend(deps)
 
     makedirs(build_dir)
 
@@ -118,13 +130,15 @@ def _add_to_existing_arg(args: T.List[str], arg_prefix: str, to_add: str, sep: s
             args[i] = args[i] + sep + to_add
             return
     args.append(arg_prefix + to_add)
-                        
 
-def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False, dependencies: T.Iterable[Lib] = []) -> None:
+
+def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: bool = False, dependencies: T.List[Lib] = []) -> None:
     cmake_path = shutil.which("cmake")
     if cmake_path is None:
         raise PowerMakeRuntimeError("Unable to found cmake executable")
-    
+
+    deps = list(dependencies)  # Just to be sure it's not an iterable that can be consumed
+
     config._package_libs.extend(dependencies)
 
     args: T.List[str] = []
@@ -191,7 +205,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     else:
         args.append('-DBUILD_SHARED_LIBS=ON')
 
-    dirs, prefix_paths = _set_pkg_environment(config, dependencies)
+    dirs, prefix_paths = _set_pkg_environment(config, deps)
 
     if len(dirs) > 0:
         lib_path_str = ';'.join(dirs)
@@ -222,12 +236,23 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
             }
             if config.target_simplified_architecture in android_abis:
                 args.append(f"-DANDROID_ABI={android_abis[config.target_simplified_architecture]}")
+        elif config.c_compiler is not None and config.c_compiler.path.endswith("emcc"):
+            args.extend([
+                "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
+            ])
+
+            toolchain_path = os.path.join(os.path.dirname(config.c_compiler.path), "cmake/Modules/Platform/Emscripten.cmake")
+
+            args.append(f"-DCMAKE_TOOLCHAIN_FILE={toolchain_path}")
+            node_js = shutil.which('node') or shutil.which('nodejs') or 'node'
+            args.append(f'-DCMAKE_CROSSCOMPILING_EMULATOR={node_js}')
         else:
             args.extend([
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER",
             ])
-    
+
     cumulative_flags = {
         "-DCMAKE_C_FLAGS=": ' ',
         "-DCMAKE_CXX_FLAGS=": ' ',
@@ -237,7 +262,7 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         "-DCMAKE_PREFIX_PATH=": ';',
         "-DCMAKE_FIND_ROOT_PATH=": ';'
     }
-    
+
     for arg in additional_args:
         if arg in args:
             continue

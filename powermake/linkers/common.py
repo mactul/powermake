@@ -68,5 +68,5 @@ class Linker(Tool, abc.ABC):
         return []
 
     @abc.abstractmethod
-    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.Set[str]:
-        return set()
+    def get_lib_dirs(self, flags: T.List[T.Union[str, T.Tuple[str, ...]]]) -> T.List[str]:
+        return []
