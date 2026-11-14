@@ -276,9 +276,13 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
 
 
     cmake_generator: T.Tuple[str, ...] = tuple()
-    ninja = shutil.which("ninja")
-    if ninja is not None:
+    if shutil.which("ninja") is not None:
         cmake_generator = ("-G", "Ninja")
+    elif config.target_is_android() and config.host_is_windows():
+        if shutil.which("mingw32-make") is not None:
+            cmake_generator = ("-G", "MinGW Makefiles")
+        else:
+            raise PowerMakeRuntimeError("Ninja is required to compile for Android, install it with:\nwinget install -e --id Ninja-build.Ninja")
 
     if run_command(config, [cmake_path, *cmake_generator, path, *args]) != 0:
         raise PowerMakeRuntimeError("Unable to run cmake")
