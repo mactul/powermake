@@ -51,6 +51,11 @@ def download_android_sdk(sdk_path: str, verbosity: int, jdk_filename: str = "ope
         print_debug_info(f"Downloading {url} into {jdk_path}", verbosity)
         download_and_extract(url, jdk_path)
 
+        if "macos" in jdk_filename:
+            # macos tar.gz doesn't have the same layout, everything is burried in jdk-21.0.2.jdk/Contents/Home/
+            shutil.move(os.path.join(jdk_path, "jdk-21.0.2.jdk", "Contents", "Home"), os.path.join(jdk_path, "jdk-21.0.2"))
+            shutil.rmtree(os.path.join(jdk_path, "jdk-21.0.2.jdk"), ignore_errors=True)
+
     if os.path.exists(lock_file):
         return java_environ
 
