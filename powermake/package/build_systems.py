@@ -141,27 +141,26 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
 
     config._package_libs.extend(dependencies)
 
-    args: T.List[str] = []
+    args: T.List[str] = ["-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF"]
     if config.c_compiler is not None:
         args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
-        flags = shlex.join(config.c_compiler.translate_flags(["-O3", "-DNDEBUG", "-Wno-error"]))
-        args.append(f"-DCMAKE_C_FLAGS_RELEASE={flags}")
+        flags = config.c_compiler.translate_flags(["-Wno-error", "-Wno-error=stringop-overflow"])
         if config.target_simplified_architecture == "x86":
-            flags = shlex.join(config.c_compiler.translate_flags(["-m32", "-msse2"]))
-            args.append(f"-DCMAKE_C_FLAGS={flags}")
+            flags.extend(config.c_compiler.translate_flags(["-m32", "-msse2"]))
+        args.append(f"-DCMAKE_C_FLAGS={shlex.join(flags)}")
     if config.cpp_compiler is not None:
         args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
-        flags = shlex.join(config.cpp_compiler.translate_flags(["-O3", "-DNDEBUG", "-Wno-error"]))
-        args.append(f"-DCMAKE_CXX_FLAGS_RELEASE={flags}")
+        flags = config.cpp_compiler.translate_flags(["-Wno-error", "-Wno-error=stringop-overflow"])
         if config.target_simplified_architecture == "x86":
-            flags = shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))
-            args.append(f"-DCMAKE_CXX_FLAGS={flags}")
+            flags.extend(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))
+        args.append(f"-DCMAKE_CXX_FLAGS={shlex.join(flags)}")
 
     if config.as_compiler is not None and (not config.target_is_windows() or config.target_is_mingw()):
         args.append(f"-DCMAKE_ASM_COMPILER={config.as_compiler.path}")
+        flags = config.as_compiler.translate_flags(["-Wno-error", "-Wno-error=stringop-overflow"])
         if config.target_simplified_architecture == "x86":
-            flags = shlex.join(config.as_compiler.translate_flags(["-m32", "-msse2"]))
-            args.append(f"-DCMAKE_ASM_FLAGS={flags}")
+            flags.extend(config.as_compiler.translate_flags(["-m32", "-msse2"]))
+        args.append(f"-DCMAKE_ASM_FLAGS={shlex.join(flags)}")
 
     nasm = compilers.CompilerNASM()
     if nasm.is_available():
@@ -261,8 +260,6 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         "-DCMAKE_C_FLAGS=": ' ',
         "-DCMAKE_CXX_FLAGS=": ' ',
         "-DCMAKE_ASM_FLAGS=": ' ',
-        "-DCMAKE_C_FLAGS_RELEASE": ' ',
-        "-DCMAKE_CXX_FLAGS_RELEASE": ' ',
         "-DCMAKE_INCLUDE_PATH=": ';',
         "-DCMAKE_LIBRARY_PATH=": ';',
         "-DCMAKE_PREFIX_PATH=": ';',
