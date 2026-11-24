@@ -144,11 +144,15 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
     args: T.List[str] = []
     if config.c_compiler is not None:
         args.append(f"-DCMAKE_C_COMPILER={config.c_compiler.path}")
+        flags = shlex.join(config.c_compiler.translate_flags(["-O3", "-DNDEBUG", "-Wno-error"]))
+        args.append(f"-DCMAKE_C_FLAGS_RELEASE={flags}")
         if config.target_simplified_architecture == "x86":
             flags = shlex.join(config.c_compiler.translate_flags(["-m32", "-msse2"]))
             args.append(f"-DCMAKE_C_FLAGS={flags}")
     if config.cpp_compiler is not None:
         args.append(f"-DCMAKE_CXX_COMPILER={config.cpp_compiler.path}")
+        flags = shlex.join(config.cpp_compiler.translate_flags(["-O3", "-DNDEBUG", "-Wno-error"]))
+        args.append(f"-DCMAKE_CXX_FLAGS_RELEASE={flags}")
         if config.target_simplified_architecture == "x86":
             flags = shlex.join(config.cpp_compiler.translate_flags(["-m32", "-msse2"]))
             args.append(f"-DCMAKE_CXX_FLAGS={flags}")
@@ -257,6 +261,8 @@ def run_cmake(config: Config, path: str, *additional_args: str, prefer_static: b
         "-DCMAKE_C_FLAGS=": ' ',
         "-DCMAKE_CXX_FLAGS=": ' ',
         "-DCMAKE_ASM_FLAGS=": ' ',
+        "-DCMAKE_C_FLAGS_RELEASE": ' ',
+        "-DCMAKE_CXX_FLAGS_RELEASE": ' ',
         "-DCMAKE_INCLUDE_PATH=": ';',
         "-DCMAKE_LIBRARY_PATH=": ';',
         "-DCMAKE_PREFIX_PATH=": ';',
