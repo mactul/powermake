@@ -121,7 +121,7 @@ jobs:
         run: sudo apt-get install -y g++-aarch64-linux-gnu
 
       - name: Install gcc libs for i386
-        if: matrix.host_os == 'ubuntu-latest'
+        if: matrix.host_os == 'ubuntu-latest' && matrix.target_os == 'linux' && matrix.target_arch == 'x86'
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
@@ -145,18 +145,19 @@ jobs:
       - name: Install build deps (ubuntu cross arm64)
         if: matrix.host_os == 'ubuntu-latest' && matrix.target_arch == 'arm64' && matrix.target_os != 'android'
         run: |
+          CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
           sudo dpkg --add-architecture arm64
           sudo sed -i '/^Types: deb$/a Architectures: amd64 i386' /etc/apt/sources.list.d/ubuntu.sources
-          sudo tee /etc/apt/sources.list.d/ubuntu-arm64.sources > /dev/null <<'EOF'
+          sudo tee /etc/apt/sources.list.d/ubuntu-arm64.sources > /dev/null <<EOF
           Types: deb
           URIs: http://ports.ubuntu.com/ubuntu-ports/
-          Suites: noble noble-updates noble-security
+          Suites: ${CODENAME} ${CODENAME}-updates ${CODENAME}-security
           Components: main restricted universe multiverse
           Architectures: arm64
           Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
           EOF
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get install --no-install-recommends --allow-downgrades -y \
             meson cmake autoconf automake nasm ninja-build gnome-desktop-testing \
             libasound2-dev:arm64 libaudio-dev:arm64 libfribidi-dev:arm64 \
             libjack-dev:arm64 libsndio-dev:arm64 libx11-dev:arm64 libxext-dev:arm64 \
