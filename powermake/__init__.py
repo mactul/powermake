@@ -580,7 +580,7 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
     if config.rebuild or not up_to_date:
         delete_files_from_disk("build/.objs/classes/")
         makedirs("build/.objs/classes/")
-        if run_command(config, [os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/javac{'.exe' if config.host_is_windows() else ''}"), "-d", "build/.objs/classes", "-cp", android_jar, *java_files_set], env=config.java_env, target="classes") != 0:
+        if run_command(config, [os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/javac{'.exe' if config.host_is_windows() else ''}"), "-d", "build/.objs/classes", "-cp", android_jar, *java_files_set], env={**os.environ, **config.java_env}, target="classes") != 0:
             raise PowerMakeRuntimeError("Java compilation failed")
         with open("build/.objs/java_cache.json", "w") as file:
             java_cache = {
@@ -668,7 +668,7 @@ def link_android_apk(config: Config, object_files: T.Iterable[str], java_files: 
         if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/zipalign{'.exe' if config.host_is_windows() else ''}"), "-f", "-p", "4", "build/.objs/app.apk", output_file], custom_info_msg="Aligning APK") != 0:
             raise PowerMakeRuntimeError("apk align failed")
 
-        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.bat' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={"POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}, custom_info_msg="Signing APK") != 0:
+        if run_command(config, [os.path.join(config.sdk_path, f"build-tools/35.0.1/apksigner{'.bat' if config.host_is_windows() else ''}"), "sign", "--ks", keystore_path, "--ks-pass", "env:POWERMAKE_KS_PASSWORD", "--key-pass", "env:POWERMAKE_KS_PASSWORD", output_file], env={**os.environ, "POWERMAKE_KS_PASSWORD": keystore_password, **config.java_env}, custom_info_msg="Signing APK") != 0:
             raise PowerMakeRuntimeError("apk align failed")
 
     return output_file
@@ -680,7 +680,7 @@ def create_android_keystore(config: Config, path: str, password: str, keysize: i
         return
 
     print_info("Generating Android keystore", config.verbosity)
-    if subprocess.run([os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/keytool{'.exe' if config.host_is_windows() else ''}"), "-genkeypair", "-keystore", path, "-storepass", password, "-keypass", password, "-keyalg", "RSA", "-keysize", str(keysize), "-validity", str(days_of_validity), "-dname", f"CN={CN}"], env=config.java_env).returncode != 0:
+    if subprocess.run([os.path.join(config.sdk_path, f"jdk/jdk-21.0.2/bin/keytool{'.exe' if config.host_is_windows() else ''}"), "-genkeypair", "-keystore", path, "-storepass", password, "-keypass", password, "-keyalg", "RSA", "-keysize", str(keysize), "-validity", str(days_of_validity), "-dname", f"CN={CN}"], env={**os.environ, **config.java_env}).returncode != 0:
         raise PowerMakeRuntimeError("Android keystore generation failed")
 
 
