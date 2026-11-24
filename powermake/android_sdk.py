@@ -12,6 +12,29 @@ from .utils import makedirs
 from .exceptions import PowerMakeRuntimeError
 from .__version__ import __version__
 
+def _safe_tar_extract(tar: tarfile.TarFile, path: str) -> None:
+    if hasattr(tarfile, "data_filter"):
+        tar.extractall(path=path, filter="data")
+        return
+
+    # Fallback for older Pythons: minimal manual checks
+    base = os.path.realpath(path)
+    for member in tar:
+        target = os.path.realpath(os.path.join(base, member.name))
+        if os.path.commonpath([base, target]) != base:
+            raise ValueError(f"Unsafe path in archive: {member.name}")
+        if member.issym() or member.islnk():
+            link_target = os.path.realpath(
+                os.path.join(os.path.dirname(target), member.linkname)
+            )
+            if os.path.commonpath([base, link_target]) != base:
+                raise ValueError(f"Unsafe link in archive: {member.name}")
+        if member.isdev():
+            raise ValueError(f"Device file in archive: {member.name}")
+        member.mode &= 0o755  # drop setuid/setgid and group/other write
+        tar.extract(member, path=path)
+
+
 def download_and_extract(url: str, path: str) -> None:
     with urllib.request.urlopen(url) as response:
         if url.endswith(".zip"):
@@ -24,10 +47,10 @@ def download_and_extract(url: str, path: str) -> None:
                     if info.create_system == 3:
                         unix_attributes = info.external_attr >> 16
                         if unix_attributes > 0:
-                            os.chmod(extracted_file_path, unix_attributes)
+                            os.chmod(extracted_file_path, unix_attributes & 0o755)
         elif url.endswith(".tar.gz"):
             with tarfile.open(fileobj=response, mode="r|gz") as tar:
-                tar.extractall(path=path, filter="data")
+                _safe_tar_extract(tar, path)
         else:
             raise NotImplementedError(f"File format extraction not implemented for {url}")
 
