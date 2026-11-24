@@ -108,7 +108,7 @@ class SentinelSearch:
             print_bytes(POWERMAKE_SENTINEL[:self.i])
 
 
-def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True, propagate_cmdline_add_flag: bool = True) -> T.Union[T.List[str], None]:
+def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] = None, rebuild: T.Union[bool, None] = None, verbosity: T.Union[int, None] = None, nb_jobs: T.Union[int, None] = None, command_line_args: T.List[str] = [], use_parent_toolchain: bool = True, skip_already_done: bool = True, propagate_cmdline_add_flag: bool = True, clean: T.Union[bool, None] = None) -> T.Union[T.List[str], None]:
     """
     Run a powermake from another directory and returns a list of path to all libraries generated
 
@@ -149,6 +149,8 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
         verbosity = config.verbosity
     if nb_jobs is None:
         nb_jobs = config.nb_jobs
+    if clean is None:
+        clean = str(config._args_parsed.action) == "clean" or bool(config._args_parsed.clean)
 
     last_comp_unit = _get_last_compilation_unit(path)
     if skip_already_done and last_comp_unit is not None and last_comp_unit[0] == config.compilation_unit:
@@ -166,6 +168,9 @@ def run_another_powermake(config: Config, path: str, debug: T.Union[bool, None] 
 
     if debug:
         command.append("-d")
+
+    if clean:
+        command.append("-c")
 
     if propagate_cmdline_add_flag:
         for flag in config._args_parsed.add_flag:
