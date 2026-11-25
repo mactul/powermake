@@ -119,6 +119,20 @@ class SharedLinkerClangPlusPlus(SharedLinkerGNU):
         super().__init__(path)
 
 
+class SharedLinkerEmscripten(SharedLinkerGNU):
+    type: T.ClassVar = "emcc"
+
+    def __init__(self, path: str = "emcc"):
+        super().__init__(path)
+
+
+class SharedLinkerEmscriptenPlusPlus(SharedLinkerGNU):
+    type: T.ClassVar = "em++"
+
+    def __init__(self, path: str = "em++"):
+        super().__init__(path)
+
+
 class SharedLinkerMinGW(SharedLinkerGNU):
     type: T.ClassVar = "mingw"
     shared_lib_extension: T.ClassVar = ".dll"

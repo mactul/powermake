@@ -63,10 +63,12 @@ from .lib import Lib
 from .utils import find_closest_include_dir
 from .git_repos import GitRepo, DefaultGitRepos
 from .build_systems import run_cmake, run_meson
+from .emscripten import lib_to_emcc_port, post_port_build_fixes
 
 from ..config import Config
 from ..utils import makedirs
 from ..tools import EnforcedFlag
+from ..linkers import LinkerEmscripten
 from ..exceptions import PowerMakeRuntimeError
 from ..architecture import split_toolchain_prefix
 from ..display import print_info, print_debug_info
@@ -604,17 +606,34 @@ def macos_prefer_static(ext_pref_order: T.List[ExtType]) -> bool:
             return True
     return False  # False by default if nothing found
 
-def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> T.Tuple[bool, str, str, T.Union[Version, None], bool]:
+def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_dir: str, package_name: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), min_version: T.Union[Version, None] = None, max_version: T.Union[Version, None] = None, allow_prerelease: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER, any_system_version: bool = False) -> T.Tuple[bool, str, str, T.Union[Version, None], bool]:
     cache_modified = False
 
     if "system" not in cache:
         cache["system"] = []
 
+    if config.target_is_emscriptem() and config.linker is not None and isinstance(config.linker, LinkerEmscripten):
+        emcc_port = lib_to_emcc_port(libname, config.linker.translate_flags(config.ld_flags, silent_translation=True))
+        if emcc_port is not None:
+            embuilder_target, emlibname = emcc_port
+            embuilder = shutil.which(os.path.join(os.path.dirname(config.linker.path), "embuilder"))
+            embuilder_additional_args: T.List[str] = []
+            if "-flto" in config.ld_flags:
+                embuilder_additional_args.append("--lto")
+            if "-flto=thin" in config.ld_flags:
+                embuilder_additional_args.append("--lto=thin")
+            if "-pic" in config.ld_flags or "-fPIC" in config.ld_flags:
+                embuilder_additional_args.append("--pic")
+            emsysroot = config.linker.get_sysroot()
+            if emsysroot and embuilder is not None and subprocess.run([embuilder, *embuilder_additional_args, "build", embuilder_target]).returncode == 0:
+                post_port_build_fixes(emsysroot, libname)
+                libname = emlibname
+
     tempdir, main_object_path = create_main_object(config)
 
 
     possible_filepaths = get_possible_filepaths(config, libname, ext_pref_order)
-    if not disable_system_packages and min_version is None and max_version is None:
+    if not disable_system_packages and (min_version is None and max_version is None or any_system_version):
         # If we find a compatible file installed, no need to search the version number it will be good in any case.
         for filepath in possible_filepaths:
             if os.path.exists(filepath) and check_linker_compat(config, tempdir.name, main_object_path, filepath):
@@ -709,7 +728,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
 
 
 
-def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/installed_libs/", min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), package_name: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER) -> Lib:
+def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/installed_libs/", min_version: T.Union[str, None] = None, max_version: T.Union[str, None] = None, git_repo: T.Union[GitRepo, None] = DefaultGitRepos(), package_name: T.Union[str, None] = None, allow_prerelease: bool = False, strict_post: bool = False, disable_system_packages: bool = False, ext_pref_order: T.List[ExtType] = DEFAULT_EXT_PREF_ORDER, any_system_version: bool = False) -> Lib:
     # Cache structure example:
     # =======================================================
     # cache = {
@@ -746,7 +765,7 @@ def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/i
     if not strict_post and max_v is not None and max_v.post_number is None:
         max_v.post_number = '*'
 
-    cache_modified, lib, include, version, is_system = _find_lib(cache, config, libname, os.path.abspath(os.path.expanduser(install_dir)), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order)
+    cache_modified, lib, include, version, is_system = _find_lib(cache, config, libname, os.path.abspath(os.path.expanduser(install_dir)), package_name, git_repo, min_v, max_v, allow_prerelease, disable_system_packages, ext_pref_order=ext_pref_order, any_system_version=any_system_version)
     if cache_modified:
         save_cache(cache_filepath, cache)
 
@@ -772,5 +791,23 @@ def find_lib(config: Config, libname: str, *, install_dir: str = "~/.powermake/i
                 dependencies.append(Lib(includedir=dep_includedir, lib_file=dep_file, version=dep_version, soname=dep_soname, is_system=dep_is_system, dependencies=[]))
     except OSError:
         pass
+
+    if len(dependencies) == 0:
+        if libname == "SDL3_ttf":
+            dependencies.append(find_lib(config, "SDL3", install_dir=install_dir))
+            dependencies.append(find_lib(config, "harfbuzz", install_dir=install_dir))
+            dependencies.append(find_lib(config, "freetype", install_dir=install_dir))
+            dependencies.append(find_lib(config, "z", install_dir=install_dir))
+        if libname == "SDL2_ttf":
+            dependencies.append(find_lib(config, "SDL2", install_dir=install_dir))
+            dependencies.append(find_lib(config, "harfbuzz", install_dir=install_dir))
+            dependencies.append(find_lib(config, "freetype", install_dir=install_dir))
+            dependencies.append(find_lib(config, "z", install_dir=install_dir))
+
+        if libname == "SDL3_image":
+            dependencies.append(find_lib(config, "SDL3", install_dir=install_dir))
+        if libname == "SDL2_image":
+            dependencies.append(find_lib(config, "SDL2", install_dir=install_dir))
+
 
     return Lib(includedir=include, lib_file=lib, version=version, soname=get_soname(config, lib), is_system=is_system, dependencies=dependencies)

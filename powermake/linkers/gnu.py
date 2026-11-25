@@ -50,6 +50,7 @@
 
 
 import os
+import shlex
 import subprocess
 import typing as T
 
@@ -237,6 +238,30 @@ class LinkerClangPlusPlus(LinkerGNU):
     type: T.ClassVar = "clang++"
 
     def __init__(self, path: str = "clang++"):
+        super().__init__(path)
+
+
+class LinkerEmscripten(LinkerGNU):
+    type: T.ClassVar = "emcc"
+
+    def __init__(self, path: str = "emcc"):
+        super().__init__(path)
+
+    def get_sysroot(self) -> str:
+        try:
+            args = shlex.split(subprocess.check_output([self.path, "--cflags"], encoding="utf-8"))
+        except subprocess.CalledProcessError:
+            return ""
+        for arg in args:
+            if arg.startswith("--sysroot="):
+                return arg[len("--sysroot="):]
+        return ""
+
+
+class LinkerEmscriptenPlusPlus(LinkerEmscripten):
+    type: T.ClassVar = "em++"
+
+    def __init__(self, path: str = "em++"):
         super().__init__(path)
 
 

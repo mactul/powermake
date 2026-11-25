@@ -65,7 +65,7 @@
 import typing as T
 
 from .common import Archiver
-from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR, ArchiverMinGW
+from .gnu import ArchiverGNU, ArchiverAR, ArchiverLLVM_AR, ArchiverMinGW, ArchiverEmscripten
 from .msvc import ArchiverMSVC
 
 __all__ = [
@@ -74,7 +74,8 @@ __all__ = [
     "ArchiverAR",
     "ArchiverLLVM_AR",
     "ArchiverMinGW",
-    "ArchiverMSVC"
+    "ArchiverMSVC",
+    "ArchiverEmscripten"
 ]
 
 _archiver_types: T.Dict[str, T.Callable[[], Archiver]] = {
@@ -83,7 +84,8 @@ _archiver_types: T.Dict[str, T.Callable[[], Archiver]] = {
     "ar": ArchiverAR,
     "llvm-ar": ArchiverLLVM_AR,
     "msvc": ArchiverMSVC,
-    "mingw": ArchiverMinGW
+    "mingw": ArchiverMinGW,
+    "emar": ArchiverEmscripten,
 }
 
 

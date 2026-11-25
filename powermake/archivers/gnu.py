@@ -110,3 +110,10 @@ class ArchiverMinGW(ArchiverGNU):
 
     def __init__(self, path: str = "x86_64-w64-mingw32-gcc-ar"):
         super().__init__(path)
+
+
+class ArchiverEmscripten(ArchiverGNU):
+    type: T.ClassVar = "emar"
+
+    def __init__(self, path: str = "emar"):
+        super().__init__(path)

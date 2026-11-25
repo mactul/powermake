@@ -68,7 +68,7 @@ from .common import Compiler
 from .asm import CompilerNASM, CompilerMASM
 from .rc import CompilerWindRes, CompilerRcMSVC
 from .msvc import CompilerMSVC, CompilerClang_CL
-from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus, CompilerMinGW, CompilerMinGWPlusPlus
+from .gnu import CompilerGNU, CompilerGNUPlusPlus, CompilerGCC, CompilerGPlusPlus, CompilerClang, CompilerClangPlusPlus, CompilerMinGW, CompilerMinGWPlusPlus, CompilerEmscripten, CompilerEmscriptenPlusPlus
 
 __all__ = [
     "Compiler",
@@ -85,7 +85,9 @@ __all__ = [
     "CompilerClang",
     "CompilerClangPlusPlus",
     "CompilerMinGW",
-    "CompilerMinGWPlusPlus"
+    "CompilerMinGWPlusPlus",
+    "CompilerEmscripten",
+    "CompilerEmscriptenPlusPlus"
 ]
 
 _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
@@ -94,7 +96,8 @@ _c_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "clang": CompilerClang,
     "msvc": CompilerMSVC,
     "clang-cl": CompilerClang_CL,
-    "mingw": CompilerMinGW
+    "mingw": CompilerMinGW,
+    "emcc": CompilerEmscripten
 }
 
 _cpp_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
@@ -103,7 +106,8 @@ _cpp_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "clang++": CompilerClangPlusPlus,
     "msvc": CompilerMSVC,
     "clang-cl": CompilerClang_CL,
-    "mingw++": CompilerMinGWPlusPlus
+    "mingw++": CompilerMinGWPlusPlus,
+    "em++": CompilerEmscriptenPlusPlus
 }
 
 
@@ -111,7 +115,8 @@ _as_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {
     "gnu": CompilerGNU,
     "gcc": CompilerGCC,
     "clang": CompilerClang,
-    "mingw": CompilerMinGW
+    "mingw": CompilerMinGW,
+    "emcc": CompilerEmscripten,
 }
 
 _asm_compiler_types: T.Dict[str, T.Callable[[], Compiler]] = {

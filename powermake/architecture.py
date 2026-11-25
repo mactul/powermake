@@ -129,6 +129,8 @@ def split_toolchain_architecture(toolchain_name: str) -> T.Tuple[T.Union[str, No
         return ("arm64", toolchain_name[len("aarch64-"):])
     if toolchain_name.startswith("arm-"):
         return ("arm32", toolchain_name[len("arm-"):])
+    if toolchain_name.startswith("em"):
+        return ("wasm", toolchain_name)
     return (None, toolchain_name)
 
 

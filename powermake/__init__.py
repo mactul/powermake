@@ -447,8 +447,12 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     archives.extend(lib.lib_file for lib in reversed(config._package_libs))
 
+    archives_basenames = [os.path.basename(ar) for ar in archives]
+
     deps = _get_recursives_deps(config._package_libs)
     for lib in deps:
+        if not os.path.exists(lib.lib_file):
+            continue
         if not lib.is_system or config.target_is_windows():
             if lib.lib_file.endswith(".dll.a") or lib.lib_file.endswith(".lib"):
                 dll_name = lib.soname or os.path.basename(lib.lib_file[:-2] if lib.lib_file.endswith(".dll.a") else (lib.lib_file[:-3] + "dll"))
@@ -462,6 +466,14 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
                 out = os.path.join(output_dir, lib.soname or os.path.basename(lib.lib_file))
                 print("Copying", lib.lib_file, "into", out)
                 shutil.copy2(lib.lib_file, out)
+        if lib.lib_file.endswith(".a"):
+            if lib.lib_file not in archives:
+                if config.target_is_emscriptem():
+                    name = os.path.basename(lib.lib_file)[:-2]
+                    if f"{name}-mt.a" in archives_basenames or f"{name}-legacysjlj.a" in archives or f"{name}-wasmsjlj.a" in archives:
+                        # These are the same libs and more specific ones have priority
+                        continue
+                archives.append(lib.lib_file)
 
     command = config.linker.basic_link_command(output_file, object_files, archives, args)
     return Operation(output_file, set(object_files).union(archives), config, command, "LD").execute(force=force)

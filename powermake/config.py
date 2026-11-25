@@ -68,7 +68,7 @@ from .linkers import Linker, GenericLinker, get_all_linker_types
 from .archivers import Archiver, GenericArchiver, get_all_archiver_types
 from .shared_linkers import SharedLinker, GenericSharedLinker, get_all_shared_linker_types
 from .architecture import simplify_architecture, search_new_toolchain, split_toolchain_architecture, split_toolchain_prefix
-from .compilers import Compiler, CompilerGNU, CompilerClang, CompilerClangPlusPlus, GenericCompiler, default_path_from_type, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
+from .compilers import Compiler, CompilerGNU, CompilerClang, CompilerClangPlusPlus, CompilerEmscripten, GenericCompiler, default_path_from_type, get_all_c_compiler_types, get_all_cpp_compiler_types, get_all_as_compiler_types, get_all_asm_compiler_types, get_all_rc_compiler_types
 
 _Config = T.TypeVar("_Config", bound="Config")
 
@@ -119,6 +119,8 @@ def get_type_pref(tool_primer: ToolPrimer) -> T.Union[str, None]:
         return "masm"
     if name.startswith("rc"):
         return "rc_msvc"
+    if name.startswith("em"):
+        return "emcc"
 
     if "CCC_ANALYZER_ANALYSIS" in os.environ:
         # This is the signature of scan-build
@@ -143,7 +145,10 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "msvc": "msvc",
         "clang-cl": "clang-cl",
         "llvm-ar": "clang",
-        "mingw-ld": "mingw"
+        "mingw-ld": "mingw",
+        "emcc": "emcc",
+        "em++": "emcc",
+        "emar": "emcc"
     }
 
     to_cpp = {
@@ -158,7 +163,10 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "msvc": "msvc",
         "clang-cl": "clang-cl",
         "llvm-ar": "clang++",
-        "mingw-ld": "mingw++"
+        "mingw-ld": "mingw++",
+        "emcc": "em++",
+        "em++": "em++",
+        "emar": "em++"
     }
 
     to_as = {
@@ -171,7 +179,10 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "mingw": "mingw",
         "mingw++": "mingw",
         "llvm-ar": "clang",
-        "mingw-ld": "mingw"
+        "mingw-ld": "mingw",
+        "emcc": "emcc",
+        "em++": "emcc",
+        "emar": "emcc"
     }
 
     to_asm = {
@@ -189,7 +200,7 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "clang-cl": "masm",
         "llvm-ar": "nasm",
         "ld": "nasm",
-        "mingw-ld": "nasm"
+        "mingw-ld": "nasm",
     }
 
     to_ld = {
@@ -205,7 +216,10 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "clang-cl": "clang-cl",
         "llvm-ar": "clang++",
         "ld": "ld",
-        "mingw-ld": "mingw-ld"
+        "mingw-ld": "mingw-ld",
+        "emcc": "em++",
+        "em++": "em++",
+        "emar": "em++"
     }
 
     to_ar = {
@@ -222,7 +236,10 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
         "msvc": "msvc",
         "clang-cl": "llvm-ar",
         "ld": "ar",
-        "mingw-ld": "mingw"
+        "mingw-ld": "mingw",
+        "emcc": "emar",
+        "em++": "emar",
+        "emar": "emar"
     }
 
     to_rc = {
@@ -402,7 +419,7 @@ def auto_toolchain(preferences: T.Dict[str, T.Union[str, None]]) -> T.Dict[str, 
 
 def replace_architecture(string: str, new_arch: str) -> str:
     new_arch = "/" + new_arch + "/"
-    for arch in ("/x86/", "/x64/", "/arm32/", "/arm64/"):
+    for arch in ("/x86/", "/x64/", "/arm32/", "/arm64/", "/wasm/"):
         string = string.replace(arch, new_arch)
     return string
 
@@ -652,6 +669,8 @@ class Config:
             target_arch_detected = True
             if self.target_is_android():
                 self.target_architecture = "aarch64"  # For Android it's safer to bet on aarch64, we are always cross-compiling anyway.
+            elif self.target_is_emscriptem():
+                self.target_architecture = "wasm"
             else:
                 self.target_architecture = platform.machine()
         if self.host_architecture == "":
@@ -720,6 +739,13 @@ class Config:
                 self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "mingw", "llvm-ar"))
                 self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "mingw++", "clang-cl"))
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "mingw++", "clang-cl"))
+        elif self.target_is_emscriptem():
+            self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "emcc"))
+            self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "em++"))
+            self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "emcc"))
+            self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "emar"))
+            self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "em++"))
+            self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "em++"))
         else:
             self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "gcc", "clang"))
             self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "g++", "clang++"))
@@ -748,8 +774,13 @@ class Config:
         for key in primers_dict:
             self._disable_architecture_toolchain_discover = self._disable_architecture_toolchain_discover or primers_dict[key].tool_path_specified
 
-        if target_os_autodetected and self.c_compiler is not None and "mingw" in self.c_compiler.path.lower():
-            self.target_operating_system = "Windows"
+        if target_os_autodetected and self.c_compiler is not None:
+            if "mingw" in self.c_compiler.path.lower():
+                self.target_operating_system = "Windows"
+            elif "emcc" in self.c_compiler.path.lower():
+                self.target_operating_system = "Emscripten"
+                self.target_architecture = "wasm"
+                self.target_simplified_architecture = "wasm"
 
         self.set_debug(self.debug, True)
         self.add_flags("-fdiagnostics-color")
@@ -809,7 +840,7 @@ class Config:
             if env is not None:
                 for var in env:
                     os.environ[var] = env[var]
-        
+
         if self.target_is_android():
             if self.host_is_windows():
                 jdk_filename = "openjdk-21.0.2_windows-x64_bin.zip"
@@ -984,7 +1015,10 @@ class Config:
 
     def target_is_mingw(self) -> bool:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
-    
+
+    def target_is_emscriptem(self) -> bool:
+        return self.target_operating_system.lower().startswith(("emscript", "web")) or self.target_simplified_architecture == "wasm" or isinstance(self.c_compiler, CompilerEmscripten)
+
     def target_is_android(self) -> bool:
         return self.target_operating_system.lower().startswith("android")
 

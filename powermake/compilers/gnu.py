@@ -152,3 +152,17 @@ class CompilerClangPlusPlus(CompilerGNUPlusPlus):
 
     def __init__(self, path: str = "clang++"):
         super().__init__(path)
+
+
+class CompilerEmscripten(CompilerGNU):
+    type: T.ClassVar = "emcc"
+
+    def __init__(self, path: str = "emcc"):
+        super().__init__(path)
+
+
+class CompilerEmscriptenPlusPlus(CompilerGNUPlusPlus):
+    type: T.ClassVar = "em++"
+
+    def __init__(self, path: str = "em++"):
+        super().__init__(path)
