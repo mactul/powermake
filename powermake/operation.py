@@ -84,7 +84,7 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
     except OSError:
         return False
 
-    if not filename.endswith((".c", ".cpp", ".cc", ".C", ".h", ".hpp", ".lex", ".y", ".rc")):
+    if not filename.endswith((".c", ".cpp", ".cc", ".C", ".h", ".hpp", ".lex", ".y", ".rc", ".slang")):
         return True
 
     headers_found = []
@@ -102,6 +102,44 @@ def is_file_uptodate_recursive(output_date: float, filename: str, additional_inc
             i += 1
         if i >= len(line):
             continue
+
+        if filename.endswith(".slang"):
+            if line[i:].startswith("__exported"):
+                i += len("__exported")
+                if i >= len(line) or (line[i] != ' ' and line[i] != '\t'):
+                    continue
+                i += 1
+                while i < len(line) and (line[i] == ' ' or line[i] == '\t'):
+                    i += 1
+            if line[i:].startswith(("import", "__include")):
+                i += len("import") if line[i:].startswith("import") else len("__include")
+                if i >= len(line) or (line[i] != ' ' and line[i] != '\t'):
+                    continue
+                i += 1
+                while i < len(line) and (line[i] == ' ' or line[i] == '\t'):
+                    i += 1
+                j = i
+                while j < len(line) and line[j] != ';':
+                    j += 1
+                if line[j] != ';':
+                    continue
+                slang_file = line[i:j].strip()
+                if len(slang_file) == 0:
+                    continue
+                if slang_file.count('"') not in (0, 2):
+                    continue
+                if '"' in slang_file:
+                    if len(slang_file) < 3 or slang_file[0] != '"' or slang_file[-1] != '"':
+                        continue
+                    slang_file = slang_file[1:-1]
+                    if not slang_file.endswith(".slang"):
+                        slang_file += ".slang"
+                else:
+                    slang_file = f"{slang_file.replace('.', '/')}.slang"
+                if slang_file not in headers_found:
+                    headers_found.append(slang_file)
+                continue
+
         if line[i] != '#':
             continue
         i += 1
