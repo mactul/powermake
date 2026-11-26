@@ -1016,7 +1016,7 @@ class Config:
     def target_is_mingw(self) -> bool:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
 
-    def target_is_emscriptem(self) -> bool:
+    def target_is_emscripten(self) -> bool:
         return self.target_operating_system.lower().startswith(("emscript", "web")) or self.target_simplified_architecture == "wasm" or isinstance(self.c_compiler, CompilerEmscripten)
 
     def target_is_android(self) -> bool:
