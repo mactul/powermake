@@ -425,6 +425,8 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     if executable_name is None:
         executable_name = config.target_name
+        if config.target_is_emscriptem():
+            executable_name += ".html"
 
     if config.linker is None:
         raise PowerMakeRuntimeError(display.error_text("No linker has been specified and the default config didn't find any"))
