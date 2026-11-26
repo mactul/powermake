@@ -132,7 +132,7 @@ You will have two choices, the compiler type and the compiler path.
 > [!NOTE]  
 > The compiler type is here to tell PowerMake what the compiler command line syntax looks like. For example, `i386-elf-gcc` has the same command line syntax as `gcc`.
 >
-> Most of the time, PowerMake will detect the type based on the path (it will be the case for `i386-elf-gcc`), but it may be required for a tool like `emcc`.
+> Most of the time, PowerMake will detect the type based on the path (it will be the case for `i386-elf-gcc`), but it may be required for a tool like `icx` where the name itself isn't enough to make the syntax of the tool obvious.
 
 
 Try to change the C Compiler.  

@@ -1845,8 +1845,8 @@ def compile_scr_modifier_tool(config: powermake.Config):
 def on_build(config: powermake.Config):
     config.add_flags("-Wall", "-Wextra", "-fanalyzer")
 
-    config.c_compiler = powermake.compilers.CompilerGNU("emcc")
-    config.linker = powermake.compilers.CompilerGNU("emcc")
+    config.c_compiler = powermake.compilers.CompilerEmscripten()
+    config.linker = powermake.compilers.CompilerEmscripten()
 
     # Here we make an empty copy of the config so the tool is compiled with the host toolchain.
     tool_path = compile_scr_modifier_tool(config.empty_copy())
@@ -2650,7 +2650,7 @@ There are 4 classes of tools, `powermake.compilers.Compiler`, `powermake.archive
 
 #### powermake.compilers.Compiler
 
-There is 13 predefined compilers:
+There is 15 predefined compilers:
 ```py
 powermake.compilers.CompilerWindRes
 powermake.compilers.CompilerNASM
@@ -2665,17 +2665,19 @@ powermake.compilers.CompilerClang
 powermake.compilers.CompilerClangPlusPlus
 powermake.compilers.CompilerMinGW
 powermake.compilers.CompilerMinGWPlusPlus
+powermake.compilers.CompilerEmscripten
+powermake.compilers.CompilerEmscriptenPlusPlus
 ```
 
 A compiler instance can be created by calling any of these constructors with either no argument, or the path/name of the program.
 
-For example, you can create an instance of an emscripten C compiler like that:
+For example, you can create an instance of the American Fuzzy Loop C compiler like that:
 ```py
-config.c_compiler = powermake.compilers.CompilerGNU("emcc")
+config.c_compiler = powermake.compilers.CompilerGCC("afl-gcc")
 ```
 Or with a complete path:
 ```py
-config.c_compiler = powermake.compilers.CompilerGNU("/usr/lib/emscripten/emcc")
+config.c_compiler = powermake.compilers.CompilerGCC("/usr/bin/afl-gcc")
 ```
 
 If you want to create an instance of clang, you can use `powermake.compilers.CompilerClang("/usr/bin/clang")` like below or let powermake use the default path for clang:

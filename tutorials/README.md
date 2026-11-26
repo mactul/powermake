@@ -21,3 +21,4 @@ This section is not meant to show every argument of every function, the idea is 
 - [Configuration and Crosscompilation](./05-configuration-and-crosscompilation/README.md)
 - [Package Manager](./06-package-manager/README.md)
 - [An Android app with SDL3](./07-sdl3-android-app/README.md)
+- [Compiling for Emscripten, Android, Linux or Windows, from a single makefile and a single Linux computer](./08-emscripten-android-linux-windows/README.md)
