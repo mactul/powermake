@@ -669,7 +669,7 @@ class Config:
             target_arch_detected = True
             if self.target_is_android():
                 self.target_architecture = "aarch64"  # For Android it's safer to bet on aarch64, we are always cross-compiling anyway.
-            elif self.target_is_emscriptem():
+            elif self.target_is_emscripten():
                 self.target_architecture = "wasm"
             else:
                 self.target_architecture = platform.machine()
@@ -739,7 +739,7 @@ class Config:
                 self.archiver = T.cast(T.Union[Archiver, None], archiver_primer.get_tool(toolchain_prefix, preferences["archiver"], "mingw", "llvm-ar"))
                 self.linker = T.cast(T.Union[Linker, None], linker_primer.get_tool(toolchain_prefix, preferences["linker"], "mingw++", "clang-cl"))
                 self.shared_linker = T.cast(T.Union[SharedLinker, None], shared_linker_primer.get_tool(toolchain_prefix, preferences["shared_linker"], "mingw++", "clang-cl"))
-        elif self.target_is_emscriptem():
+        elif self.target_is_emscripten():
             self.c_compiler = T.cast(T.Union[Compiler, None], c_compiler_primer.get_tool(toolchain_prefix, preferences["c_compiler"], "emcc"))
             self.cpp_compiler = T.cast(T.Union[Compiler, None], cpp_compiler_primer.get_tool(toolchain_prefix, preferences["cpp_compiler"], "em++"))
             self.as_compiler = T.cast(T.Union[Compiler, None], as_compiler_primer.get_tool(toolchain_prefix, preferences["as_compiler"], "emcc"))
@@ -1016,7 +1016,7 @@ class Config:
     def target_is_mingw(self) -> bool:
         return self.target_is_windows() and isinstance(self.c_compiler, CompilerGNU)
 
-    def target_is_emscriptem(self) -> bool:
+    def target_is_emscripten(self) -> bool:
         return self.target_operating_system.lower().startswith(("emscript", "web")) or self.target_simplified_architecture == "wasm" or isinstance(self.c_compiler, CompilerEmscripten)
 
     def target_is_android(self) -> bool:

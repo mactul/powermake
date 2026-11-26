@@ -425,6 +425,8 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
 
     if executable_name is None:
         executable_name = config.target_name
+        if config.target_is_emscripten():
+            executable_name += ".html"
 
     if config.linker is None:
         raise PowerMakeRuntimeError(display.error_text("No linker has been specified and the default config didn't find any"))
@@ -468,7 +470,7 @@ def link_files(config: Config, object_files: T.Iterable[str], archives: T.List[s
                 shutil.copy2(lib.lib_file, out)
         if lib.lib_file.endswith(".a"):
             if lib.lib_file not in archives:
-                if config.target_is_emscriptem():
+                if config.target_is_emscripten():
                     name = os.path.basename(lib.lib_file)[:-2]
                     if f"{name}-mt.a" in archives_basenames or f"{name}-legacysjlj.a" in archives or f"{name}-wasmsjlj.a" in archives:
                         # These are the same libs and more specific ones have priority

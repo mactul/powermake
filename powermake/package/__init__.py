@@ -612,7 +612,7 @@ def _find_lib(cache: T.Dict[str, T.Any], config: Config, libname: str, install_d
     if "system" not in cache:
         cache["system"] = []
 
-    if config.target_is_emscriptem() and config.linker is not None and isinstance(config.linker, LinkerEmscripten):
+    if config.target_is_emscripten() and config.linker is not None and isinstance(config.linker, LinkerEmscripten):
         emcc_port = lib_to_emcc_port(libname, config.linker.translate_flags(config.ld_flags, silent_translation=True))
         if emcc_port is not None:
             embuilder_target, emlibname = emcc_port
